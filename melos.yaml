@@ -2,7 +2,6 @@ name: dartzen
 repository: https://github.com/your-org/dartzen
 
 packages:
-  - apps/*
   - packages/*
 
 command:
@@ -22,26 +21,3 @@ command:
     # It seems so that running "pub get" in parallel can have issues (like
     # https://github.com/dart-lang/pub/issues/3404)
     runPubGetInParallel: false
-
-scripts:
-  analyze:
-    exec: dart analyze .
-    description: Run dart analyze in all packages.
-
-  format:
-    exec: dart format .
-    description: Run dart format in all packages.
-
-  format:check:
-    exec: dart format --set-exit-if-changed .
-    description: Run dart format --set-exit-if-changed in all packages.
-
-  test:
-    exec: dart test
-    description: Run dart test in all packages.
-
-  publish:
-    exec: dart pub publish --dry-run
-    description: Publish all dartzen_* packages to pub.dev (dry-run mode).
-    packageFilters:
-      scope: 'dartzen_*'

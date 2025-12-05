@@ -6,6 +6,10 @@ version: 1.0.0+1
 environment:
   sdk: ">=3.5.0 <4.0.0"
 
+workspace:
+  - packages/dartzen_core
+  - packages/dartzen_shared
+
 dependency_overrides:
   flutter:
     sdk: flutter
@@ -24,4 +28,26 @@ dependency_overrides:
   collection: ^1.19.1
 
 dev_dependencies:
-  melos: ^6.0.0
+  melos: ^7.3.0
+
+melos:
+  scripts:
+    analyze:
+      exec: dart analyze .
+      description: Run dart analyze in all packages.
+    format:
+      exec: dart format .
+      description: Run dart format in all packages.
+    format:check:
+      exec: dart format --set-exit-if-changed .
+      description: Run dart format --set-exit-if-changed in all packages.
+    test:
+      exec: dart test
+      description: Run dart test in all packages.
+      packageFilters:
+        dirExists: test
+    publish:
+      exec: dart pub publish --dry-run
+      description: Publish all dartzen_* packages to pub.dev (dry-run mode).
+      packageFilters:
+        scope: 'dartzen_*'
