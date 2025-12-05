@@ -1,0 +1,27 @@
+name: dartzen
+description: DartZen workspace mono-repo for managing dependencies and packages.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependency_overrides:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.0.3
+  go_router: ^17.0.0
+  intl: ^0.20.2
+
+  # UI
+  flutter_hooks: ^0.21.3+1
+  google_fonts: ^6.3.3
+
+  # Networking
+  dio: ^5.9.0
+
+  # Utils
+  collection: ^1.19.1
+
+dev_dependencies:
+  melos: ^6.0.0

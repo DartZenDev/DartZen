@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Bootstrap Melos
+        run: dart run melos bootstrap
+
+      - name: Check formatting
+        run: dart run melos run format:check
+
+      - name: Analyze
+        run: dart run melos run analyze
+
+      - name: Run tests
+        run: dart run melos run test

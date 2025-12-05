@@ -1,0 +1,4 @@
+# melos_managed_dependency_overrides: dartzen_shared
+dependency_overrides:
+  dartzen_shared:
+    path: ../dartzen_shared
