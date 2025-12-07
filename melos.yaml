@@ -21,3 +21,4 @@ command:
     # It seems so that running "pub get" in parallel can have issues (like
     # https://github.com/dart-lang/pub/issues/3404)
     runPubGetInParallel: false
+

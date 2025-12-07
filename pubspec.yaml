@@ -40,7 +40,7 @@ melos:
       exec: dart format --set-exit-if-changed .
       description: Run dart format --set-exit-if-changed in all packages.
     test:
-      exec: dart test
+      exec: flutter test --dart-define=DZ_PLATFORM=macos
       description: Run dart test in all packages.
       packageFilters:
         dirExists: test
