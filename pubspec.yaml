@@ -9,25 +9,23 @@ environment:
 workspace:
   - packages/dartzen_core
   - packages/dartzen_shared
+  - packages/dartzen_navigation
+  - packages/dartzen_navigation/example
 
 dependency_overrides:
+  cli_util: ^0.4.2
+  collection: ^1.19.1
+  dio: ^5.9.0
   flutter:
     sdk: flutter
-  flutter_riverpod: ^3.0.3
+  flutter_hooks: ^0.21.3+1
   go_router: ^17.0.0
+  google_fonts: ^6.3.3
   intl: ^0.20.2
 
-  # UI
-  flutter_hooks: ^0.21.3+1
-  google_fonts: ^6.3.3
-
-  # Networking
-  dio: ^5.9.0
-
-  # Utils
-  collection: ^1.19.1
-
 dev_dependencies:
+  flutter_lints: ^6.0.0
+  import_sorter: ^4.6.0
   melos: ^7.3.0
 
 melos:
@@ -51,3 +49,63 @@ melos:
       description: Publish all dartzen_* packages to pub.dev (dry-run mode).
       packageFilters:
         scope: 'dartzen_*'
+    run:android:
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android
+      description: Run the app on Android (debug mode).
+    run:android:profile:
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --profile
+      description: Run the app on Android (profile mode).
+    run:android:release:
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --release
+      description: Run the app on Android (release mode).
+    run:ios:
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios
+      description: Run the app on iOS (debug mode).
+    run:ios:profile:
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --profile
+      description: Run the app on iOS (profile mode).
+    run:ios:release:
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --release
+      description: Run the app on iOS (release mode).
+    run:web:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web
+      description: Run the app on Web (debug mode).
+    run:web:profile:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --profile
+      description: Run the app on Web (profile mode).
+    run:web:release:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --release
+      description: Run the app on Web (release mode).
+    run:desktop:windows:
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows
+      description: Run the app on Windows (debug mode).
+    run:desktop:windows:profile:
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --profile
+      description: Run the app on Windows (profile mode).
+    run:desktop:windows:release:
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --release
+      description: Run the app on Windows (release mode).
+    run:desktop:macos:
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos
+      description: Run the app on macOS (debug mode).
+    run:desktop:macos:profile:
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --profile
+      description: Run the app on macOS (profile mode).
+    run:desktop:macos:release:
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --release
+      description: Run the app on macOS (release mode).
+    run:desktop:linux:
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux
+      description: Run the app on Linux (debug mode).
+    run:desktop:linux:profile:
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --profile
+      description: Run the app on Linux (profile mode).
+    run:desktop:linux:release:
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --release
+      description: Run the app on Linux (release mode).
+    example:navigation:web:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web
+      scope: dartzen_navigation_example
+    example:navigation:ios:
+      exec: flutter run --dart-define=DZ_PLATFORM=ios
+      scope: dartzen_navigation_example
