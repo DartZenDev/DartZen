@@ -56,7 +56,8 @@ class HomeScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            const _FeatureItem(text: '✓ Adaptive navigation (mobile, tablet, desktop)'),
+            const _FeatureItem(
+                text: '✓ Adaptive navigation (mobile, tablet, desktop)'),
             const _FeatureItem(text: '✓ Platform-specific highlights'),
             const _FeatureItem(text: '✓ Overflow handling'),
             const _FeatureItem(text: '✓ Badge support'),
