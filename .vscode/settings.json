@@ -1,9 +1,27 @@
 {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "always",
+        "source.organizeImports": "always"
+    },
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "always",
+            "source.organizeImports": "always"
+        }
+    },
     "cSpell.words": [
+        "Behaviour",
         "buildlog",
+        "cupertino",
         "dartdoc",
         "dartzen",
+        "goldens",
+        "inavigation",
+        "mocktail",
         "pubspec",
-        "riverpod"
+        "riverpod",
+        "Schyler"
     ]
 }

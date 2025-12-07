@@ -11,10 +11,10 @@ resolution: workspace
 dependencies:
   dartzen_shared:
     path: ../dartzen_shared
-  shelf: ^1.4.2
+  firebase_admin: ^0.3.1
   get_it: ^9.2.0
   logger: ^2.6.2
-  firebase_admin: ^0.3.1
+  shelf: ^1.4.2
 
 dev_dependencies:
   lints: ^6.0.0

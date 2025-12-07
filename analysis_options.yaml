@@ -1,0 +1,67 @@
+# -----------------------------
+# Enterprise-style strict lints, local include from dartzen_shared
+# Handles relative imports up to one level, auto-fix formatting, and import sorting
+# -----------------------------
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+
+  errors:
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+    unused_import: warning
+    unused_local_variable: warning
+    invalid_null_aware_operator: error
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+
+linter:
+  rules:
+    # --- Style & consistency ---
+    always_declare_return_types: true
+    always_use_package_imports: true
+    avoid_dynamic_calls: true
+    avoid_function_literals_in_foreach_calls: true
+    avoid_print: true
+    avoid_returning_null_for_future: true
+    avoid_redundant_argument_values: true
+    avoid_unused_constructor_parameters: true
+    directives_ordering: true
+    prefer_single_quotes: true
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    prefer_expression_function_bodies: true
+    unnecessary_this: true
+    unnecessary_lambdas: true
+    sort_child_properties_last: true
+    sort_pub_dependencies: true
+
+    # --- Safety ---
+    close_sinks: true
+    cancel_subscriptions: true
+    always_require_non_null_named_parameters: true
+
+    # --- Performance ---
+    prefer_const_literals_to_create_immutables: true
+    avoid_unnecessary_containers: true
+
+    # --- Readability & API hygiene ---
+    public_member_api_docs: true
+    comment_references: true
+
+    # --- Testing ---
+    avoid_empty_else: true
+    prefer_const_declarations: true

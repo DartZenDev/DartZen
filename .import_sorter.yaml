@@ -1,0 +1,4 @@
+comments: true
+ignored_files:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"

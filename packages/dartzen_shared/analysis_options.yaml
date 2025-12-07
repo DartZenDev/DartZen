@@ -1,0 +1,40 @@
+include: ../../analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/generated/**"
+
+linter:
+  rules:
+    # Prefer relative imports within the same package or folder
+    prefer_relative_imports: true
+    avoid_relative_lib_imports: false
+    always_use_package_imports: false
+
+# Custom lint rules
+custom_lint:
+  rules:
+    sort_pub_dependencies: true
+    # Enforce import ordering
+    sort_directives: true
+    # Auto-fix style formatting
+    prefer_final_locals: true
+    prefer_const_constructors: true
+    avoid_print: true
+
+# Formatting and style
+dart:
+  line-length: 100
+  indent: 2
+  trailing-comma: true
+  sort-constructor-parameters: true
+
+# Auto-fix suggestions
+# (most modern IDEs like VSCode respect this)
+fix:
+  format: true
+  sort-imports: true
+
+# Relative import restriction: only same folder, one up, one down
+# (Handled by prefer_relative_imports + avoid_relative_lib_imports)

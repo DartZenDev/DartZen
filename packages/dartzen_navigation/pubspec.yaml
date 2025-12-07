@@ -1,0 +1,22 @@
+name: dartzen_navigation
+description: Adaptive navigation layer for DartZen.
+publish_to: 'none'
+version: 0.0.1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  dartzen_shared:
+    path: ../dartzen_shared
+  flutter:
+    sdk: flutter
+  logger: ^2.6.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^6.0.0
+  test: ^1.25.0
