@@ -1,21 +1,23 @@
 name: dartzen_core
-description: Core runtime for DartZen.
+description: The core layer for the DartZen ecosystem. Provides universal result types, value objects, and shared contracts.
 version: 0.0.1
-publish_to: 'none'
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/dartzen
+issue_tracker: https://github.com/DartZenDev/dartzen/issues
+
+publish_to: none
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: '>=3.4.0 <4.0.0'
 
-resolution: workspace
+topics:
+  - architecture
+  - functional
+  - result
 
 dependencies:
-  dartzen_shared:
-    path: ../dartzen_shared
-  firebase_admin: ^0.3.1
-  get_it: ^9.2.0
-  logger: ^2.6.2
-  shelf: ^1.4.2
+  meta: ^1.11.0
 
 dev_dependencies:
-  lints: ^6.0.0
-  test: ^1.25.0
+  lints: ^3.0.0
+  test: ^1.24.0

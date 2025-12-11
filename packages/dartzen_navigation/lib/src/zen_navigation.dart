@@ -1,5 +1,5 @@
 // Conditional imports for platform-specific widgets
-import 'package:dartzen_shared/dartzen_shared.dart';
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:flutter/widgets.dart';
 
 import './widgets/navigation_stub.dart'

@@ -1,4 +1,4 @@
-import 'package:dartzen_shared/dartzen_shared.dart';
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

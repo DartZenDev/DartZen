@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'zen_navigation.dart';
 
 /// A navigation item that can be used in a [ZenNavigation].
 ///
