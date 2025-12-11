@@ -8,7 +8,6 @@ environment:
 
 workspace:
   - packages/dartzen_core
-  - packages/dartzen_shared
   - packages/dartzen_navigation
   - packages/dartzen_navigation/example
 

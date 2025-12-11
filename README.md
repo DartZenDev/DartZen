@@ -16,16 +16,15 @@ This is a **monorepo** managed with [Melos](https://melos.invertase.dev/), conta
 ```
 dartzen/
 ├── packages/
-│   ├── dartzen_shared/    # Shared models and contracts
-│   └── dartzen_core/      # Core runtime and Shelf backend
-├── apps/                  # Example applications (future)
-├── melos.yaml            # Monorepo configuration
-└── CONTRIBUTING.md       # Contribution guidelines
+│   ├── dartzen_core/       # Core runtime and Shelf backend
+│   └── dartzen_navigation/ # Navigation widget for Flutter applications
+├── apps/                   # Example applications (future)
+├── melos.yaml              # Monorepo configuration
+└── CONTRIBUTING.md         # Contribution guidelines
 ```
 
 ### Packages
 
-- **`dartzen_shared`**: Shared models, contracts, and type definitions used across all DartZen packages
 - **`dartzen_core`**: Core runtime with Shelf-based HTTP server, Firebase integration, and dependency injection
 - **`dartzen_navigation`**: Navigation widget for Flutter applications
 

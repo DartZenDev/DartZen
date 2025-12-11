@@ -6,8 +6,8 @@ Unified, adaptive navigation layer for DartZen applications with platform-specif
 
 ## Features
 
-✨ **Platform Adaptive** - Automatically adapts to mobile, web, and desktop platforms  
-📱 **Responsive** - Smart overflow handling and breakpoint-based layouts  
+✨ **Platform Adaptive** - Automatically adapts to mobile, web, and desktop platforms
+📱 **Responsive** - Smart overflow handling and breakpoint-based layouts
 🚀 **Zero Configuration** - Sensible defaults with customization options
 
 ## Installation
@@ -25,11 +25,9 @@ dependencies:
 import 'package:flutter/material.dart';
 import 'package:dartzen_navigation/dartzen_navigation.dart';
 
+
 void main() {
-  runApp(
-      child: MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -59,19 +57,19 @@ class _HomeScreenState extends State<HomeScreen> {
       id: 'home',
       label: 'Home',
       icon: Icons.home,
-      builder: (context) => const HomeScreen(),
+      builder: (context) => HomeScreen(),
     ),
     ZenNavigationItem(
       id: 'search',
       label: 'Search',
       icon: Icons.search,
-      builder: (context) => const SearchScreen(),
+      builder: (context) => SearchScreen(),
     ),
     ZenNavigationItem(
       id: 'profile',
       label: 'Profile',
       icon: Icons.person,
-      builder: (context) => const ProfileScreen(),
+      builder: (context) => ProfileScreen(),
       badgeCount: 3,
     ),
   ];
@@ -122,9 +120,9 @@ const ZenNavigationItem(
   id: 'messages',
   label: 'Messages',
   icon: Icons.message,
-  builder: (context) => const MessagesScreen(),
+  builder: (context) => MessagesScreen(),
   badgeCount: 5, // Shows a badge with "5"
-)
+);
 ```
 
 ## Overflow Management
@@ -132,16 +130,17 @@ const ZenNavigationItem(
 The package automatically handles overflow items on Mobile when there are more than 4 items to display. Extra items are moved to a "More" menu. The 'more' is customizable.
 
 ```dart
-const ZenNavigation(
+ZenNavigation(
   items: _navItems,
-  onDestinationSelected: (i) { /* Handle navigation */ },
+  selectedIndex: 0,
+  onItemSelected: (i) { /* Handle navigation */ },
   labelMore: 'More',
 )
 ```
 
 ## Example
 
-The example can be found in the [example](example) directory.
+The example can be found in the [`example/`](example) directory.
 
 ## Design Principles
 
