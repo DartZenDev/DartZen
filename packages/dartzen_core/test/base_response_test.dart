@@ -11,15 +11,15 @@ void main() {
     });
 
     test('failure factory', () {
-      final resp = BaseResponse.failure('error', errorCode: 'ERR_01');
+      final resp = BaseResponse<void>.failure('error', errorCode: 'ERR_01');
       expect(resp.success, isFalse);
       expect(resp.message, 'error');
       expect(resp.errorCode, 'ERR_01');
     });
 
     test('fromError factory', () {
-      final err = ZenNotFoundError('Not found');
-      final resp = BaseResponse.fromError(err);
+      const err = ZenNotFoundError('Not found');
+      final resp = BaseResponse<void>.fromError(err);
       expect(resp.success, isFalse);
       expect(resp.message, 'Not found');
       expect(resp.errorCode, 'NOT_FOUND_ERROR');

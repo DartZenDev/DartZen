@@ -44,7 +44,7 @@ dartzen/
 
 2. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/dartzen.git
+   git clone https://github.com/DartZenDev/DartZen.git
    cd dartzen
    ```
 
@@ -138,8 +138,8 @@ DartZen uses **independent versioning** with [Semantic Versioning (SemVer)](http
 git commit -m "feat(dartzen_core): add authentication middleware"
 # dartzen_core: 0.1.0 → 0.2.0
 
-git commit -m "fix(dartzen_shared): correct type definitions"
-# dartzen_shared: 0.1.0 → 0.1.1
+git commit -m "fix(dartzen_navigation): correct type definitions"
+# dartzen_navigation: 0.1.0 → 0.1.1
 ```
 
 Run `melos version --dry-run` to preview version bumps before applying them.

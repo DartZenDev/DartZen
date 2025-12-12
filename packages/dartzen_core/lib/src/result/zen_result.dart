@@ -38,10 +38,7 @@ sealed class ZenResult<T> {
 
   /// Folds the result into a single value by applying [onSuccess] if successful,
   /// or [onFailure] if failed.
-  R fold<R>(
-    R Function(T data) onSuccess,
-    R Function(ZenError error) onFailure,
-  );
+  R fold<R>(R Function(T data) onSuccess, R Function(ZenError error) onFailure);
 }
 
 /// Represents a successful operation containing a value of type [T].
@@ -69,9 +66,7 @@ final class ZenSuccess<T> extends ZenResult<T> {
   R fold<R>(
     R Function(T data) onSuccess,
     R Function(ZenError error) onFailure,
-  ) {
-    return onSuccess(data);
-  }
+  ) => onSuccess(data);
 
   @override
   String toString() => 'ZenSuccess($data)';
@@ -111,9 +106,7 @@ final class ZenFailure<T> extends ZenResult<T> {
   R fold<R>(
     R Function(T data) onSuccess,
     R Function(ZenError error) onFailure,
-  ) {
-    return onFailure(error);
-  }
+  ) => onFailure(error);
 
   @override
   String toString() => 'ZenFailure($error)';

@@ -1,0 +1,16 @@
+name: dartzen_msgpack
+description: Minimal MessagePack implementation for DartZen ecosystem - zero dependencies, functional approach
+version: 0.1.0
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/dartzen
+issue_tracker: https://github.com/DartZenDev/dartzen/issues
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

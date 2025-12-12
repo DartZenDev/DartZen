@@ -83,9 +83,7 @@ class _SearchScreenState extends State<SearchScreen> {
               itemCount: _filteredItems.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  leading: CircleAvatar(
-                    child: Text(_filteredItems[index][0]),
-                  ),
+                  leading: CircleAvatar(child: Text(_filteredItems[index][0])),
                   title: Text(_filteredItems[index]),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(

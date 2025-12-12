@@ -11,11 +11,15 @@ void main() {
 
     test('ZenLocale validation', () {
       expect(ZenLocale.create(languageCode: 'en').isSuccess, isTrue);
-      expect(ZenLocale.create(languageCode: 'en', regionCode: 'US').isSuccess,
-          isTrue);
+      expect(
+        ZenLocale.create(languageCode: 'en', regionCode: 'US').isSuccess,
+        isTrue,
+      );
       expect(ZenLocale.create(languageCode: 'E').isFailure, isTrue); // Bad lang
-      expect(ZenLocale.create(languageCode: 'en', regionCode: 'u').isFailure,
-          isTrue); // Bad region
+      expect(
+        ZenLocale.create(languageCode: 'en', regionCode: 'u').isFailure,
+        isTrue,
+      ); // Bad region
     });
 
     test('ZenTimestamp works', () {

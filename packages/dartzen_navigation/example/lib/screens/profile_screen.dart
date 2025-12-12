@@ -29,8 +29,9 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 60,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
                   child: Icon(
                     Icons.person,
                     size: 60,
@@ -46,8 +47,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'john.doe@example.com',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

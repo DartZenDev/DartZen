@@ -16,23 +16,24 @@ final class EmailAddress {
   /// Uses a strict regex to ensure format validity.
   static ZenResult<EmailAddress> create(String rawValue) {
     if (rawValue.isEmpty) {
-      return ZenResult.err(ZenValidationError('Email cannot be empty'));
+      return const ZenResult.err(ZenValidationError('Email cannot be empty'));
     }
 
     // Basic email regex
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     if (!emailRegex.hasMatch(rawValue)) {
-      return ZenResult.err(ZenValidationError('Invalid email format'));
+      return const ZenResult.err(ZenValidationError('Invalid email format'));
     }
 
     return ZenResult.ok(EmailAddress._(rawValue));
   }
-  
+
   @override
   String toString() => value;
-  
+
   @override
-  bool operator ==(Object other) => other is EmailAddress && other.value == value;
+  bool operator ==(Object other) =>
+      other is EmailAddress && other.value == value;
 
   @override
   int get hashCode => value.hashCode;
@@ -51,14 +52,14 @@ final class UserId {
   /// Creates and validates a [UserId].
   static ZenResult<UserId> create(String value) {
     if (value.trim().isEmpty) {
-      return ZenResult.err(ZenValidationError('UserId cannot be empty'));
+      return const ZenResult.err(ZenValidationError('UserId cannot be empty'));
     }
     return ZenResult.ok(UserId._(value));
   }
-  
+
   @override
   String toString() => value;
-  
+
   @override
   bool operator ==(Object other) => other is UserId && other.value == value;
 

@@ -1,5 +1,7 @@
 import 'package:meta/meta.dart';
 
+import 'zen_result.dart' show ZenFailure;
+
 /// The base class for all functional errors in the Zen architecture.
 ///
 /// [ZenError] is intended to be used as the value of a [ZenFailure], representing
@@ -18,11 +20,7 @@ sealed class ZenError {
   final StackTrace? stackTrace;
 
   /// Creates a [ZenError] with a [message] and optional metadata.
-  const ZenError(
-    this.message, {
-    this.internalData,
-    this.stackTrace,
-  });
+  const ZenError(this.message, {this.internalData, this.stackTrace});
 
   @override
   String toString() => '$runtimeType: $message';
@@ -43,11 +41,7 @@ final class ZenValidationError extends ZenError {
 @immutable
 final class ZenNotFoundError extends ZenError {
   /// Creates a [ZenNotFoundError].
-  const ZenNotFoundError(
-    super.message, {
-    super.internalData,
-    super.stackTrace,
-  });
+  const ZenNotFoundError(super.message, {super.internalData, super.stackTrace});
 }
 
 /// Represents an authentication or authorization failure.
@@ -65,11 +59,7 @@ final class ZenUnauthorizedError extends ZenError {
 @immutable
 final class ZenConflictError extends ZenError {
   /// Creates a [ZenConflictError].
-  const ZenConflictError(
-    super.message, {
-    super.internalData,
-    super.stackTrace,
-  });
+  const ZenConflictError(super.message, {super.internalData, super.stackTrace});
 }
 
 /// Represents an unexpected or unclassified failure.
@@ -78,9 +68,5 @@ final class ZenConflictError extends ZenError {
 @immutable
 final class ZenUnknownError extends ZenError {
   /// Creates a [ZenUnknownError].
-  const ZenUnknownError(
-    super.message, {
-    super.internalData,
-    super.stackTrace,
-  });
+  const ZenUnknownError(super.message, {super.internalData, super.stackTrace});
 }
