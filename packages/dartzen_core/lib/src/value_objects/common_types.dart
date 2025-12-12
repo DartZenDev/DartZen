@@ -19,22 +19,22 @@ final class ZenTimestamp {
   /// Creates a [ZenTimestamp] from a specific [dateTime].
   ///
   /// Forces the [dateTime] to UTC.
-  factory ZenTimestamp.from(DateTime dateTime) {
-    return ZenTimestamp._(dateTime.toUtc());
-  }
-  
+  factory ZenTimestamp.from(DateTime dateTime) =>
+      ZenTimestamp._(dateTime.toUtc());
+
   @override
   String toString() => value.toIso8601String();
-  
+
   @override
-  bool operator ==(Object other) => other is ZenTimestamp && other.value == value;
+  bool operator ==(Object other) =>
+      other is ZenTimestamp && other.value == value;
 
   @override
   int get hashCode => value.hashCode;
 
   /// Returns true if this timestamp is before [other].
   bool isBefore(ZenTimestamp other) => value.isBefore(other.value);
-  
+
   /// Returns true if this timestamp is after [other].
   bool isAfter(ZenTimestamp other) => value.isAfter(other.value);
 }
@@ -80,13 +80,12 @@ final class ZenLocale {
   @override
   String toString() =>
       regionCode == null ? languageCode : '${languageCode}_$regionCode';
-      
+
   @override
-  bool operator ==(Object other) {
-    return other is ZenLocale &&
-        other.languageCode == languageCode &&
-        other.regionCode == regionCode;
-  }
+  bool operator ==(Object other) =>
+      other is ZenLocale &&
+      other.languageCode == languageCode &&
+      other.regionCode == regionCode;
 
   @override
   int get hashCode => Object.hash(languageCode, regionCode);

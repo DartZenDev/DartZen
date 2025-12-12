@@ -62,12 +62,6 @@
             "flutterMode": "release"
         },
         {
-            "name": "dartzen_shared",
-            "cwd": "packages/dartzen_shared",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
             "name": "example",
             "cwd": "packages/dartzen_navigation/example",
             "request": "launch",

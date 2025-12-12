@@ -8,7 +8,9 @@ issue_tracker: https://github.com/DartZenDev/dartzen/issues
 publish_to: none
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
 
 topics:
   - architecture
@@ -19,5 +21,5 @@ dependencies:
   meta: ^1.11.0
 
 dev_dependencies:
-  lints: ^3.0.0
-  test: ^1.24.0
+  lints: ^6.0.0
+  test: ^1.25.0

@@ -15,12 +15,7 @@ class ZenTry {
     try {
       return ZenResult.ok(block());
     } catch (e, stack) {
-      return ZenResult.err(
-        ZenUnknownError(
-          e.toString(),
-          stackTrace: stack,
-        ),
-      );
+      return ZenResult.err(ZenUnknownError(e.toString(), stackTrace: stack));
     }
   }
 
@@ -32,12 +27,7 @@ class ZenTry {
       final result = await block();
       return ZenResult.ok(result);
     } catch (e, stack) {
-      return ZenResult.err(
-        ZenUnknownError(
-          e.toString(),
-          stackTrace: stack,
-        ),
-      );
+      return ZenResult.err(ZenUnknownError(e.toString(), stackTrace: stack));
     }
   }
 }

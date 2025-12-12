@@ -10,6 +10,10 @@ workspace:
   - packages/dartzen_core
   - packages/dartzen_navigation
   - packages/dartzen_navigation/example
+  - packages/dartzen_msgpack
+  - packages/dartzen_transport
+  - packages/dartzen_server_transport
+  - packages/dartzen_client_transport
 
 dependency_overrides:
   cli_util: ^0.4.2
@@ -39,72 +43,72 @@ melos:
       exec: dart format --set-exit-if-changed .
       description: Run dart format --set-exit-if-changed in all packages.
     test:
-      exec: flutter test --dart-define=DZ_PLATFORM=macos
-      description: Run dart test in all packages.
-      packageFilters:
-        dirExists: test
+      run: |
+        melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
+        melos exec --scope="dartzen_msgpack,dartzen_transport,dartzen_server_transport,dartzen_client_transport" -- "dart test"
+      description: Run all Dart & Flutter tests
     publish:
       exec: dart pub publish --dry-run
       description: Publish all dartzen_* packages to pub.dev (dry-run mode).
       packageFilters:
         scope: 'dartzen_*'
     run:android:
-      exec: flutter run -d android --dart-define=DZ_PLATFORM=android
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --dart-define=DZ_ENV=dev
       description: Run the app on Android (debug mode).
     run:android:profile:
-      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --profile
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --dart-define=DZ_ENV=prd --profile
       description: Run the app on Android (profile mode).
     run:android:release:
-      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --release
+      exec: flutter run -d android --dart-define=DZ_PLATFORM=android --dart-define=DZ_ENV=prd --release
       description: Run the app on Android (release mode).
     run:ios:
-      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       description: Run the app on iOS (debug mode).
     run:ios:profile:
-      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --profile
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=prd --profile
       description: Run the app on iOS (profile mode).
     run:ios:release:
-      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --release
+      exec: flutter run -d ios --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=prd --release
       description: Run the app on iOS (release mode).
     run:web:
-      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
       description: Run the app on Web (debug mode).
     run:web:profile:
-      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --profile
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=prd --profile
       description: Run the app on Web (profile mode).
     run:web:release:
-      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --release
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=prd --release
       description: Run the app on Web (release mode).
     run:desktop:windows:
-      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --dart-define=DZ_ENV=dev
       description: Run the app on Windows (debug mode).
     run:desktop:windows:profile:
-      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --profile
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --dart-define=DZ_ENV=prd --profile
       description: Run the app on Windows (profile mode).
     run:desktop:windows:release:
-      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --release
+      exec: flutter run -d windows --dart-define=DZ_PLATFORM=windows --dart-define=DZ_ENV=prd --release
       description: Run the app on Windows (release mode).
     run:desktop:macos:
-      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=dev
       description: Run the app on macOS (debug mode).
     run:desktop:macos:profile:
-      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --profile
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=prd --profile
       description: Run the app on macOS (profile mode).
     run:desktop:macos:release:
-      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --release
+      exec: flutter run -d macos --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=prd --release
       description: Run the app on macOS (release mode).
     run:desktop:linux:
-      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --dart-define=DZ_ENV=dev
       description: Run the app on Linux (debug mode).
     run:desktop:linux:profile:
-      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --profile
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --dart-define=DZ_ENV=prd --profile
       description: Run the app on Linux (profile mode).
     run:desktop:linux:release:
-      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --release
+      exec: flutter run -d linux --dart-define=DZ_PLATFORM=linux --dart-define=DZ_ENV=prd --release
       description: Run the app on Linux (release mode).
     example:navigation:web:
-      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
       scope: dartzen_navigation_example
     example:navigation:ios:
-      exec: flutter run --dart-define=DZ_PLATFORM=ios
+      exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       scope: dartzen_navigation_example

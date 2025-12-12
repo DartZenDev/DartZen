@@ -1,0 +1,23 @@
+name: dartzen_transport
+description: DartZen transport layer for serialization, codec selection, and WebSocket communication
+version: 0.1.0
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/dartzen
+issue_tracker: https://github.com/DartZenDev/dartzen/issues
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_msgpack:
+    path: ../dartzen_msgpack
+  web_socket_channel: ^3.0.1
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

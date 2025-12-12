@@ -1,8 +1,8 @@
 # -----------------------------
-# Enterprise-style strict lints, local include from dartzen_shared
+# Enterprise-style strict lints, local include from dartzen_core
 # Handles relative imports up to one level, auto-fix formatting, and import sorting
 # -----------------------------
-include: package:flutter_lints/flutter.yaml
+include: package:lints/recommended.yaml
 
 analyzer:
   language:

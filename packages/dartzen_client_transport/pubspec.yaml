@@ -1,0 +1,21 @@
+name: dartzen_client_transport
+description: Minimal HTTP client wrapper for DartZen transport layer
+version: 0.1.0
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/dartzen
+issue_tracker: https://github.com/DartZenDev/dartzen/issues
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  dartzen_transport:
+    path: ../dartzen_transport
+  http: ^1.2.2
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

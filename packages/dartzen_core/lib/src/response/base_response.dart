@@ -31,38 +31,26 @@ final class BaseResponse<T> {
   });
 
   /// Creates a successful response.
-  factory BaseResponse.success(
-    T data, {
-    String message = 'Success',
-  }) {
-    return BaseResponse._(
-      success: true,
-      message: message,
-      data: data,
-      timestamp: DateTime.now().toUtc(),
-    );
-  }
+  factory BaseResponse.success(T data, {String message = 'Success'}) =>
+      BaseResponse._(
+        success: true,
+        message: message,
+        data: data,
+        timestamp: DateTime.now().toUtc(),
+      );
 
   /// Creates a failure response.
-  factory BaseResponse.failure(
-    String message, {
-    String? errorCode,
-    T? data,
-  }) {
-    return BaseResponse._(
-      success: false,
-      message: message,
-      errorCode: errorCode ?? 'UNKNOWN_ERROR',
-      data: data,
-      timestamp: DateTime.now().toUtc(),
-    );
-  }
+  factory BaseResponse.failure(String message, {String? errorCode, T? data}) =>
+      BaseResponse._(
+        success: false,
+        message: message,
+        errorCode: errorCode ?? 'UNKNOWN_ERROR',
+        data: data,
+        timestamp: DateTime.now().toUtc(),
+      );
 
   /// Creates a failure response from a [ZenError].
-  factory BaseResponse.fromError(
-    ZenError error, {
-    T? data,
-  }) {
+  factory BaseResponse.fromError(ZenError error, {T? data}) {
     // Map ZenError types to error codes if desired, or use class name
     String code = 'UNKNOWN_ERROR';
     if (error is ZenValidationError) code = 'VALIDATION_ERROR';
@@ -80,7 +68,6 @@ final class BaseResponse<T> {
   }
 
   @override
-  String toString() {
-    return 'BaseResponse(success: $success, message: "$message", data: $data, errorCode: $errorCode, timestamp: $timestamp)';
-  }
+  String toString() =>
+      'BaseResponse(success: $success, message: "$message", data: $data, errorCode: $errorCode, timestamp: $timestamp)';
 }

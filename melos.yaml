@@ -1,8 +1,9 @@
 name: dartzen
-repository: https://github.com/your-org/dartzen
+repository: https://github.com/DartZenDev/DartZen
 
 packages:
   - packages/*
+  - packages/dartzen_navigation/example
 
 command:
   version:
@@ -21,4 +22,3 @@ command:
     # It seems so that running "pub get" in parallel can have issues (like
     # https://github.com/dart-lang/pub/issues/3404)
     runPubGetInParallel: false
-

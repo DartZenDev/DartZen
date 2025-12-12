@@ -93,7 +93,6 @@ BREAKING CHANGE: AuthService constructor now requires FirebaseApp instance"
 The scope indicates which package is affected:
 
 - `dartzen_core` - Core runtime package
-- `dartzen_shared` - Shared models package
 - `workspace` - Changes affecting the entire monorepo
 
 ### Examples
@@ -102,10 +101,8 @@ The scope indicates which package is affected:
 
 ```bash
 feat(dartzen_core): add JWT authentication middleware
-fix(dartzen_shared): correct UserModel serialization
 docs(workspace): update README with new examples
 refactor(dartzen_core): simplify request handling logic
-test(dartzen_shared): add unit tests for validation helpers
 ```
 
 ❌ **Bad commits:**
@@ -257,7 +254,7 @@ DartZen uses **automated versioning** based on conventional commits:
 
 Each package versions independently:
 - `dartzen_core` can be at v2.3.1
-- `dartzen_shared` can be at v1.0.5
+- `dartzen_navigation` can be at v1.0.5
 - Only packages with changes get version bumps
 
 ### Example Workflow
@@ -265,7 +262,7 @@ Each package versions independently:
 ```bash
 # Make changes and commit
 git commit -m "feat(dartzen_core): add middleware support"
-git commit -m "fix(dartzen_shared): correct validation logic"
+git commit -m "fix(dartzen_navigation): correct validation logic"
 
 # Preview version changes
 melos version --dry-run

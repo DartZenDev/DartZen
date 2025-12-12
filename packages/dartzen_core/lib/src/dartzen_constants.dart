@@ -1,3 +1,22 @@
+/// Environment constants
+///
+/// These constants are used to determine the current environment (DEV or PRD).
+/// They are set via the environment variable DZ_ENV.
+///
+/// Usage:
+/// ```dart
+/// if (dzIsDev) {
+///   // Development code
+/// }
+/// ```
+const String dzEnv = String.fromEnvironment('DZ_ENV', defaultValue: 'prd');
+
+/// Whether the current environment is development.
+const bool dzIsDev = dzEnv == 'dev';
+
+/// Whether the current environment is production.
+const bool dzIsPrd = dzEnv == 'prd';
+
 /// Platform constants
 ///
 /// These constants are used to determine the current platform.

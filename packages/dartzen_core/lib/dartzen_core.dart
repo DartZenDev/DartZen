@@ -1,11 +1,11 @@
-/// The core layer for the DartZen ecosystem.
+/// DartZen Core - Universal result types, value objects, and shared contracts.
 ///
-/// This library provides universal types and utilities that are shared across
-/// client and server boundaries, ensuring a consistent and robust architecture.
-///
-/// Use [ZenResult] for functional error handling, [BaseResponse] for API contracts,
-/// and core value objects like [ZenTimestamp] and [EmailAddress] for domain modeling.
-library dartzen_core;
+/// This package provides the foundational building blocks for the DartZen ecosystem:
+/// - Result types (ZenResult, ZenSuccess, ZenFailure)
+/// - Error hierarchy (ZenError and subtypes)
+/// - Value objects (ZenTimestamp, ZenLocale, EmailAddress, UserId)
+/// - Base response contract (BaseResponse)
+library;
 
 export 'src/dartzen_constants.dart';
 export 'src/response/base_response.dart';
