@@ -6,7 +6,7 @@ A framework-agnostic, zero-dependency library providing the core building blocks
 [![pub package](https://img.shields.io/pub/v/dartzen_core.svg)](https://pub.dev/packages/dartzen_core)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
-> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/dartzen) monorepo.
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ## 🧘 Why `dartzen_core`?
 

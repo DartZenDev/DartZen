@@ -1,10 +1,10 @@
 name: dartzen
 description: DartZen workspace mono-repo for managing dependencies and packages.
 publish_to: 'none'
-version: 1.0.0+1
+version: 0.0.1
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ">=3.10.3 <4.0.0"
 
 workspace:
   - packages/dartzen_core
@@ -14,6 +14,7 @@ workspace:
   - packages/dartzen_transport
   - packages/dartzen_server_transport
   - packages/dartzen_client_transport
+  - packages/dartzen_localization
 
 dependency_overrides:
   cli_util: ^0.4.2
