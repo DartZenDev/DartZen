@@ -1,9 +1,10 @@
 // ignore_for_file: avoid_print
 
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
 
 void main() {
-  print('=== DartZen Transport Example ===\n');
+  ZenLogger.instance.info('=== DartZen Transport Example ===\n');
 
   // Example 1: JSON Encoding/Decoding
   jsonExample();
@@ -19,7 +20,7 @@ void main() {
 }
 
 void jsonExample() {
-  print('--- JSON Example ---');
+  ZenLogger.instance.info('--- JSON Example ---');
 
   const request = ZenRequest(
     id: 'req-001',
@@ -33,16 +34,16 @@ void jsonExample() {
 
   // Encode using JSON
   final bytes = request.encodeWith(ZenTransportFormat.json);
-  print('Encoded size (JSON): ${bytes.length} bytes');
+  ZenLogger.instance.info('Encoded size (JSON): ${bytes.length} bytes');
 
   // Decode back
   final decoded = ZenRequest.decodeWith(bytes, ZenTransportFormat.json);
-  print('Decoded request: ${decoded.path}');
-  print('Data: ${decoded.data}\n');
+  ZenLogger.instance.info('Decoded request: ${decoded.path}');
+  ZenLogger.instance.info('Data: ${decoded.data}\n');
 }
 
 void msgpackExample() {
-  print('--- MessagePack Example ---');
+  ZenLogger.instance.info('--- MessagePack Example ---');
 
   final request = ZenRequest(
     id: 'req-002',
@@ -54,23 +55,27 @@ void msgpackExample() {
 
   // Encode using MessagePack
   final msgpackBytes = request.encodeWith(ZenTransportFormat.msgpack);
-  print('Encoded size (MessagePack): ${msgpackBytes.length} bytes');
+  ZenLogger.instance.info(
+    'Encoded size (MessagePack): ${msgpackBytes.length} bytes',
+  );
 
   // Compare with JSON
   final jsonBytes = request.encodeWith(ZenTransportFormat.json);
-  print('Encoded size (JSON): ${jsonBytes.length} bytes');
-  print('Savings: ${jsonBytes.length - msgpackBytes.length} bytes\n');
+  ZenLogger.instance.info('Encoded size (JSON): ${jsonBytes.length} bytes');
+  ZenLogger.instance.info(
+    'Savings: ${jsonBytes.length - msgpackBytes.length} bytes\n',
+  );
 
   // Decode back
   final decoded = ZenRequest.decodeWith(
     msgpackBytes,
     ZenTransportFormat.msgpack,
   );
-  print('Decoded successfully: ${decoded.id}\n');
+  ZenLogger.instance.info('Decoded successfully: ${decoded.id}\n');
 }
 
 void requestResponseExample() {
-  print('--- Request/Response Example ---');
+  ZenLogger.instance.info('--- Request/Response Example ---');
 
   // Create a request
   const request = ZenRequest(
@@ -79,7 +84,7 @@ void requestResponseExample() {
     data: {'username': 'bob', 'password': 'secret123'},
   );
 
-  print('Request: ${request.path}');
+  ZenLogger.instance.info('Request: ${request.path}');
 
   // Simulate a successful response
   final successResponse = ZenResponse(
@@ -91,9 +96,9 @@ void requestResponseExample() {
     },
   );
 
-  print('Response status: ${successResponse.status}');
-  print('Is success: ${successResponse.isSuccess}');
-  print('Response data: ${successResponse.data}');
+  ZenLogger.instance.info('Response status: ${successResponse.status}');
+  ZenLogger.instance.info('Is success: ${successResponse.isSuccess}');
+  ZenLogger.instance.info('Response data: ${successResponse.data}');
 
   // Simulate an error response
   final errorResponse = ZenResponse(
@@ -102,17 +107,17 @@ void requestResponseExample() {
     error: 'Invalid credentials',
   );
 
-  print('\nError response status: ${errorResponse.status}');
-  print('Is error: ${errorResponse.isError}');
-  print('Error message: ${errorResponse.error}\n');
+  ZenLogger.instance.info('\nError response status: ${errorResponse.status}');
+  ZenLogger.instance.info('Is error: ${errorResponse.isError}');
+  ZenLogger.instance.info('Error message: ${errorResponse.error}\n');
 }
 
 void websocketExample() {
-  print('--- WebSocket Example (Conceptual) ---');
-  print('To use WebSocket, you need a running server.\n');
+  ZenLogger.instance.info('--- WebSocket Example (Conceptual) ---');
+  ZenLogger.instance.info('To use WebSocket, you need a running server.\n');
 
-  print('Example code:');
-  print('''
+  ZenLogger.instance.info('Example code:');
+  ZenLogger.instance.info('''
   // Connect to WebSocket server
   final ws = ZenWebSocket(
     Uri.parse('ws://localhost:8080'),
@@ -136,9 +141,11 @@ void websocketExample() {
   await ws.close();
   ''');
 
-  print('\nCodec selection:');
-  print('- DEV mode: JSON everywhere');
-  print('- PRD mode (web): JSON');
-  print('- PRD mode (native): MessagePack');
-  print('\nCurrent default codec: ${selectDefaultCodec().value}');
+  ZenLogger.instance.info('\nCodec selection:');
+  ZenLogger.instance.info('- DEV mode: JSON everywhere');
+  ZenLogger.instance.info('- PRD mode (web): JSON');
+  ZenLogger.instance.info('- PRD mode (native): MessagePack');
+  ZenLogger.instance.info(
+    '\nCurrent default codec: ${selectDefaultCodec().value}',
+  );
 }

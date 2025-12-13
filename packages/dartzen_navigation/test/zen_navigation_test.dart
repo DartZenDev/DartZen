@@ -1,3 +1,4 @@
+import 'package:dartzen_localization/dartzen_localization.dart'; // Added import
 import 'package:dartzen_navigation/dartzen_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('ZenNavigation renders body content',
       (WidgetTester tester) async {
+    const config = ZenLocalizationConfig();
+    final service = ZenLocalizationService(config: config);
     var selectedIndex = 0;
 
     await tester.pumpWidget(
@@ -17,6 +20,8 @@ void main() {
                 selectedIndex = index;
               });
             },
+            localization: service,
+            language: 'en',
             items: [
               ZenNavigationItem(
                 id: 'tab1',

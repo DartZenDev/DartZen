@@ -2,6 +2,7 @@ import 'package:dartzen_navigation/dartzen_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'providers/localization_providers.dart'; // Added import
 import 'providers/navigation_providers.dart';
 
 void main() {
@@ -42,6 +43,8 @@ class AdaptiveNavigationShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedNavigationIndexProvider);
     final navItems = ref.watch(navigationItemsProvider);
+    final localization = ref.watch(localizationServiceProvider);
+    final language = ref.watch(languageProvider);
 
     return ZenNavigation(
       items: navItems,
@@ -49,6 +52,8 @@ class AdaptiveNavigationShell extends ConsumerWidget {
       onItemSelected: (index) {
         ref.read(selectedNavigationIndexProvider.notifier).setIndex(index);
       },
+      localization: localization,
+      language: language,
     );
   }
 }

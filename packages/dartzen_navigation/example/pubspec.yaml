@@ -17,6 +17,9 @@ dependencies:
   dartzen_navigation:
     path: ../
 
+  dartzen_localization:
+    path: ../../dartzen_localization
+
   flutter_riverpod: ^3.0.3   # State management
   cupertino_icons: ^1.0.8 # Icons
 
@@ -27,3 +30,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - lib/l10n/

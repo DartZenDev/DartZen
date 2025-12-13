@@ -11,6 +11,8 @@ resolution: workspace
 dependencies:
   dartzen_core:
     path: ../dartzen_core
+  dartzen_localization:
+    path: ../dartzen_localization
   flutter:
     sdk: flutter
 

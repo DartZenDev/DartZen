@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:dartzen_client_transport/dartzen_client_transport.dart';
+import 'package:dartzen_core/dartzen_core.dart';
 
 void main() async {
   // Create client
@@ -8,29 +9,29 @@ void main() async {
 
   try {
     // POST request
-    print('Creating user...');
+    ZenLogger.instance.info('Creating user...');
     final user = await client.post('/api/users', {
       'name': 'Alice',
       'email': 'alice@example.com',
     });
-    print('Created: $user');
+    ZenLogger.instance.info('Created: $user');
 
     // GET request
-    print('\nFetching users...');
+    ZenLogger.instance.info('\nFetching users...');
     final users = await client.get('/api/users');
-    print('Users: $users');
+    ZenLogger.instance.info('Users: $users');
 
     // PUT request
-    print('\nUpdating user...');
+    ZenLogger.instance.info('\nUpdating user...');
     final updated = await client.put('/api/users/1', {'name': 'Alice Updated'});
-    print('Updated: $updated');
+    ZenLogger.instance.info('Updated: $updated');
 
     // DELETE request
-    print('\nDeleting user...');
+    ZenLogger.instance.info('\nDeleting user...');
     await client.delete('/api/users/1');
-    print('Deleted successfully');
+    ZenLogger.instance.info('Deleted successfully');
   } catch (e) {
-    print('Error: $e');
+    ZenLogger.instance.error('Error: $e');
   } finally {
     client.close();
   }

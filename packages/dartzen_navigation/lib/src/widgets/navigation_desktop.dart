@@ -1,3 +1,4 @@
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../zen_navigation.dart';
@@ -13,6 +14,8 @@ Widget _widget({
   required int selectedIndex,
   required ValueChanged<int> onItemSelected,
   required List<ZenNavigationItem> items,
+  required ZenLocalizationService localization,
+  required String language,
   String? labelMore,
 }) =>
     Row(

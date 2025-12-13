@@ -6,34 +6,42 @@ import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/settings_screen.dart';
+import 'localization_providers.dart';
 
 /// Provider for navigation items
 final navigationItemsProvider = Provider<List<ZenNavigationItem>>((ref) {
+  final localization = ref.watch(localizationServiceProvider);
+  final language = ref.watch(languageProvider);
+
   return [
     ZenNavigationItem(
       id: 'home',
       label: 'Home',
       icon: Icons.home,
-      builder: (context) => const HomeScreen(),
+      builder: (context) =>
+          HomeScreen(localization: localization, language: language),
     ),
     ZenNavigationItem(
       id: 'search',
       label: 'Search',
       icon: Icons.search,
-      builder: (context) => const SearchScreen(),
+      builder: (context) =>
+          SearchScreen(localization: localization, language: language),
     ),
     ZenNavigationItem(
       id: 'profile',
       label: 'Profile',
       icon: Icons.person,
-      builder: (context) => const ProfileScreen(),
+      builder: (context) =>
+          ProfileScreen(localization: localization, language: language),
       badgeCount: 3,
     ),
     ZenNavigationItem(
       id: 'settings',
       label: 'Settings',
       icon: Icons.settings,
-      builder: (context) => const SettingsScreen(),
+      builder: (context) =>
+          SettingsScreen(localization: localization, language: language),
     ),
   ];
 });

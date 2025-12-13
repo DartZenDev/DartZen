@@ -1,9 +1,10 @@
 // ignore_for_file: avoid_print
 
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_msgpack/dartzen_msgpack.dart';
 
 void main() {
-  print('=== DartZen MessagePack Example ===\n');
+  ZenLogger.instance.info('=== DartZen MessagePack Example ===\n');
 
   // Example 1: Simple data
   simpleExample();
@@ -16,21 +17,21 @@ void main() {
 }
 
 void simpleExample() {
-  print('--- Simple Example ---');
+  ZenLogger.instance.info('--- Simple Example ---');
 
   final data = {'name': 'Alice', 'age': 30, 'active': true};
 
   final bytes = encode(data);
-  print('Encoded ${bytes.length} bytes');
+  ZenLogger.instance.info('Encoded ${bytes.length} bytes');
 
   final decoded = decode(bytes) as Map<String, dynamic>;
-  print('Name: ${decoded['name']}');
-  print('Age: ${decoded['age']}');
-  print('Active: ${decoded['active']}\n');
+  ZenLogger.instance.info('Name: ${decoded['name']}');
+  ZenLogger.instance.info('Age: ${decoded['age']}');
+  ZenLogger.instance.info('Active: ${decoded['active']}\n');
 }
 
 void complexExample() {
-  print('--- Complex Example ---');
+  ZenLogger.instance.info('--- Complex Example ---');
 
   final data = {
     'users': [
@@ -45,26 +46,26 @@ void complexExample() {
   };
 
   final bytes = encode(data);
-  print('Encoded ${bytes.length} bytes');
+  ZenLogger.instance.info('Encoded ${bytes.length} bytes');
 
   final decoded = decode(bytes) as Map<String, dynamic>;
   final users = decoded['users'] as List<dynamic>;
   final firstUser = users[0] as Map<String, dynamic>;
   final metadata = decoded['metadata'] as Map<String, dynamic>;
-  print('First user: ${firstUser['name']}');
-  print('Metadata version: ${metadata['version']}\n');
+  ZenLogger.instance.info('First user: ${firstUser['name']}');
+  ZenLogger.instance.info('Metadata version: ${metadata['version']}\n');
 }
 
 void binaryExample() {
-  print('--- Binary Example ---');
+  ZenLogger.instance.info('--- Binary Example ---');
 
   final binaryData = [0x01, 0x02, 0x03, 0x04, 0x05];
   final data = {'type': 'binary', 'payload': binaryData};
 
   final bytes = encode(data);
-  print('Encoded ${bytes.length} bytes');
+  ZenLogger.instance.info('Encoded ${bytes.length} bytes');
 
   final decoded = decode(bytes) as Map<String, dynamic>;
-  print('Type: ${decoded['type']}');
-  print('Payload: ${decoded['payload']}\n');
+  ZenLogger.instance.info('Type: ${decoded['type']}');
+  ZenLogger.instance.info('Payload: ${decoded['payload']}\n');
 }

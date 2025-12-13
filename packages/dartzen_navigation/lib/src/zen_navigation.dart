@@ -1,5 +1,6 @@
 // Conditional imports for platform-specific widgets
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/widgets.dart';
 
 import './widgets/navigation_stub.dart'
@@ -15,7 +16,7 @@ import 'zen_navigation_item.dart';
 /// and will render different layouts based on the platform. On mobile it
 /// applies 'overflow' behavior, meaning that if there are more than 4 items,
 /// a 'more' button will be displayed, which will open a screen with the
-/// remaining items. The 'more' label is customizable.
+/// remaining items. The 'more' label is customizable or localized via [localization].
 ///
 /// Example:
 /// ```dart
@@ -23,14 +24,15 @@ import 'zen_navigation_item.dart';
 ///   items: [
 ///     ZenNavigationItem(
 ///       id: 'home',
-///       label: 'Home', // or t.Home for l10n
+///       label: 'Home',
 ///       icon: const Icon(Icons.home),
 ///       builder: (context) => const HomeScreen(),
 ///     ),
 ///   ],
 ///   selectedIndex: 0,
 ///   onItemSelected: (id) { // Handle navigation if needed },
-///   labelMore: 'More', // or t.More for l10n
+///   localization: service,
+///   language: 'en',
 /// );
 /// ```
 class ZenNavigation extends StatelessWidget {
@@ -39,8 +41,10 @@ class ZenNavigation extends StatelessWidget {
     required this.selectedIndex,
     required this.onItemSelected,
     required this.items,
+    required this.localization,
+    required this.language,
     super.key,
-    this.labelMore = 'More',
+    this.labelMore,
   });
 
   /// The selected index of the navigation item.
@@ -52,7 +56,14 @@ class ZenNavigation extends StatelessWidget {
   /// The list of navigation items.
   final List<ZenNavigationItem> items;
 
+  /// The localization service.
+  final ZenLocalizationService localization;
+
+  /// The current language code.
+  final String language;
+
   /// The label for the "more" button.
+  /// If null, it will be localized using [localization] (key: navigation.more).
   final String? labelMore;
 
   @override
@@ -65,6 +76,8 @@ class ZenNavigation extends StatelessWidget {
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
       items: items,
+      localization: localization,
+      language: language,
       labelMore: labelMore,
     );
   }
@@ -76,5 +89,7 @@ typedef PlatformNavigationBuilder = Widget Function({
   required int selectedIndex,
   required ValueChanged<int> onItemSelected,
   required List<ZenNavigationItem> items,
+  required ZenLocalizationService localization,
+  required String language,
   String? labelMore,
 });

@@ -12,6 +12,8 @@ environment:
 resolution: workspace
 
 dependencies:
+  dartzen_core:
+    path: ../dartzen_core
   dartzen_transport:
     path: ../dartzen_transport
   shelf: ^1.4.2

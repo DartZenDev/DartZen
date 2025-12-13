@@ -1,4 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../zen_navigation.dart';
@@ -16,6 +17,8 @@ Widget _widget({
   required int selectedIndex,
   required ValueChanged<int> onItemSelected,
   required List<ZenNavigationItem> items,
+  required ZenLocalizationService localization,
+  required String language,
   String? labelMore,
 }) {
   if (dzIsMobile) {
@@ -24,6 +27,8 @@ Widget _widget({
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
       items: items,
+      localization: localization,
+      language: language,
       labelMore: labelMore,
     );
   }
@@ -33,6 +38,8 @@ Widget _widget({
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
       items: items,
+      localization: localization,
+      language: language,
       labelMore: labelMore,
     );
   }
