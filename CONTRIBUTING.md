@@ -174,6 +174,10 @@ Then create a Pull Request on GitHub.
 
 ## ✅ Code Quality Standards
 
+### Implementation Plan
+
+All new DartZen packages must be implemented using the official Implementation Plan Template located at `./github/implementation-plan-template.md`.
+
 ### Dart Analysis
 
 All code must pass `dart analyze` with no errors or warnings:

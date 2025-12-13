@@ -11,7 +11,8 @@ class ZenLocalizationCache {
 
   /// Checks if module data for [module] and [language] is cached.
   bool hasModule(String module, String language) =>
-      _moduleCache.containsKey(module) && _moduleCache[module]!.containsKey(language);
+      _moduleCache.containsKey(module) &&
+      _moduleCache[module]!.containsKey(language);
 
   /// Stores global data.
   void setGlobal(String language, Map<String, String> data) {
@@ -24,7 +25,8 @@ class ZenLocalizationCache {
   }
 
   /// Retrieves global messages for [language]. Returns empty map if not found.
-  Map<String, String> getGlobal(String language) => _globalCache[language] ?? const {};
+  Map<String, String> getGlobal(String language) =>
+      _globalCache[language] ?? const {};
 
   /// Retrieves module messages for [module] and [language]. Returns empty map if not found.
   Map<String, String> getModule(String module, String language) =>

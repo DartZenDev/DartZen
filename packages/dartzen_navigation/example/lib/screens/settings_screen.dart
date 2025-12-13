@@ -1,9 +1,19 @@
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/example_messages.dart';
+
 /// Settings screen with app preferences
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({
+    required this.localization,
+    required this.language,
+    super.key,
+  });
+
+  final ZenLocalizationService localization;
+  final String language;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -16,18 +26,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final messages = ExampleMessages(widget.localization, widget.language);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(messages.settingsTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: ListView(
         children: [
-          const _SectionHeader(title: 'Appearance'),
+          _SectionHeader(title: messages.settingsAppearanceTitle),
           SwitchListTile(
             secondary: const Icon(Icons.dark_mode),
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Enable dark theme'),
+            title: Text(messages.settingsAppearanceDarkMode),
+            subtitle: Text(messages.settingsAppearanceDarkModeSubtitle),
             value: _darkModeEnabled,
             onChanged: (value) {
               setState(() {
@@ -37,7 +49,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.text_fields),
-            title: const Text('Text Size'),
+            title: Text(messages.settingsAppearanceTextSize),
             subtitle: Slider(
               value: _textScale,
               min: 0.8,
@@ -52,11 +64,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const Divider(),
-          const _SectionHeader(title: 'Notifications'),
+          _SectionHeader(title: messages.settingsNotificationsTitle),
           SwitchListTile(
             secondary: const Icon(Icons.notifications),
-            title: const Text('Push Notifications'),
-            subtitle: const Text('Receive notifications'),
+            title: Text(messages.settingsNotificationsPush),
+            subtitle: Text(messages.settingsNotificationsReceive),
             value: _notificationsEnabled,
             onChanged: (value) {
               setState(() {
@@ -65,24 +77,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           const Divider(),
-          const _SectionHeader(title: 'Navigation'),
-          const ListTile(
-            leading: Icon(Icons.navigation),
-            title: Text('Navigation Type'),
-            subtitle: Text('Adaptive (automatic)'),
-            trailing: Icon(Icons.check),
+          _SectionHeader(title: messages.settingsNavigationTitle),
+          ListTile(
+            leading: const Icon(Icons.navigation),
+            title: Text(messages.settingsNavigationType),
+            subtitle: Text(messages.settingsNavigationAdaptive),
+            trailing: const Icon(Icons.check),
           ),
           const Divider(),
-          const _SectionHeader(title: 'About'),
-          const ListTile(
-            leading: Icon(Icons.info),
-            title: Text('Version'),
-            subtitle: Text('1.0.0'),
+          _SectionHeader(title: messages.settingsAboutTitle),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: Text(messages.settingsAboutVersion),
+            subtitle: const Text('1.0.0'),
           ),
-          const ListTile(
-            leading: Icon(Icons.code),
-            title: Text('Package'),
-            subtitle: Text('dartzen_navigation 0.1.0'),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: Text(messages.settingsAboutPackage),
+            subtitle: Text(messages.settingsAboutPackageValue),
           ),
         ],
       ),

@@ -1,7 +1,9 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/navigation_messages.dart';
 import '../zen_navigation.dart';
 import '../zen_navigation_item.dart';
 import 'navigation_badge.dart';
@@ -17,9 +19,12 @@ Widget _widget({
   required int selectedIndex,
   required ValueChanged<int> onItemSelected,
   required List<ZenNavigationItem> items,
+  required ZenLocalizationService localization,
+  required String language,
   String? labelMore,
 }) {
-  final moreLabel = labelMore ?? 'More';
+  final messages = NavigationMessages(localization, language);
+  final moreLabel = labelMore ?? messages.more;
   final List<ZenNavigationItem> visible = items.take(dzMaxItemsMobile).toList();
   final List<ZenNavigationItem> overflow = items.length > dzMaxItemsMobile
       ? items.skip(dzMaxItemsMobile).toList()

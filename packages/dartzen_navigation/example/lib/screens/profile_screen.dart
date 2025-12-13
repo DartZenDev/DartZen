@@ -1,21 +1,33 @@
+import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/material.dart';
+
+import '../l10n/example_messages.dart';
 
 /// Profile screen showing user information
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({
+    required this.localization,
+    required this.language,
+    super.key,
+  });
+
+  final ZenLocalizationService localization;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
+    final messages = ExampleMessages(localization, language);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(messages.profileTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit profile clicked')),
+                SnackBar(content: Text(messages.profileEditClicked)),
               );
             },
           ),
@@ -57,22 +69,22 @@ class ProfileScreen extends StatelessWidget {
           Card(
             child: Column(
               children: [
-                const _ProfileTile(
+                _ProfileTile(
                   icon: Icons.badge,
-                  title: 'Badge Count',
-                  subtitle: '3 unread notifications',
+                  title: messages.profileBadgeCount,
+                  subtitle: messages.profileBadgeSubtitle,
                 ),
                 const Divider(height: 1),
-                const _ProfileTile(
+                _ProfileTile(
                   icon: Icons.location_on,
-                  title: 'Location',
-                  subtitle: 'San Francisco, CA',
+                  title: messages.profileLocation,
+                  subtitle: messages.profileLocationValue,
                 ),
                 const Divider(height: 1),
-                const _ProfileTile(
+                _ProfileTile(
                   icon: Icons.calendar_today,
-                  title: 'Member Since',
-                  subtitle: 'December 2025',
+                  title: messages.profileMemberSince,
+                  subtitle: messages.profileMemberSinceValue,
                 ),
               ],
             ),
@@ -83,19 +95,19 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 _ProfileActionTile(
                   icon: Icons.notifications,
-                  title: 'Notifications',
+                  title: messages.profileNotifications,
                   onTap: () {},
                 ),
                 const Divider(height: 1),
                 _ProfileActionTile(
                   icon: Icons.security,
-                  title: 'Privacy',
+                  title: messages.profilePrivacy,
                   onTap: () {},
                 ),
                 const Divider(height: 1),
                 _ProfileActionTile(
                   icon: Icons.help,
-                  title: 'Help & Support',
+                  title: messages.profileHelpSupport,
                   onTap: () {},
                 ),
               ],
