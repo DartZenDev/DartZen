@@ -2,8 +2,8 @@ name: dartzen_server_transport
 description: Minimal Shelf middleware for DartZen transport layer
 version: 0.1.0
 homepage: https://dartzen.dev
-repository: https://github.com/DartZenDev/dartzen
-issue_tracker: https://github.com/DartZenDev/dartzen/issues
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 publish_to: none
 
 environment:

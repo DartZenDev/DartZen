@@ -8,6 +8,7 @@
 library;
 
 export 'src/dartzen_constants.dart';
+export 'src/logging/zen_logger.dart';
 export 'src/response/base_response.dart';
 export 'src/result/zen_error.dart';
 export 'src/result/zen_result.dart';

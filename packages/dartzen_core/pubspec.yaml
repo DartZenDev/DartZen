@@ -2,8 +2,8 @@ name: dartzen_core
 description: The core layer for the DartZen ecosystem. Provides universal result types, value objects, and shared contracts.
 version: 0.0.1
 homepage: https://dartzen.dev
-repository: https://github.com/DartZenDev/dartzen
-issue_tracker: https://github.com/DartZenDev/dartzen/issues
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 
 publish_to: none
 
@@ -18,7 +18,10 @@ topics:
   - result
 
 dependencies:
+  flutter:
+    sdk: flutter
   meta: ^1.11.0
+
 
 dev_dependencies:
   lints: ^6.0.0

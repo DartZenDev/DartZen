@@ -1,0 +1,4 @@
+{
+  "app.title": "DartZen Example",
+  "greeting": "Hello, {name}!"
+}
