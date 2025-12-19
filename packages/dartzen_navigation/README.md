@@ -8,13 +8,13 @@
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
-## Features
+## 📊 Features
 
 ✨ **Platform Adaptive** - Automatically adapts to mobile, web, and desktop platforms
 📱 **Responsive** - Smart overflow handling and breakpoint-based layouts
 🚀 **Zero Configuration** - Sensible defaults with customization options
 
-## Installation
+## 📦 Installation
 
 Add this to your package's `pubspec.yaml` file:
 
@@ -23,7 +23,7 @@ dependencies:
   dartzen_navigation: ^0.1.0
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ```dart
 import 'package:flutter/material.dart';
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 ```
 
-## Platform Support
+## 📱 Platform Support
 
 The package supports the following platforms:
 
@@ -115,7 +115,7 @@ flutter run -d android --dart-define=DZ_PLATFORM=android
 flutter run -d ios --dart-define=DZ_PLATFORM=ios
 ```
 
-## Badge Support
+## 📛 Badge Support
 
 Show notification badges on navigation items:
 
@@ -129,7 +129,7 @@ const ZenNavigationItem(
 );
 ```
 
-## Overflow Management
+## 🏭 Overflow Management
 
 The package automatically handles overflow items on Mobile when there are more than 4 items to display. Extra items are moved to a "More" menu. The 'more' is customizable.
 
@@ -142,7 +142,7 @@ ZenNavigation(
 )
 ```
 
-## Example
+## 📊 Example
 
 The example can be found in the [`example/`](example) directory.
 

@@ -127,13 +127,6 @@ if (guard.isFailure) return guard;
 This package is designed to be **extremely stable**.  
 Breaking changes will be avoided at all costs to ensure it can serve as a long-term foundation for large-scale applications.
 
-## 🔮 Future
-
-This is just the beginning. The DartZen ecosystem will grow to include:
-- `dartzen_transport`: Network abstraction (Dio/Http) implementation.
-- `dartzen_server`: Specialized backend tools.
-- `dartzen_localization`: Shared translation management.
-
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

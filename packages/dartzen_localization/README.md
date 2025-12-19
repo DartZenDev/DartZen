@@ -1,4 +1,4 @@
-# dartzen_localization
+# DartZen Localization
 
 [![pub package](https://img.shields.io/pub/v/dartzen_localization.svg)](https://pub.dev/packages/dartzen_localization)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
@@ -89,8 +89,6 @@ final greeting = service.translate(
 );
 ```
 
----
-
 ## 📁 Localization Files
 
 A strict **Flat JSON** format is enforced.
@@ -112,9 +110,7 @@ A strict **Flat JSON** format is enforced.
 }
 ```
 
----
-
-## 📊 Development vs Production
+## ⚖️ Development vs Production
 
 | Feature | Development (isProduction: false) | Production (isProduction: true) |
 |---|---|---|
@@ -127,8 +123,6 @@ A strict **Flat JSON** format is enforced.
 
 - **Development**: Crash early. Ensure developers define every key and parameter.
 - **Production**: Never crash. If a translation is missing, show the key. If interpolation fails, show what's possible.
-
----
 
 ## 📦 Production Bundling (REQUIRED)
 
@@ -162,8 +156,6 @@ flutter:
   assets:
     - assets/l10n/en.json
 ```
-
----
 
 ## 🏗️ Architecture
 

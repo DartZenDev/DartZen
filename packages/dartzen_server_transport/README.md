@@ -1,4 +1,4 @@
-# dartzen_server_transport
+# DartZen Server Transport
 
 [![pub package](https://img.shields.io/pub/v/dartzen_server_transport.svg)](https://pub.dev/packages/dartzen_server_transport)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
@@ -10,9 +10,7 @@ Provides automatic format negotiation and encoding/decoding for Shelf-based serv
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
----
-
-## Features
+## ⚙️ Features
 
 - Automatic format negotiation via `X-DZ-Transport` header
 - Content-Type detection
@@ -20,9 +18,7 @@ Provides automatic format negotiation and encoding/decoding for Shelf-based serv
 - Minimal, functional API
 - Zero configuration required
 
----
-
-## Installation
+## 📦 Installation
 
 ```yaml
 dependencies:
@@ -30,9 +26,7 @@ dependencies:
     path: ../dartzen_server_transport
 ```
 
----
-
-## Usage
+## 🚀 Usage
 
 ### Basic Server
 
@@ -111,9 +105,7 @@ return zenResponse(200, {'data': 'value'}, headers: {
 });
 ```
 
----
-
-## API
+## ⚙️ API
 
 ### `transportMiddleware()`
 
@@ -132,22 +124,16 @@ Helper to create responses with automatic encoding.
 
 **Returns**: `Response` with encoded body
 
----
-
-## Integration with dartzen_transport
+## 🛠️ Integration with dartzen_transport
 
 This package is a thin wrapper around `dartzen_transport`. It:
 - Uses `ZenEncoder`/`ZenDecoder` for serialization
 - Respects `ZenTransportFormat` negotiation
 - Follows the same platform/environment rules
 
----
-
-## Example Server
+## 📊 Example Server
 
 See `/example/server.dart` for a complete working example.
-
----
 
 ## 📄 License
 

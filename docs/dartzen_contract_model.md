@@ -2,7 +2,7 @@
 
 This document defines the architecture of truth in the DartZen framework. It specifies how clients and servers share meaning without relying on external schemas or code generation.
 
-## 1. Core Philosophy
+## 🎯 Core Philosophy
 
 DartZen follows a **runtime-first, contract-as-code** approach. The contract is not a side effect of development; it is the source of truth.
 
@@ -12,7 +12,7 @@ DartZen follows a **runtime-first, contract-as-code** approach. The contract is 
 *   **Explicit Failure**: Success and failure are modeled as data, never as side effects.
 *   **Control Flow**: Exceptions are reserved for catastrophic failures only. Business logic uses result types.
 
-## 2. What Is a Contract
+## 📚 What Is a Contract
 
 A contract in DartZen is the set of types and validation rules that define the interface between independent components.
 
@@ -30,7 +30,7 @@ A contract in DartZen is the set of types and validation rules that define the i
 *   Logging and observability implementations.
 *   Transport-specific headers or status codes.
 
-## 3. Contract Boundaries & Ownership
+## 👷🏻 Contract Boundaries & Ownership
 
 The contract exists in a dedicated layer that acts as a buffer between the internal logic of the server and the external world of the client.
 
@@ -44,7 +44,7 @@ The contract is a shared responsibility. While the server typically dictates the
 ### Versioning
 Versioning is determined by the compatibility of the types. When a change forces an update to the shared contract types that is not backwards compatible at the source level, a new version of the contract package is required.
 
-## 4. Request Model
+## ⬇️ Request Model
 
 Requests are modeled as immutable Dart classes or records. 
 
@@ -52,7 +52,7 @@ Requests are modeled as immutable Dart classes or records.
 *   **Data Constraints**: Requests should only contain data necessary for the operation. They must not carry implementation-specific metadata.
 *   **Transport Mapping**: Requests remain unaware of their transport. Whether sent via HTTP POST or a WebSocket message, the request type remains identical.
 
-## 5. Response Model
+## ⬆️ Response Model
 
 `BaseResponse` is the wire-level contract for the DartZen ecosystem. It is a stable carrier of meaning designed to be transport-agnostic.
 
@@ -66,7 +66,7 @@ Requests are modeled as immutable Dart classes or records.
 *   **Protocol-independent**: It is not an HTTP response and does not map 1:1 to HTTP status codes.
 *   **Framework-agnostic**: It exists independently of any serialization format or networking library.
 
-## 6. Result Model
+## ⚙️ Result Model
 
 The Result Model governs how logic returns values within a single process or across boundaries.
 
@@ -79,7 +79,7 @@ Exceptions are invisible in the type system. They create non-deterministic exit 
 ### Propagation
 Failure propagation is explicit. A failure at the repository layer is wrapped in a `ZenResult`, passed to the service, and eventually mapped to a `BaseResponse`.
 
-## 7. Error Semantics
+## 🐛 Error Semantics
 
 Errors are not just strings; they are structured data.
 
@@ -87,7 +87,7 @@ Errors are not just strings; they are structured data.
 *   **Localizable Messages**: Messages carry context but may be replaced by localized strings on the client using the error code as a key.
 *   **Domain vs. Transport**: Domain errors (e.g., `INSUFFICIENT_FUNDS`) are part of the contract. Transport errors (e.g., `TIMEOUT`) are handled by the transport layer and mapped into the contract if they prevent contract fulfillment.
 
-## 8. Safe Value Objects
+## 🔒 Safe Value Objects
 
 Raw primitives (strings, ints) are forbidden for domain-significant data.
 
@@ -95,14 +95,14 @@ Raw primitives (strings, ints) are forbidden for domain-significant data.
 *   **Validation at Construction**: Value objects use factory constructors that return a `ZenResult`. If validation fails, the object is never created.
 *   **Safety**: Once a value object exists, it is guaranteed to be valid according to the contract's rules.
 
-## 9. Client–Server Symmetry
+## 🤝 Client–Server Symmetry
 
 Because both sides use the same Dart types, the contract ensures perfect symmetry.
 
 *   **Uniform Logic**: Validation logic written for a value object runs identically on the client (for immediate feedback) and on the server (for security).
 *   **Shared Meaning**: When the server returns a `ZenFailure`, the client interprets it using the exact same type definitions, ensuring no "magic" mapping is required.
 
-## 10. Transport Independence
+## 🚂 Transport Independence
 
 The contract model is decoupled from the `dartzen_transport` implementation.
 
