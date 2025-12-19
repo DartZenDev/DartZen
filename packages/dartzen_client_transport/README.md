@@ -1,8 +1,14 @@
 # dartzen_client_transport
 
+[![pub package](https://img.shields.io/pub/v/dartzen_client_transport.svg)](https://pub.dev/packages/dartzen_client_transport)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 **Minimal HTTP client wrapper for DartZen transport layer.**
 
 Provides automatic format negotiation and encoding/decoding for HTTP clients.
+
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ---
 
@@ -162,6 +168,6 @@ See `/example/client.dart` for a complete working example.
 
 ---
 
-## License
+## 📄 License
 
-Apache License 2.0 - see LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
