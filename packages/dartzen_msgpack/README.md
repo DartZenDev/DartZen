@@ -1,8 +1,14 @@
 # dartzen_msgpack
 
+[![pub package](https://img.shields.io/pub/v/dartzen_msgpack.svg)](https://pub.dev/packages/dartzen_msgpack)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 **Minimal MessagePack implementation for the DartZen ecosystem.**
 
 Zero dependencies. Functional approach. Predictable behavior.
+
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ---
 
@@ -132,6 +138,6 @@ Use `dartzen_msgpack` when you need:
 
 ---
 
-## License
+## 📄 License
 
-Apache License 2.0 - see LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

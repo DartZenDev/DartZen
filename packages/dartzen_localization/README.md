@@ -1,6 +1,10 @@
 # dartzen_localization
 
-Foundational localization package for the DartZen ecosystem.
+[![pub package](https://img.shields.io/pub/v/dartzen_localization.svg)](https://pub.dev/packages/dartzen_localization)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+**Foundational localization package for the DartZen ecosystem.**
 
 Adheres to strict **Zen Architecture** principles:
 - **Explicit over Implicit**: Language is always passed explicitly.
@@ -8,17 +12,19 @@ Adheres to strict **Zen Architecture** principles:
 - **Safe Production**: Production mode never crashes; returns keys or safe fallbacks.
 - **Zero Global State**: No internal language state.
 
-## Installation
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
+
+## 📦 Installation
 
 ```yaml
 dependencies:
   dartzen_localization:
-    path: packages/dartzen_localization # Or git/pub version
+    path: ../dartzen_localization # Or git/pub version
   flutter:
     sdk: flutter # Required for AssetBundle support
 ```
 
-## Usage
+## 🚀 Usage
 
 ### 1. Configuration
 
@@ -85,7 +91,7 @@ final greeting = service.translate(
 
 ---
 
-## Localization Files
+## 📁 Localization Files
 
 A strict **Flat JSON** format is enforced.
 
@@ -108,7 +114,7 @@ A strict **Flat JSON** format is enforced.
 
 ---
 
-## Development vs Production
+## 📊 Development vs Production
 
 | Feature | Development (isProduction: false) | Production (isProduction: true) |
 |---|---|---|
@@ -124,7 +130,7 @@ A strict **Flat JSON** format is enforced.
 
 ---
 
-## Production Bundling (REQUIRED)
+## 📦 Production Bundling (REQUIRED)
 
 In production, `dartzen_localization` expects a **single merged JSON file** per language to minimize I/O and HTTP requests.
 
@@ -159,8 +165,12 @@ flutter:
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 - **ZenLocalizationService**: Core logic.
 - **ZenLocalizationLoader**: Platform-agnostic loader (IO vs AssetBundle).
 - **ZenLocalizationCache**: In-memory caching to prevent redundant loads.
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

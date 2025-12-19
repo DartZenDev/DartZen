@@ -27,6 +27,7 @@
         "msgpack",
         "pubspec",
         "riverpod",
-        "Schyler"
+        "Schyler",
+        "unrepresentable"
     ]
 }

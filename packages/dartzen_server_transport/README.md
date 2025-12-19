@@ -1,8 +1,14 @@
 # dartzen_server_transport
 
+[![pub package](https://img.shields.io/pub/v/dartzen_server_transport.svg)](https://pub.dev/packages/dartzen_server_transport)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 **Minimal Shelf middleware for DartZen transport layer.**
 
 Provides automatic format negotiation and encoding/decoding for Shelf-based servers.
+
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ---
 
@@ -143,6 +149,6 @@ See `/example/server.dart` for a complete working example.
 
 ---
 
-## License
+## 📄 License
 
-Apache License 2.0 - see LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

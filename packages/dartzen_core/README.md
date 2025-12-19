@@ -1,10 +1,12 @@
 # DartZen Core
 
-The **core layer** for the DartZen ecosystem.  
-A framework-agnostic, zero-dependency library providing the core building blocks for robust, clean architecture in Dart.
-
 [![pub package](https://img.shields.io/pub/v/dartzen_core.svg)](https://pub.dev/packages/dartzen_core)
-[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+**The core layer for the DartZen ecosystem.**
+
+A framework-agnostic, zero-dependency library providing the core building blocks for robust, clean architecture in Dart.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
@@ -132,6 +134,6 @@ This is just the beginning. The DartZen ecosystem will grow to include:
 - `dartzen_server`: Specialized backend tools.
 - `dartzen_localization`: Shared translation management.
 
-## License
+## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

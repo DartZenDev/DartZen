@@ -1,8 +1,12 @@
 # DartZen Navigation
 
 [![pub package](https://img.shields.io/pub/v/dartzen_navigation.svg)](https://pub.dev/packages/dartzen_navigation)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
+**Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.**
+
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ## Features
 
@@ -150,6 +154,6 @@ Following DartZen's Zen principles:
 - **External Source of Truth** - Bring you own state management
 - **Maximum Predictability** - No code generation, you see all the code
 
-## License
+## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

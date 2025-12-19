@@ -1,5 +1,9 @@
 # dartzen_transport
 
+[![pub package](https://img.shields.io/pub/v/dartzen_transport.svg)](https://pub.dev/packages/dartzen_transport)
+[![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 **DartZen transport layer for serialization, codec selection, and WebSocket communication.**
 
 `dartzen_transport` is a foundational package in the DartZen ecosystem that provides:
@@ -9,6 +13,8 @@
 - **Transport envelopes**: Structured request/response messages
 - **WebSocket helper**: Simple WebSocket communication with automatic codec support
 - **Platform-aware treeshaking**: Unused code is automatically removed
+
+> **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ---
 
@@ -300,12 +306,6 @@ dart run example/main.dart
 
 ---
 
-## License
+## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
-
----
-
-## Contributing
-
-This package follows strict architectural conventions. See the main DartZen repository for contribution guidelines.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
