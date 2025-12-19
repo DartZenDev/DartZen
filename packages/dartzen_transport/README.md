@@ -1,4 +1,4 @@
-# dartzen_transport
+# DartZen Transport
 
 [![pub package](https://img.shields.io/pub/v/dartzen_transport.svg)](https://pub.dev/packages/dartzen_transport)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
@@ -16,9 +16,7 @@
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
----
-
-## Why This Package Exists
+## 🧘🏻 Why This Package Exists
 
 Modern applications need efficient data serialization that adapts to different environments and platforms:
 
@@ -28,9 +26,17 @@ Modern applications need efficient data serialization that adapts to different e
 
 `dartzen_transport` handles this complexity automatically while maintaining a simple, consistent API.
 
----
+## 🎯 Philosophy
 
-## Installation
+`dartzen_transport` follows DartZen's core principles:
+
+- **Simplicity**: One clear way to do things
+- **Consistency**: Uniform API across all platforms
+- **Explicitness**: No magic, clear behavior
+- **Efficiency**: Automatic optimization without manual intervention
+- **Treeshaking**: Only include what you use
+
+## 📦 Installation
 
 Add to your `pubspec.yaml`:
 
@@ -47,9 +53,7 @@ dependencies:
   dartzen_transport: ^0.1.0
 ```
 
----
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Basic Request/Response
 
@@ -98,9 +102,7 @@ ws.send(ZenRequest(
 await ws.close();
 ```
 
----
-
-## Codec Selection
+## 🪧 Codec Selection
 
 ### Automatic Selection
 
@@ -135,9 +137,7 @@ final ws = ZenWebSocket(
 );
 ```
 
----
-
-## Transport Header
+## 🚂 Transport Header
 
 For HTTP-based communication, use the `X-DZ-Transport` header to negotiate format:
 
@@ -155,9 +155,7 @@ final format = ZenTransportFormat.parse('msgpack');
 
 If the header value is invalid, a `ZenTransportException` is thrown.
 
----
-
-## Message Types
+## ✉️ Message Types
 
 ### ZenRequest
 
@@ -188,9 +186,7 @@ response.isSuccess; // true for 200-299
 response.isError;   // true for 400+
 ```
 
----
-
-## Environment Variables
+## 🏗 ️Environment Variables
 
 Set the environment at compile time:
 
@@ -204,9 +200,7 @@ dart run --define=DZ_ENV=prd example/main.dart
 
 Default is `prd` if not specified.
 
----
-
-## JSON vs MessagePack
+## ⚖️ JSON vs MessagePack
 
 ### When to Use JSON
 
@@ -233,9 +227,7 @@ print('MessagePack: ${msgpackBytes.length} bytes');
 // MessagePack is typically 20-50% smaller
 ```
 
----
-
-## Error Handling
+## 🐛 Error Handling
 
 All transport errors throw `ZenTransportException`:
 
@@ -247,21 +239,7 @@ try {
 }
 ```
 
----
-
-## Philosophy
-
-`dartzen_transport` follows DartZen's core principles:
-
-- **Simplicity**: One clear way to do things
-- **Consistency**: Uniform API across all platforms
-- **Explicitness**: No magic, clear behavior
-- **Efficiency**: Automatic optimization without manual intervention
-- **Treeshaking**: Only include what you use
-
----
-
-## API Reference
+## 📚 API Reference
 
 ### Core Classes
 
@@ -287,9 +265,7 @@ try {
 
 - `ZenTransportException` - All transport errors
 
----
-
-## Testing
+## 🧪 Testing
 
 Run tests:
 
@@ -303,8 +279,6 @@ Run example:
 ```bash
 dart run example/main.dart
 ```
-
----
 
 ## 📄 License
 

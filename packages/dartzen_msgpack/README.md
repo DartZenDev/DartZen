@@ -1,4 +1,4 @@
-# dartzen_msgpack
+# DartZen msgpack
 
 [![pub package](https://img.shields.io/pub/v/dartzen_msgpack.svg)](https://pub.dev/packages/dartzen_msgpack)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
@@ -10,9 +10,7 @@ Zero dependencies. Functional approach. Predictable behavior.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
----
-
-## Philosophy
+## 🎯 Philosophy
 
 `dartzen_msgpack` follows the Zen Architecture principles:
 
@@ -23,9 +21,7 @@ Zero dependencies. Functional approach. Predictable behavior.
 
 This is NOT a complete MessagePack implementation. It provides only the minimal subset required by `dartzen_transport`.
 
----
-
-## Features
+## 📊 Features
 
 Supports encoding/decoding of:
 - `null`
@@ -37,9 +33,7 @@ Supports encoding/decoding of:
 - `Map<String, dynamic>`
 - `Uint8List` (binary data)
 
----
-
-## Installation
+## 📦 Installation
 
 ```yaml
 dependencies:
@@ -47,9 +41,7 @@ dependencies:
     path: ../dartzen_msgpack
 ```
 
----
-
-## Usage
+## 🚀 Usage
 
 ### Basic Encoding/Decoding
 
@@ -89,9 +81,7 @@ final bytes = encode(complex);
 final result = decode(bytes);
 ```
 
----
-
-## API
+## ⚙️ API
 
 ### `encode(dynamic value) → Uint8List`
 
@@ -105,9 +95,7 @@ Decodes MessagePack binary data to a Dart value.
 
 **Throws**: `FormatException` if the data is invalid or corrupted.
 
----
-
-## Extending
+## 🛠️ Extending
 
 To add support for additional types:
 
@@ -118,9 +106,7 @@ To add support for additional types:
 
 Keep it minimal. Only add what's truly needed.
 
----
-
-## Comparison with msgpack_dart
+## ⚖️ Comparison with msgpack_dart
 
 | Feature | dartzen_msgpack | msgpack_dart |
 |---------|-----------------|--------------|
@@ -135,8 +121,6 @@ Use `dartzen_msgpack` when you need:
 - Minimal bundle size
 - Predictable, simple API
 - Only basic MessagePack features
-
----
 
 ## 📄 License
 

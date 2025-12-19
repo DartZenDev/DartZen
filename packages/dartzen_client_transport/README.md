@@ -1,4 +1,4 @@
-# dartzen_client_transport
+# DartZen Client Transport
 
 [![pub package](https://img.shields.io/pub/v/dartzen_client_transport.svg)](https://pub.dev/packages/dartzen_client_transport)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
@@ -10,9 +10,7 @@ Provides automatic format negotiation and encoding/decoding for HTTP clients.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
----
-
-## Features
+## 🤖 Features
 
 - Automatic format negotiation via headers
 - Request/response encoding/decoding
@@ -20,9 +18,7 @@ Provides automatic format negotiation and encoding/decoding for HTTP clients.
 - Minimal, functional API
 - Easy to test with injectable HTTP client
 
----
-
-## Installation
+## 📦 Installation
 
 ```yaml
 dependencies:
@@ -30,9 +26,7 @@ dependencies:
     path: ../dartzen_client_transport
 ```
 
----
-
-## Usage
+## 🚀 Usage
 
 ### Basic Client
 
@@ -99,9 +93,7 @@ final updated = await client.put('/api/resource/1', {'key': 'new value'});
 await client.delete('/api/resource/1');
 ```
 
----
-
-## API
+## ⚙️ API
 
 ### `ZenClient`
 
@@ -123,9 +115,7 @@ ZenClient({
 - `Future<dynamic> delete(String path, {Map<String, String>? headers})`
 - `void close()`
 
----
-
-## Testing
+## 🧪 Testing
 
 Inject a mock HTTP client for testing:
 
@@ -151,22 +141,16 @@ void main() {
 }
 ```
 
----
-
-## Integration with dartzen_transport
+## 🛠️ Integration with dartzen_transport
 
 This package is a thin wrapper around `dartzen_transport`. It:
 - Uses `ZenEncoder`/`ZenDecoder` for serialization
 - Respects `ZenTransportFormat` negotiation
 - Follows the same platform/environment rules
 
----
-
-## Example
+## 📊 Example
 
 See `/example/client.dart` for a complete working example.
-
----
 
 ## 📄 License
 
