@@ -1,0 +1,15 @@
+name: dartzen_identity_domain_example
+description: Example usage of the dartzen_identity_domain package.
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+dependencies:
+  dartzen_core:
+    path: ../../dartzen_core
+  dartzen_identity_domain:
+    path: ..
+
+dev_dependencies:
+  lints: ^6.0.0
