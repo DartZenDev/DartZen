@@ -3,6 +3,7 @@ import 'package:dartzen_core/dartzen_core.dart';
 import 'authority.dart';
 import 'identity_id.dart';
 import 'identity_lifecycle.dart';
+import 'identity_verification_facts.dart';
 
 /// The central domain aggregate representing an identity.
 ///
@@ -38,6 +39,37 @@ class Identity {
     authority: authority,
     createdAt: ZenTimestamp.now(),
   );
+
+  /// Creates an [Identity] from external verification facts.
+  ///
+  /// Domain policy: Identity is activated only if email is verified.
+  /// This encapsulates the business rule that email verification is
+  /// sufficient for activation, keeping this decision in the domain layer.
+  static ZenResult<Identity> fromExternalFacts({
+    required IdentityId id,
+    required Authority authority,
+    required IdentityVerificationFacts facts,
+    required ZenTimestamp createdAt,
+  }) {
+    // Domain logic: determine lifecycle based on verification facts
+    var lifecycle = IdentityLifecycle.initial();
+    if (facts.emailVerified) {
+      final activationResult = lifecycle.activate();
+      lifecycle = activationResult.fold(
+        (activated) => activated,
+        (_) => lifecycle, // Keep as pending if activation fails
+      );
+    }
+
+    return ZenResult.ok(
+      Identity(
+        id: id,
+        lifecycle: lifecycle,
+        authority: authority,
+        createdAt: createdAt,
+      ),
+    );
+  }
 
   /// Evaluates if the identity is allowed to perform an action requiring a [Capability].
   ///
