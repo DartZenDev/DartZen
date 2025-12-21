@@ -9,3 +9,5 @@ export 'src/identity.dart';
 export 'src/identity_errors.dart';
 export 'src/identity_id.dart';
 export 'src/identity_lifecycle.dart';
+export 'src/identity_ports.dart';
+export 'src/identity_verification_facts.dart';

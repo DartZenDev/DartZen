@@ -18,7 +18,8 @@ topics:
   - architecture
 
 dependencies:
-  dartzen_core: ^0.0.1
+  dartzen_core:
+    path: ../dartzen_core
   meta: ^1.11.0
 
 dev_dependencies:
