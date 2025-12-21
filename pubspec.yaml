@@ -15,6 +15,7 @@ workspace:
   - packages/dartzen_server_transport
   - packages/dartzen_client_transport
   - packages/dartzen_localization
+  - packages/dartzen_identity_domain
 
 dependency_overrides:
   cli_util: ^0.4.2

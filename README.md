@@ -19,6 +19,7 @@ DartZen embraces **minimalism**, **scalability**, and **developer zen**. Built o
 - [Versioning and Releases](docs/versioning_and_releases.md) — Explains how independent versioning and SemVer are applied in DartZen.
 - [Infrastructure Philosophy](docs/infrastructure_philosophy.md) — Clarifies how DartZen interacts with physical systems while keeping the domain pure.
 - [Identity Model Philosophy](docs/identity_model_philosophy.md) — Establishes identity as a stable domain concept, independent of authentication details.
+- [Identity Domain](docs/identity_domain.md) — Defines the identity domain model and its lifecycle.
 
 ## 📦 Repository Structure
 
@@ -44,6 +45,7 @@ dartzen/
 - **`dartzen_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
 - **`dartzen_server_transport`**: Minimal Shelf middleware for DartZen transport layer.
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, and WebSocket communication.
+- **`dartzen_identity_domain`**: DartZen identity domain for managing user identity and authentication.
 
 ## 📄 License
 
