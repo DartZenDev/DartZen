@@ -24,11 +24,15 @@
         "fixstr",
         "goldens",
         "inavigation",
+        "Memorystore",
         "mocktail",
         "msgpack",
         "pubspec",
         "riverpod",
         "Schyler",
+        "SETEX",
+        "simplecast",
+        "unawaited",
         "unrepresentable"
     ]
 }
