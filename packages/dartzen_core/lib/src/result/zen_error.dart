@@ -9,7 +9,7 @@ import 'zen_result.dart' show ZenFailure;
 ///
 /// All errors include a human-readable [message] and optional debugging details.
 @immutable
-sealed class ZenError {
+abstract class ZenError {
   /// A human-readable message describing the error.
   final String message;
 
