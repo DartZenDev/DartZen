@@ -5,6 +5,9 @@
 include: package:lints/recommended.yaml
 
 analyzer:
+  plugins:
+    - import_sorter
+
   language:
     strict-casts: true
     strict-inference: true
@@ -65,3 +68,8 @@ linter:
     # --- Testing ---
     avoid_empty_else: true
     prefer_const_declarations: true
+
+import_sorter:
+  reorder:
+    - relative_imports_first: true
+    - package_imports_later: true

@@ -17,6 +17,7 @@
         "cupertino",
         "dartdoc",
         "dartzen",
+        "firestore",
         "fixarray",
         "fixint",
         "fixmap",

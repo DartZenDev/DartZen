@@ -18,6 +18,7 @@ workspace:
   - packages/dartzen_identity_domain
   - packages/dartzen_identity_contract
   - packages/dartzen_infrastructure_identity
+  - packages/dartzen_infrastructure_firestore
 
 dependency_overrides:
   cli_util: ^0.4.2
