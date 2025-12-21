@@ -1,0 +1,41 @@
+name: Monorepo Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap
+        run: melos bootstrap
+
+      - name: Run Tests
+        run: melos run test:coverage
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # This tells Codecov to look for all lcov files in the packages directory
+          directory: ./packages/ 
+          fail_ci_if_error: true
+      
+      - name: Fix LCOV paths for Monorepo
+        run: |
+          for file in packages/*/coverage/lcov.info; do
+            # Extract package name from the path
+            package=$(echo $file | cut -d/ -f2)
+            # Replace 'SF:lib/' with 'SF:packages/<package_name>/lib/'
+            sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$file"
+          done

@@ -16,12 +16,25 @@ Adheres to strict **Zen Architecture** principles:
 
 ## 📦 Installation
 
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   dartzen_localization:
     path: ../dartzen_localization # Or git/pub version
   flutter:
     sdk: flutter # Required for AssetBundle support
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_localization: ^latest_version
 ```
 
 ## 🚀 Usage

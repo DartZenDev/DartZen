@@ -27,12 +27,25 @@ If instructions conflict, STOP and ask before writing any code.
 
 ## 2. SOURCE OF TRUTH (ORDERED)
 
-You MUST follow documents in this order of priority:
+You MUST follow documents in this strict order of priority:
 
-- This implementation plan {PACKAGE INSTRUCTIONS} section below `.github/copilot-instructions.md`
-- Root `README.md` (monorepo)
-- Root `/analysis_options.yaml` and `packages/dartzen_core/analysis_options.yaml`
-- Lower-priority documents MUST NOT override higher-priority ones.
+1. This implementation plan [PACKAGE INSTRUCTIONS](#package-instructions) section below (`.github/copilot-instructions.md`)
+
+2. Architectural & Philosophical Canon:
+   - `docs/dartzen_contract_model.md`
+   - `docs/infrastructure_philosophy.md`
+   - `docs/identity_model_philosophy.md`
+
+3. Root `README.md` (monorepo intent and scope)
+
+4. Development & Process Documents:
+   - `docs/development_workflow.md`
+   - `docs/versioning_and_releases.md`
+
+5. Root `/analysis_options.yaml`  
+   and `packages/**/analysis_options.yaml`
+
+Lower-priority documents MUST NOT override higher-priority ones. When in doubt, defer to the philosophical canon over implementation convenience. These documents describe **intent**, not just structure.
 
 ## 3. ROLE (MANDATORY)
 

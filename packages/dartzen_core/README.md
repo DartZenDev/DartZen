@@ -41,7 +41,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartzen_core: ^0.0.1
+  dartzen_core: ^latest_version
 ```
 
 ## 🚀 Usage Guide

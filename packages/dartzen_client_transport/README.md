@@ -20,10 +20,23 @@ Provides automatic format negotiation and encoding/decoding for HTTP clients.
 
 ## 📦 Installation
 
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   dartzen_client_transport:
     path: ../dartzen_client_transport
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_client_transport: ^latest_version
 ```
 
 ## 🚀 Usage

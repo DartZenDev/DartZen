@@ -1,0 +1,18 @@
+coverage:
+  precision: 2
+  round: down
+  status:
+    default: success
+    success: 100%
+    failure: 50%
+ignore:
+  - "**/example/**"
+  - "**/test/**"
+  - "**/test_driver/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/melos/**"
+  - "**/*.lock"
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "**/generated_plugin_registrant.dart"

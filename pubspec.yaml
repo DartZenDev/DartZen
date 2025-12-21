@@ -48,6 +48,11 @@ melos:
         melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
         melos exec --scope="dartzen_msgpack,dartzen_transport,dartzen_server_transport,dartzen_client_transport" -- "dart test"
       description: Run all Dart & Flutter tests
+    test:coverage:
+      run: |
+        melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
+        melos exec --scope="dartzen_msgpack,dartzen_transport,dartzen_server_transport,dartzen_client_transport" -- "dart test --coverage=coverage"
+      description: Run all Dart & Flutter tests with coverage
     publish:
       exec: dart pub publish --dry-run
       description: Publish all dartzen_* packages to pub.dev (dry-run mode).
