@@ -1,0 +1,26 @@
+name: dartzen_infrastructure_cache
+description: Caching adapter layer with pluggable backends for DartZen Identity infrastructure.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_identity_contract:
+    path: ../dartzen_identity_contract
+  dartzen_identity_domain:
+    path: ../dartzen_identity_domain
+  dartzen_infrastructure_identity:
+    path: ../dartzen_infrastructure_identity
+  meta: ^1.11.0
+  redis: ^3.0.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  mocktail: ^1.0.0
+  test: ^1.24.0

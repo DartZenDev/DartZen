@@ -19,6 +19,7 @@ workspace:
   - packages/dartzen_identity_contract
   - packages/dartzen_infrastructure_identity
   - packages/dartzen_infrastructure_firestore
+  - packages/dartzen_infrastructure_cache
 
 dependency_overrides:
   cli_util: ^0.4.2
