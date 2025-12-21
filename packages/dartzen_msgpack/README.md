@@ -35,10 +35,23 @@ Supports encoding/decoding of:
 
 ## 📦 Installation
 
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   dartzen_msgpack:
     path: ../dartzen_msgpack
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_msgpack: ^latest_version
 ```
 
 ## 🚀 Usage

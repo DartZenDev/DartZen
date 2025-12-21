@@ -30,6 +30,11 @@
 .pub-cache/
 .pub/
 build/
+# Coverage reports
+coverage/
+*.lcov
+# Specifically for the VM artifacts you mentioned
+*_test.dart.vm.json
 
 # Web related
 lib/generated_plugin_registrant.dart

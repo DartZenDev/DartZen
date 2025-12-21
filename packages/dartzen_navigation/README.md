@@ -16,11 +16,23 @@
 
 ## 📦 Installation
 
-Add this to your package's `pubspec.yaml` file:
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartzen_navigation: ^0.1.0
+  dartzen_navigation:
+    path: ../dartzen_navigation
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_navigation: ^latest_version
 ```
 
 ## 🚀 Quick Start

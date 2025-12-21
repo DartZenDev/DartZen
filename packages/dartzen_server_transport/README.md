@@ -20,10 +20,23 @@ Provides automatic format negotiation and encoding/decoding for Shelf-based serv
 
 ## 📦 Installation
 
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   dartzen_server_transport:
     path: ../dartzen_server_transport
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_server_transport: ^latest_version
 ```
 
 ## 🚀 Usage

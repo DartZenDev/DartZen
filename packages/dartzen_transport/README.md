@@ -28,7 +28,7 @@ Modern applications need efficient data serialization that adapts to different e
 
 ## 🎯 Philosophy
 
-`dartzen_transport` follows DartZen's core principles:
+`dartzen_transport` follows the Zen Architecture principles:
 
 - **Simplicity**: One clear way to do things
 - **Consistency**: Uniform API across all platforms
@@ -38,7 +38,9 @@ Modern applications need efficient data serialization that adapts to different e
 
 ## 📦 Installation
 
-Add to your `pubspec.yaml`:
+### In a Melos Workspace
+
+If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -46,11 +48,13 @@ dependencies:
     path: ../dartzen_transport
 ```
 
-Or if published:
+### External Usage
+
+Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartzen_transport: ^0.1.0
+  dartzen_transport: ^latest_version
 ```
 
 ## 🚀 Quick Start
