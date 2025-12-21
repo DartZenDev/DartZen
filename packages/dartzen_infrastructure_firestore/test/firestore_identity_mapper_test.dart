@@ -104,5 +104,95 @@ void main() {
       expect(result.dataOrNull!.lifecycle.state, IdentityState.revoked);
       expect(result.dataOrNull!.lifecycle.reason, 'TOS violation');
     });
+
+    test('fromDocument reconstructs disabled lifecycle with reason', () async {
+      await firestore.collection('identities').doc('disabled-id').set({
+        'lifecycle_state': 'disabled',
+        'lifecycle_reason': 'Account suspended',
+        'roles': <String>[],
+        'capabilities': <String>[],
+        'created_at': Timestamp.now(),
+      });
+
+      final doc = await firestore
+          .collection('identities')
+          .doc('disabled-id')
+          .get();
+      final result = FirestoreIdentityMapper.fromDocument(doc);
+
+      expect(result.isSuccess, isTrue);
+      expect(result.dataOrNull!.lifecycle.state, IdentityState.disabled);
+      expect(result.dataOrNull!.lifecycle.reason, 'Account suspended');
+    });
+
+    test('fromDocument fails on invalid lifecycle state string', () async {
+      await firestore.collection('identities').doc('invalid-id').set({
+        'lifecycle_state': 'unknown_state',
+        'roles': <String>[],
+        'capabilities': <String>[],
+        'created_at': Timestamp.now(),
+      });
+
+      final doc = await firestore
+          .collection('identities')
+          .doc('invalid-id')
+          .get();
+      final result = FirestoreIdentityMapper.fromDocument(doc);
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<ZenInfrastructureError>());
+    });
+
+    test(
+      'fromDocument handles missing lifecycle_reason for disabled state',
+      () async {
+        await firestore.collection('identities').doc('no-reason-id').set({
+          'lifecycle_state': 'disabled',
+          // lifecycle_reason is intentionally omitted
+          'roles': <String>[],
+          'capabilities': <String>[],
+          'created_at': Timestamp.now(),
+        });
+
+        final doc = await firestore
+            .collection('identities')
+            .doc('no-reason-id')
+            .get();
+        final result = FirestoreIdentityMapper.fromDocument(doc);
+
+        expect(result.isSuccess, isTrue);
+        expect(result.dataOrNull!.lifecycle.state, IdentityState.disabled);
+        // Should have a default reason
+        expect(result.dataOrNull!.lifecycle.reason, isNotNull);
+      },
+    );
+
+    test('fromDocument reconstructs full authority correctly', () async {
+      await firestore.collection('identities').doc('full-authority-id').set({
+        'lifecycle_state': 'active',
+        'roles': ['admin', 'moderator', 'user'],
+        'capabilities': ['read', 'write', 'delete', 'manage'],
+        'created_at': Timestamp.now(),
+      });
+
+      final doc = await firestore
+          .collection('identities')
+          .doc('full-authority-id')
+          .get();
+      final result = FirestoreIdentityMapper.fromDocument(doc);
+
+      expect(result.isSuccess, isTrue);
+      final identity = result.dataOrNull!;
+      expect(identity.authority.roles.length, 3);
+      expect(identity.authority.capabilities.length, 4);
+      expect(
+        identity.authority.roles.map((r) => r.name),
+        containsAll(['admin', 'moderator', 'user']),
+      );
+      expect(
+        identity.authority.capabilities.map((c) => c.id),
+        containsAll(['read', 'write', 'delete', 'manage']),
+      );
+    });
   });
 }

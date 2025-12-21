@@ -63,14 +63,26 @@ class FirestoreIdentityMapper {
         return ZenResult.err(
           ZenInfrastructureError(
             'Missing lifecycle state in document: ${doc.id}',
+            errorCode: InfrastructureErrorCode.corruptedData,
           ),
         );
       }
 
-      final targetState = IdentityState.values.firstWhere(
+      // Fail loudly on unknown lifecycle states to maintain data integrity
+      final stateIndex = IdentityState.values.indexWhere(
         (e) => e.name == stateStr,
-        orElse: () => IdentityState.pending,
       );
+
+      if (stateIndex == -1) {
+        return ZenResult.err(
+          ZenInfrastructureError(
+            'Unknown lifecycle state "$stateStr" in document: ${doc.id}',
+            errorCode: InfrastructureErrorCode.corruptedData,
+          ),
+        );
+      }
+
+      final targetState = IdentityState.values[stateIndex];
 
       final lifecycleResult = _reconstructLifecycle(targetState, reason);
       if (lifecycleResult.isFailure) {

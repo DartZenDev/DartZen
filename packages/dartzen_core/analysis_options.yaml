@@ -8,6 +8,8 @@ analyzer:
 linter:
   rules:
     # Prefer relative imports within the same package or folder
+    # Relative import restriction: only same folder, one up, one down
+    # (Handled by prefer_relative_imports + avoid_relative_lib_imports)
     prefer_relative_imports: true
     avoid_relative_lib_imports: false
     always_use_package_imports: false
@@ -35,6 +37,3 @@ dart:
 fix:
   format: true
   sort-imports: true
-
-# Relative import restriction: only same folder, one up, one down
-# (Handled by prefer_relative_imports + avoid_relative_lib_imports)
