@@ -28,22 +28,27 @@ jobs:
       - name: Convert JSON to LCOV & Fix Paths
         run: |
           for dir in packages/*; do
-            if [ -d "$dir/coverage/test" ]; then
-              echo "Converting JSON for $dir..."
-              # Convert raw JSON to LCOV
-              dart pub global run coverage:format_coverage \
-                --packages="$dir/.dart_tool/package_config.json" \
-                --report-on="$dir/lib" \
-                --lcov \
-                --in="$dir/coverage/test" \
-                --out="$dir/coverage/lcov.info"
-            fi
+            if [ -d "$dir/test" ]; then
+              echo "Processing $dir..."
+              
+              # 1. Convert JSON to LCOV for Dart packages
+              # We use --package=. and run it FROM the package directory
+              if [ -d "$dir/coverage/test" ] && [ ! -f "$dir/coverage/lcov.info" ]; then
+                echo "Converting JSON for $dir"
+                (cd "$dir" && dart pub global run coverage:format_coverage \
+                  --package="." \
+                  --report-on="lib" \
+                  --lcov \
+                  --in="coverage/test" \
+                  --out="coverage/lcov.info")
+              fi
 
-            if [ -f "$dir/coverage/lcov.info" ]; then
-              echo "Fixing paths for $dir..."
-              package=$(basename "$dir")
-              # Correct the internal SF (Source File) paths for Codecov
-              sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov.info"
+              # 2. Fix paths for Codecov
+              if [ -f "$dir/coverage/lcov.info" ]; then
+                package=$(basename "$dir")
+                echo "Fixing paths for $package"
+                sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov.info"
+              fi
             fi
           done
 
