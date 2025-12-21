@@ -14,7 +14,6 @@ import 'models/infrastructure_errors.dart';
 class FirestoreIdentityRepository implements IdentityProvider {
   final FirebaseFirestore _firestore;
   final String _collectionPath;
-  final FirestoreMessages _messages;
 
   /// Creates a [FirestoreIdentityRepository].
   ///
@@ -23,8 +22,7 @@ class FirestoreIdentityRepository implements IdentityProvider {
     required FirebaseFirestore firestore,
     String collectionPath = 'identities',
   }) : _firestore = firestore,
-       _collectionPath = collectionPath,
-       _messages = FirestoreMessages();
+       _collectionPath = collectionPath;
 
   /// Persistence: Saves the identity aggregate to Firestore.
   ///
@@ -37,9 +35,15 @@ class FirestoreIdentityRepository implements IdentityProvider {
       await docRef.set(data);
       return const ZenResult.ok(null);
     } catch (e, stack) {
+      ZenLogger.instance.error(
+        'Failed to save identity: ${identity.id.value}',
+        e,
+        stack,
+      );
       return ZenResult.err(
         ZenInfrastructureError(
-          _messages.storageError('Failed to save identity'),
+          FirestoreMessages.storageOperationFailed(),
+          errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
         ),
@@ -54,16 +58,19 @@ class FirestoreIdentityRepository implements IdentityProvider {
       final snapshot = await docRef.get();
 
       if (!snapshot.exists) {
+        ZenLogger.instance.warn('Identity not found: ${id.value}');
         return ZenResult.err(
-          ZenNotFoundError(_messages.identityNotFound(id.value)),
+          ZenNotFoundError(FirestoreMessages.identityNotFound()),
         );
       }
 
       return FirestoreIdentityMapper.fromDocument(snapshot);
     } catch (e, stack) {
+      ZenLogger.instance.error('Failed to get identity: ${id.value}', e, stack);
       return ZenResult.err(
         ZenInfrastructureError(
-          _messages.storageError('Failed to get identity'),
+          FirestoreMessages.storageOperationFailed(),
+          errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
         ),
@@ -78,9 +85,15 @@ class FirestoreIdentityRepository implements IdentityProvider {
       await docRef.delete();
       return const ZenResult.ok(null);
     } catch (e, stack) {
+      ZenLogger.instance.error(
+        'Failed to delete identity: ${id.value}',
+        e,
+        stack,
+      );
       return ZenResult.err(
         ZenInfrastructureError(
-          _messages.storageError('Failed to delete identity'),
+          FirestoreMessages.storageOperationFailed(),
+          errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
         ),
@@ -98,16 +111,19 @@ class FirestoreIdentityRepository implements IdentityProvider {
       final snapshot = await docRef.get();
 
       if (!snapshot.exists) {
+        ZenLogger.instance.warn('External identity not found: $subject');
         return ZenResult.err(
-          ZenNotFoundError(_messages.identityNotFound(subject)),
+          ZenNotFoundError(FirestoreMessages.identityNotFound()),
         );
       }
 
       final data = snapshot.data();
       if (data == null) {
+        ZenLogger.instance.error('Document data is null: $subject');
         return ZenResult.err(
           ZenInfrastructureError(
-            _messages.storageError('Document data is null'),
+            FirestoreMessages.corruptedData(),
+            errorCode: InfrastructureErrorCode.corruptedData,
           ),
         );
       }
@@ -116,9 +132,15 @@ class FirestoreIdentityRepository implements IdentityProvider {
         FirestoreExternalIdentity(subject: snapshot.id, claims: data),
       );
     } catch (e, stack) {
+      ZenLogger.instance.error(
+        'Failed to fetch external identity: $subject',
+        e,
+        stack,
+      );
       return ZenResult.err(
         ZenInfrastructureError(
-          _messages.storageError('Failed to fetch external identity'),
+          FirestoreMessages.storageOperationFailed(),
+          errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
         ),
