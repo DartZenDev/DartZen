@@ -49,7 +49,7 @@ void main() {
     });
 
     test('maps ZenUnknownError to 500', () {
-      final result = ZenResult<void>.err(ZenUnknownError('Unexpected error'));
+      const result = ZenResult<void>.err(ZenUnknownError('Unexpected error'));
       final response = ZenResponseTranslator.translate(
         result: result,
         requestId: requestId,
@@ -59,7 +59,7 @@ void main() {
     });
 
     test('hides error details in production for 500 errors', () {
-      final result = ZenResult<void>.err(ZenUnknownError('Sensitive details'));
+      const result = ZenResult<void>.err(ZenUnknownError('Sensitive details'));
       final response = ZenResponseTranslator.translate(
         result: result,
         requestId: requestId,
