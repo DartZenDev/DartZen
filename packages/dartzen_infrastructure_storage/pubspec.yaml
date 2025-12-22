@@ -1,0 +1,24 @@
+name: dartzen_infrastructure_storage
+description: Storage-backed static content providers for the DartZen ecosystem.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.10.2 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_server:
+    path: ../dartzen_server
+  gcloud: ^0.8.12
+  googleapis: ^14.0.0
+  googleapis_auth: ^1.6.0
+  meta: ^1.15.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  mocktail: ^1.0.4
+  test: ^1.25.0
