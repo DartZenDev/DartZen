@@ -18,13 +18,12 @@ void main() {
   setUp(() {
     repository = MockIdentityRepository();
     // Default mock for getCurrentIdentity
-    when(() => repository.getCurrentIdentity())
-        .thenAnswer((_) async => const ZenResult.ok(null));
+    when(
+      () => repository.getCurrentIdentity(),
+    ).thenAnswer((_) async => const ZenResult.ok(null));
 
     container = ProviderContainer(
-      overrides: [
-        identityRepositoryProvider.overrideWithValue(repository),
-      ],
+      overrides: [identityRepositoryProvider.overrideWithValue(repository)],
     );
   });
 
@@ -44,31 +43,38 @@ void main() {
       final model = contract.IdentityModel(
         id: const contract.IdentityId('user-1'),
         lifecycle: contract.IdentityLifecycleState.active,
-        authority:
-            const contract.Authority(identityId: contract.IdentityId('user-1')),
+        authority: const contract.Authority(
+          identityId: contract.IdentityId('user-1'),
+        ),
         createdAt: ZenTimestamp.now(),
       );
 
-      when(() => repository.loginWithEmail(
-            email: 'test@example.com',
-            password: 'password',
-          )).thenAnswer((_) async => ZenResult.ok(model));
+      when(
+        () => repository.loginWithEmail(
+          email: 'test@example.com',
+          password: 'password',
+        ),
+      ).thenAnswer((_) async => ZenResult.ok(model));
 
       final store = container.read(identitySessionStoreProvider.notifier);
       final result = await store.login('test@example.com', 'password');
 
       expect(result.isSuccess, isTrue);
-      expect(container.read(identitySessionStoreProvider).value?.id.value,
-          'user-1');
+      expect(
+        container.read(identitySessionStoreProvider).value?.id.value,
+        'user-1',
+      );
     });
 
     test('login failure does not update state with error', () async {
-      when(() => repository.loginWithEmail(
-                email: 'test@example.com',
-                password: 'wrong',
-              ))
-          .thenAnswer((_) async =>
-              const ZenResult.err(ZenUnauthorizedError('Invalid')));
+      when(
+        () => repository.loginWithEmail(
+          email: 'test@example.com',
+          password: 'wrong',
+        ),
+      ).thenAnswer(
+        (_) async => const ZenResult.err(ZenUnauthorizedError('Invalid')),
+      );
 
       final store = container.read(identitySessionStoreProvider.notifier);
       final result = await store.login('test@example.com', 'wrong');
@@ -81,22 +87,28 @@ void main() {
       final model = contract.IdentityModel(
         id: const contract.IdentityId('user-1'),
         lifecycle: contract.IdentityLifecycleState.active,
-        authority:
-            const contract.Authority(identityId: contract.IdentityId('user-1')),
+        authority: const contract.Authority(
+          identityId: contract.IdentityId('user-1'),
+        ),
         createdAt: ZenTimestamp.now(),
       );
 
-      when(() => repository.loginWithEmail(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          )).thenAnswer((_) async => ZenResult.ok(model));
-      when(() => repository.logout())
-          .thenAnswer((_) async => const ZenResult.ok(null));
+      when(
+        () => repository.loginWithEmail(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => ZenResult.ok(model));
+      when(
+        () => repository.logout(),
+      ).thenAnswer((_) async => const ZenResult.ok(null));
 
       final store = container.read(identitySessionStoreProvider.notifier);
       await store.login('test@example.com', 'password');
-      expect(container.read(identitySessionStoreProvider).value?.id.value,
-          'user-1');
+      expect(
+        container.read(identitySessionStoreProvider).value?.id.value,
+        'user-1',
+      );
 
       await store.logout();
       expect(container.read(identitySessionStoreProvider).value, isNull);
