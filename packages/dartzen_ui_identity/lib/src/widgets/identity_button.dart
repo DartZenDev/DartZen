@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/identity_theme_extension.dart';
 
-enum IdentityButtonVariant {
-  primary,
-  secondary,
-  text,
-}
+enum IdentityButtonVariant { primary, secondary, text }
 
 /// A reusable button for Identity flows.
 class IdentityButton extends StatelessWidget {
@@ -27,47 +23,42 @@ class IdentityButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ?? 
-                 IdentityThemeExtension.fallback();
-    
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
+        IdentityThemeExtension.fallback();
+
     final disabled = onPressed == null || isLoading;
 
-    return SizedBox(
-      height: 48,
-      child: _buildButton(context, theme, disabled),
-    );
+    return SizedBox(height: 48, child: _buildButton(context, theme, disabled));
   }
 
   Widget _buildButton(
-    BuildContext context, 
-    IdentityThemeExtension theme, 
+    BuildContext context,
+    IdentityThemeExtension theme,
     bool disabled,
   ) {
-    final child = isLoading 
-      ? SizedBox(
-          width: 20, 
-          height: 20, 
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: variant == IdentityButtonVariant.primary 
-              ? theme.surfaceColor 
-              : theme.brandColor,
-          ),
-        )
-      : Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 20),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              text,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+    final child = isLoading
+        ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: variant == IdentityButtonVariant.primary
+                  ? theme.surfaceColor
+                  : theme.brandColor,
             ),
-          ],
-        );
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          );
 
     switch (variant) {
       case IdentityButtonVariant.primary:
@@ -76,7 +67,9 @@ class IdentityButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: theme.brandColor,
             foregroundColor: theme.surfaceColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
           child: child,
         );
@@ -86,7 +79,9 @@ class IdentityButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: theme.brandColor,
             side: BorderSide(color: theme.brandColor),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
           child: child,
         );
@@ -95,7 +90,9 @@ class IdentityButton extends StatelessWidget {
           onPressed: disabled ? null : onPressed,
           style: TextButton.styleFrom(
             foregroundColor: theme.brandColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
           child: child,
         );

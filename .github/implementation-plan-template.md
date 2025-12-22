@@ -36,6 +36,7 @@ You MUST follow documents in this strict order of priority:
    - `docs/infrastructure_philosophy.md`
    - `docs/identity_model_philosophy.md`
    - `docs/identity_domain.md`
+   - `docs/server_philosophy.md`
 
 3. Root `README.md` (monorepo intent and scope)
 

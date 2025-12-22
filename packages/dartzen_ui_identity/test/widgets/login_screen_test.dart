@@ -24,24 +24,23 @@ void main() {
     messages = IdentityMessages(localizationService, 'en');
 
     // Default mocks for messages
-    when(() => localizationService.translate(
-              any(),
-              language: any(named: 'language'),
-              module: any(named: 'module'),
-              params: any(named: 'params'),
-            ))
-        .thenAnswer(
-            (invocation) => invocation.positionalArguments[0] as String);
+    when(
+      () => localizationService.translate(
+        any(),
+        language: any(named: 'language'),
+        module: any(named: 'module'),
+        params: any(named: 'params'),
+      ),
+    ).thenAnswer((invocation) => invocation.positionalArguments[0] as String);
 
-    when(() => repository.getCurrentIdentity())
-        .thenAnswer((_) async => const ZenResult.ok(null));
+    when(
+      () => repository.getCurrentIdentity(),
+    ).thenAnswer((_) async => const ZenResult.ok(null));
   });
 
   Widget createTestWidget({IdentityMessages? customMessages}) {
     return ProviderScope(
-      overrides: [
-        identityRepositoryProvider.overrideWithValue(repository),
-      ],
+      overrides: [identityRepositoryProvider.overrideWithValue(repository)],
       child: MaterialApp(
         theme: ThemeData(extensions: [IdentityThemeExtension.fallback()]),
         home: LoginScreen(
@@ -76,32 +75,37 @@ void main() {
     final model = contract.IdentityModel(
       id: const contract.IdentityId('user-1'),
       lifecycle: contract.IdentityLifecycleState.active,
-      authority:
-          const contract.Authority(identityId: contract.IdentityId('user-1')),
+      authority: const contract.Authority(
+        identityId: contract.IdentityId('user-1'),
+      ),
       createdAt: ZenTimestamp.now(),
     );
 
-    when(() => repository.loginWithEmail(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        )).thenAnswer((_) async => ZenResult.ok(model));
+    when(
+      () => repository.loginWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer((_) async => ZenResult.ok(model));
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        identityRepositoryProvider.overrideWithValue(repository),
-      ],
-      child: MaterialApp(
-        theme: ThemeData(extensions: [IdentityThemeExtension.fallback()]),
-        home: LoginScreen(
-          messages: messages,
-          onLoginSuccess: () => loginCalled = true,
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [identityRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp(
+          theme: ThemeData(extensions: [IdentityThemeExtension.fallback()]),
+          home: LoginScreen(
+            messages: messages,
+            onLoginSuccess: () => loginCalled = true,
+          ),
         ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(
-        find.byType(IdentityTextField).first, 'test@example.com');
+      find.byType(IdentityTextField).first,
+      'test@example.com',
+    );
     await tester.enterText(find.byType(IdentityTextField).last, 'password');
     await tester.tap(find.text('login.button'));
     await tester.pumpAndSettle();

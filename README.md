@@ -20,6 +20,8 @@ DartZen embraces **minimalism**, **scalability**, and **developer zen**. Built o
 - [Infrastructure Philosophy](docs/infrastructure_philosophy.md) — Clarifies how DartZen interacts with physical systems while keeping the domain pure.
 - [Identity Model Philosophy](docs/identity_model_philosophy.md) — Establishes identity as a stable domain concept, independent of authentication details.
 - [Identity Domain](docs/identity_domain.md) — Defines the identity domain model and its lifecycle.
+- [Server Philosophy](docs/server_philosophy.md) — Defines the server as an application boundary in the DartZen ecosystem.
+
 
 ## 📦 Repository Structure
 

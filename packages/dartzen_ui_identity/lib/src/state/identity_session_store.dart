@@ -11,8 +11,8 @@ import 'identity_repository.dart';
 /// Providers for accessing the session store and state.
 final identitySessionStoreProvider =
     AsyncNotifierProvider<IdentitySessionStore, domain.Identity?>(
-  IdentitySessionStore.new,
-);
+      IdentitySessionStore.new,
+    );
 
 /// Manages the current user session state.
 class IdentitySessionStore extends AsyncNotifier<domain.Identity?> {
@@ -31,7 +31,9 @@ class IdentitySessionStore extends AsyncNotifier<domain.Identity?> {
 
   /// Signs in with email and password.
   Future<ZenResult<domain.Identity>> login(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     state = const AsyncValue.loading();
     final result = await _repository.loginWithEmail(
       email: email,
@@ -53,7 +55,9 @@ class IdentitySessionStore extends AsyncNotifier<domain.Identity?> {
 
   /// Registers and optionally logs in.
   Future<ZenResult<domain.Identity>> register(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     state = const AsyncValue.loading();
     final result = await _repository.registerWithEmail(
       email: email,
@@ -98,7 +102,8 @@ class IdentitySessionStore extends AsyncNotifier<domain.Identity?> {
   }
 
   domain.IdentityLifecycle _mapLifecycle(
-      contract.IdentityLifecycleState state) {
+    contract.IdentityLifecycleState state,
+  ) {
     switch (state) {
       case contract.IdentityLifecycleState.active:
         return domain.IdentityLifecycle.initial().activate().dataOrNull!;

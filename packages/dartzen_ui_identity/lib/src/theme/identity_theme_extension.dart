@@ -46,14 +46,14 @@ class IdentityThemeExtension extends ThemeExtension<IdentityThemeExtension> {
 
   /// fallback factory
   factory IdentityThemeExtension.fallback() => const IdentityThemeExtension(
-        successColor: Colors.green,
-        errorColor: Colors.red,
-        warningColor: Colors.orange,
-        brandColor: Colors.blue,
-        surfaceColor: Colors.white,
-        titleStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        subtitleStyle: TextStyle(fontSize: 14, color: Colors.grey),
-      );
+    successColor: Colors.green,
+    errorColor: Colors.red,
+    warningColor: Colors.orange,
+    brandColor: Colors.blue,
+    surfaceColor: Colors.white,
+    titleStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    subtitleStyle: TextStyle(fontSize: 14, color: Colors.grey),
+  );
 
   @override
   IdentityThemeExtension copyWith({
@@ -96,7 +96,11 @@ class IdentityThemeExtension extends ThemeExtension<IdentityThemeExtension> {
       surfaceColor: Color.lerp(surfaceColor, other.surfaceColor, t)!,
       titleStyle: TextStyle.lerp(titleStyle, other.titleStyle, t)!,
       subtitleStyle: TextStyle.lerp(subtitleStyle, other.subtitleStyle, t)!,
-      containerPadding: EdgeInsetsGeometry.lerp(containerPadding, other.containerPadding, t)!,
+      containerPadding: EdgeInsetsGeometry.lerp(
+        containerPadding,
+        other.containerPadding,
+        t,
+      )!,
       spacing: (spacing + (other.spacing - spacing) * t),
     );
   }

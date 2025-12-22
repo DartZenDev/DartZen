@@ -8,7 +8,7 @@ import 'package:dartzen_localization/dartzen_localization.dart';
 class IdentityMessages {
   /// The localization service.
   final ZenLocalizationService _service;
-  
+
   /// The current language code.
   final String _language;
 

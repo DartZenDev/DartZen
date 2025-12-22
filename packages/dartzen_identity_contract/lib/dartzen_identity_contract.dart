@@ -9,4 +9,3 @@ export 'src/models/identity.dart';
 export 'src/models/identity_id.dart';
 export 'src/models/identity_lifecycle.dart';
 export 'src/models/role.dart';
-

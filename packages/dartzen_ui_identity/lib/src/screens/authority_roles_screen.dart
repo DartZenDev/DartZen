@@ -16,7 +16,8 @@ class AuthorityRolesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(identitySessionStoreProvider);
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ??
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
         IdentityThemeExtension.fallback();
 
     return Scaffold(
@@ -48,11 +49,7 @@ class AuthorityRolesScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            IdentityStatusChip(label: role.name),
-                          ],
-                        ),
+                        Row(children: [IdentityStatusChip(label: role.name)]),
                       ],
                     ),
                   ),
@@ -64,8 +61,9 @@ class AuthorityRolesScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, st) => Center(
           child: Text(
-            messages
-                .error(err is ZenError ? err : ZenUnknownError(err.toString())),
+            messages.error(
+              err is ZenError ? err : ZenUnknownError(err.toString()),
+            ),
           ),
         ),
       ),
