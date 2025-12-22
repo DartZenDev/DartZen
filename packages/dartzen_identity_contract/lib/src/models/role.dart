@@ -1,5 +1,6 @@
-import 'package:dartzen_identity_contract/src/models/capability.dart';
 import 'package:meta/meta.dart';
+
+import 'capability.dart';
 
 /// Represents a named role containing a set of capabilities.
 @immutable

@@ -37,7 +37,16 @@ final class ZenTimestamp {
 
   /// Returns true if this timestamp is after [other].
   bool isAfter(ZenTimestamp other) => value.isAfter(other.value);
+
+  /// Returns the number of milliseconds since epoch.
+  int get millisecondsSinceEpoch => value.millisecondsSinceEpoch;
+
+  /// Creates a [ZenTimestamp] from [milliseconds] since epoch.
+  factory ZenTimestamp.fromMilliseconds(int milliseconds) => ZenTimestamp._(
+    DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true),
+  );
 }
+
 
 /// A value object representing a locale with a mandatory language code
 /// and an optional region code.

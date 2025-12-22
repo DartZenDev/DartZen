@@ -24,56 +24,63 @@ void main() {
   });
 
   group('CacheIdentityRepository', () {
-    test('getIdentity should call delegate and cache result on first call',
-        () async {
-      const subject = 'user_123';
-      final mockExternal = MockExternalIdentity();
-      when(() => mockExternal.subject).thenReturn(subject);
+    test(
+      'getIdentity should call delegate and cache result on first call',
+      () async {
+        const subject = 'user_123';
+        final mockExternal = MockExternalIdentity();
+        when(() => mockExternal.subject).thenReturn(subject);
         when(() => mockExternal.claims).thenReturn({'role': 'admin'});
-      when(() => mockDelegate.getIdentity(subject))
-          .thenAnswer((_) async => ZenResult.ok(mockExternal));
+        when(
+          () => mockDelegate.getIdentity(subject),
+        ).thenAnswer((_) async => ZenResult.ok(mockExternal));
 
-      // First call: cache miss
-      final result1 = await repository.getIdentity(subject);
-      expect(result1.isSuccess, isTrue);
-      verify(() => mockDelegate.getIdentity(subject)).called(1);
+        // First call: cache miss
+        final result1 = await repository.getIdentity(subject);
+        expect(result1.isSuccess, isTrue);
+        verify(() => mockDelegate.getIdentity(subject)).called(1);
 
-      // Second call: cache hit
-      final result2 = await repository.getIdentity(subject);
-      expect(result2.isSuccess, isTrue);
+        // Second call: cache hit
+        final result2 = await repository.getIdentity(subject);
+        expect(result2.isSuccess, isTrue);
         // Checks value equality since serialization creates a new instance
         expect(result2.dataOrNull!.subject, subject);
         expect(result2.dataOrNull!.claims, {'role': 'admin'});
-      verifyNoMoreInteractions(mockDelegate);
-    });
+        verifyNoMoreInteractions(mockDelegate);
+      },
+    );
 
-    test('getIdentity should fall back to delegate if cache entry is expired',
-        () async {
-      const subject = 'user_123';
-      final mockExternal = MockExternalIdentity();
-      when(() => mockExternal.subject).thenReturn(subject);
+    test(
+      'getIdentity should fall back to delegate if cache entry is expired',
+      () async {
+        const subject = 'user_123';
+        final mockExternal = MockExternalIdentity();
+        when(() => mockExternal.subject).thenReturn(subject);
         when(() => mockExternal.claims).thenReturn({});
-      when(() => mockDelegate.getIdentity(subject))
-          .thenAnswer((_) async => ZenResult.ok(mockExternal));
+        when(
+          () => mockDelegate.getIdentity(subject),
+        ).thenAnswer((_) async => ZenResult.ok(mockExternal));
 
-      // Populating cache
-      await repository.getIdentity(subject);
+        // Populating cache
+        await repository.getIdentity(subject);
 
-      // Wait for expiration
-      await Future<void>.delayed(const Duration(milliseconds: 1100));
+        // Wait for expiration
+        await Future<void>.delayed(const Duration(milliseconds: 1100));
 
-      // Next call: cache expired, calls delegate again
-      await repository.getIdentity(subject);
-      verify(() => mockDelegate.getIdentity(subject)).called(2);
-    });
+        // Next call: cache expired, calls delegate again
+        await repository.getIdentity(subject);
+        verify(() => mockDelegate.getIdentity(subject)).called(2);
+      },
+    );
 
     test('resolveId should call delegate and cache result', () async {
       final mockExternal = MockExternalIdentity();
       const idValue = 'user_123';
       final id = IdentityId.create(idValue).dataOrNull!;
       when(() => mockExternal.subject).thenReturn(idValue);
-      when(() => mockDelegate.resolveId(mockExternal))
-          .thenAnswer((_) async => ZenResult.ok(id));
+      when(
+        () => mockDelegate.resolveId(mockExternal),
+      ).thenAnswer((_) async => ZenResult.ok(id));
 
       // First call
       final result1 = await repository.resolveId(mockExternal);

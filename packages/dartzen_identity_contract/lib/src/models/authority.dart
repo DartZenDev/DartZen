@@ -1,7 +1,8 @@
-import 'package:dartzen_identity_contract/src/models/capability.dart';
-import 'package:dartzen_identity_contract/src/models/identity_id.dart';
-import 'package:dartzen_identity_contract/src/models/role.dart';
 import 'package:meta/meta.dart';
+
+import 'capability.dart';
+import 'identity_id.dart';
+import 'role.dart';
 
 /// Represents the effective authority of an identity at a point in time.
 ///

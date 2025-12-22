@@ -16,9 +16,9 @@ class CacheIdentityRepository implements IdentityProvider, IdentityHooks {
     required IdentityProvider delegate,
     required CacheStore store,
     CacheConfig config = const CacheConfig(),
-  })  : _delegate = delegate,
+  }) : _delegate = delegate,
        _store = store,
-        _config = config;
+       _config = config;
 
   final IdentityProvider _delegate;
   final CacheStore _store;
@@ -28,7 +28,7 @@ class CacheIdentityRepository implements IdentityProvider, IdentityHooks {
   Future<ZenResult<ExternalIdentity>> getIdentity(String subject) async {
     final key = 'identity:$subject';
     final cached = await _store.get(key);
-    
+
     if (cached.isSuccess && cached.dataOrNull != null) {
       try {
         final data = jsonDecode(cached.dataOrNull!) as Map<String, dynamic>;
@@ -66,7 +66,7 @@ class CacheIdentityRepository implements IdentityProvider, IdentityHooks {
   Future<ZenResult<IdentityId>> resolveId(ExternalIdentity external) async {
     final key = 'id:${external.subject}';
     final cached = await _store.get(key);
-    
+
     if (cached.isSuccess && cached.dataOrNull != null) {
       final idResult = IdentityId.create(cached.dataOrNull!);
       if (idResult.isSuccess) {
