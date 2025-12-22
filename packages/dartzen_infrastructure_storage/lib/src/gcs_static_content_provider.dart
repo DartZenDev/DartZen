@@ -1,5 +1,4 @@
-import 'dart:developer' as developer;
-
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_server/dartzen_server.dart';
 import 'package:gcloud/storage.dart';
 
@@ -61,12 +60,7 @@ class GcsStaticContentProvider implements ZenStaticContentProvider {
       return String.fromCharCodes(bytes);
     } catch (e, stackTrace) {
       // Log the error for debugging purposes
-      developer.log(
-        'Error fetching object from GCS',
-        name: 'dartzen_infrastructure_storage.GcsStaticContentProvider',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      ZenLogger.instance.error('Error fetching object from GCS', e, stackTrace);
       return null;
     }
   }

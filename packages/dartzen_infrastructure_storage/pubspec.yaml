@@ -9,6 +9,8 @@ environment:
 resolution: workspace
 
 dependencies:
+  dartzen_core:
+    path: ../dartzen_core
   dartzen_server:
     path: ../dartzen_server
   gcloud: ^0.8.12
