@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:dartzen_server/dartzen_server.dart';
 import 'package:http/http.dart' as http;
+import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf_io.dart' as io;
+import 'package:shelf_router/shelf_router.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -11,11 +16,9 @@ void main() {
       app = ZenServerApplication(
         config: const ZenServerConfig(
           port: port,
-          staticContentProvider: MemoryStaticContentProvider(
-            {
+          staticContentProvider: MemoryStaticContentProvider({
             'terms': '<html><body><h1>Terms & Conditions</h1></body></html>',
-          },
-          ),
+          }),
         ),
       );
     });
@@ -57,6 +60,64 @@ void main() {
 
       await app.stop();
       expect(shutdownCalled, isTrue);
+    });
+
+    test('registers routes correctly', () async {
+      final router = Router();
+      router.get('/custom', (Request request) => Response.ok('Custom route'));
+
+      final pipeline = const Pipeline()
+          .addMiddleware(logRequests())
+          .addHandler(router.call);
+
+      final server0 = await io.serve(
+        pipeline,
+        InternetAddress.loopbackIPv4,
+        port,
+      );
+
+      final response = await http.get(
+        Uri.parse('http://localhost:$port/custom'),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, 'Custom route');
+
+      await server0.close();
+    });
+
+    test('executes middleware in correct order', () async {
+      final middlewareOrder = <String>[];
+
+      final pipeline = const Pipeline()
+          .addMiddleware(
+            (Handler innerHandler) => (Request request) {
+              middlewareOrder.add('middleware1');
+              return innerHandler(request);
+            },
+          )
+          .addMiddleware(
+            (Handler innerHandler) => (Request request) {
+              middlewareOrder.add('middleware2');
+              return innerHandler(request);
+            },
+          )
+          .addHandler((Request request) {
+            middlewareOrder.add('handler');
+            return Response.ok('Middleware test');
+          });
+
+      final server = await io.serve(
+        pipeline,
+        InternetAddress.loopbackIPv4,
+        port,
+      );
+
+      final response = await http.get(Uri.parse('http://localhost:$port/test'));
+      expect(response.statusCode, 200);
+      expect(response.body, 'Middleware test');
+      expect(middlewareOrder, ['middleware1', 'middleware2', 'handler']);
+
+      await server.close();
     });
   });
 }

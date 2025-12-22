@@ -58,5 +58,19 @@ void main() {
 
       expect(response.statusCode, 500);
     });
+
+    test('translates ZenUnauthorizedError to 401 Response', () {
+      const result = ZenResult<void>.err(ZenUnauthorizedError('Unauthorized'));
+      final response = ZenResponseTranslator.translate(
+        result: result,
+        requestId: requestId,
+        format: format,
+      );
+
+      expect(response.statusCode, 401);
+      final zenData = response.context['zen_data'] as Map<String, dynamic>;
+      expect(zenData['status'], 401);
+      expect(zenData['error'], 'Unauthorized');
+    });
   });
 }

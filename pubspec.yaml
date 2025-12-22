@@ -1,6 +1,6 @@
 name: dartzen
 description: DartZen workspace mono-repo for managing dependencies and packages.
-publish_to: 'none'
+publish_to: "none"
 version: 0.0.1
 
 environment:
@@ -64,7 +64,7 @@ melos:
       exec: dart pub publish --dry-run
       description: Publish all dartzen_* packages to pub.dev (dry-run mode).
       packageFilters:
-        scope: 'dartzen_*'
+        scope: "dartzen_*"
     run:android:
       exec: flutter run -d android --dart-define=DZ_PLATFORM=android --dart-define=DZ_ENV=dev
       description: Run the app on Android (debug mode).
@@ -135,5 +135,3 @@ melos:
       exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       packageFilters:
         scope: dartzen_ui_identity_example
-
-

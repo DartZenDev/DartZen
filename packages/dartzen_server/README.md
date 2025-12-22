@@ -68,6 +68,51 @@ void main() async {
 }
 ```
 
+## 🚀 Usage Examples
+
+### Starting the Server
+
+```dart
+import 'package:dartzen_server/dartzen_server.dart';
+
+void main() async {
+  final app = ZenServerApplication(
+    config: ZenServerConfig(
+      port: 8080,
+      staticContentProvider: FileStaticContentProvider('public'),
+    ),
+  );
+
+  await app.run();
+}
+```
+
+And put your static files (e.g., `terms.html`, `privacy.html`) in the `public` directory.
+
+```text
+public/
+  └── terms.html
+```
+
+### Translating Domain Results to HTTP Responses
+
+```dart
+import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_server/dartzen_server.dart';
+
+void main() {
+  const result = ZenResult.ok({'key': 'value'});
+  final response = ZenResponseTranslator.translate(
+    result: result,
+    requestId: '12345',
+    format: ZenTransportFormat.json,
+  );
+
+  print(response.statusCode); // 200
+  print(response.context['zen_data']);
+}
+```
+
 ## 🐛 Error Handling
 
 The server follows the `ZenResult` pattern. Domain failures are captured as `ZenFailure` and translated into `ZenResponse` with appropriate semantic error codes and localizable messages.

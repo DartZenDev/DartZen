@@ -49,7 +49,7 @@ void main() {
     });
 
     test('maps ZenUnknownError to 500', () {
-      const result = ZenResult<void>.err(ZenUnknownError('Internal'));
+      final result = ZenResult<void>.err(ZenUnknownError('Unexpected error'));
       final response = ZenResponseTranslator.translate(
         result: result,
         requestId: requestId,
@@ -59,8 +59,7 @@ void main() {
     });
 
     test('hides error details in production for 500 errors', () {
-      // Note: dzIsPrd is true by default in tests unless DZ_ENV=dev is set
-      const result = ZenResult<void>.err(ZenUnknownError('Secret details'));
+      final result = ZenResult<void>.err(ZenUnknownError('Sensitive details'));
       final response = ZenResponseTranslator.translate(
         result: result,
         requestId: requestId,

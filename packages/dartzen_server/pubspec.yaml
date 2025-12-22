@@ -9,6 +9,8 @@ environment:
 dependencies:
   dartzen_core:
     path: ../dartzen_core
+  dartzen_identity_contract:
+    path: ../dartzen_identity_contract
   dartzen_localization:
     path: ../dartzen_localization
   dartzen_server_transport:
