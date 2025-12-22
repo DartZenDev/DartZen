@@ -1,0 +1,25 @@
+name: dartzen_server
+description: The application boundary and orchestration layer for the DartZen ecosystem.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ">=3.10.2 <4.0.0"
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_localization:
+    path: ../dartzen_localization
+  dartzen_server_transport:
+    path: ../dartzen_server_transport
+  dartzen_transport:
+    path: ../dartzen_transport
+  meta: ^1.15.0
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+
+dev_dependencies:
+  http: ^1.1.0
+  lints: ^6.0.0
+  test: ^1.25.0
