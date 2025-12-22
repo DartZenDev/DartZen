@@ -63,9 +63,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.messages.error(failure)),
-            backgroundColor: Theme.of(context)
-                .extension<IdentityThemeExtension>()
-                ?.errorColor,
+            backgroundColor: Theme.of(
+              context,
+            ).extension<IdentityThemeExtension>()?.errorColor,
           ),
         );
       },
@@ -79,7 +79,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final state = ref.watch(identitySessionStoreProvider);
     final isLoading = state.isLoading;
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ??
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
         IdentityThemeExtension.fallback();
 
     return Scaffold(
@@ -137,11 +138,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: IdentityButton(
-                      text: widget.messages
+                      text: widget
+                          .messages
                           .restorePasswordTitle, // "Reset Password" usually
                       variant: IdentityButtonVariant.text,
-                      onPressed:
-                          isLoading ? null : widget.onForgotPasswordClick,
+                      onPressed: isLoading
+                          ? null
+                          : widget.onForgotPasswordClick,
                     ),
                   ),
                   SizedBox(height: theme.spacing),

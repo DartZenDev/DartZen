@@ -22,7 +22,8 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(identitySessionStoreProvider);
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ??
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
         IdentityThemeExtension.fallback();
 
     return Scaffold(
@@ -72,10 +73,7 @@ class ProfileScreen extends ConsumerWidget {
               Wrap(
                 spacing: 8,
                 children: identity.authority.roles.map((role) {
-                  return IdentityStatusChip(
-                    label: role.name,
-                    isOutline: true,
-                  );
+                  return IdentityStatusChip(label: role.name, isOutline: true);
                 }).toList(),
               ),
               SizedBox(height: theme.spacing * 2),
@@ -95,8 +93,9 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, st) => Center(
           child: Text(
-            messages
-                .error(err is ZenError ? err : ZenUnknownError(err.toString())),
+            messages.error(
+              err is ZenError ? err : ZenUnknownError(err.toString()),
+            ),
           ),
         ),
       ),

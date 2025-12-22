@@ -57,9 +57,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.messages.error(failure)),
-            backgroundColor: Theme.of(context)
-                .extension<IdentityThemeExtension>()
-                ?.errorColor,
+            backgroundColor: Theme.of(
+              context,
+            ).extension<IdentityThemeExtension>()?.errorColor,
           ),
         );
       },
@@ -70,7 +70,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(identitySessionStoreProvider);
     final isLoading = state.isLoading;
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ??
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
         IdentityThemeExtension.fallback();
 
     return Scaffold(

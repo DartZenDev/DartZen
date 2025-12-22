@@ -47,7 +47,6 @@ final class ZenTimestamp {
   );
 }
 
-
 /// A value object representing a locale with a mandatory language code
 /// and an optional region code.
 ///

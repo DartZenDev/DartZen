@@ -59,9 +59,9 @@ class _RestorePasswordScreenState extends ConsumerState<RestorePasswordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.messages.error(error)),
-            backgroundColor: Theme.of(context)
-                .extension<IdentityThemeExtension>()
-                ?.errorColor,
+            backgroundColor: Theme.of(
+              context,
+            ).extension<IdentityThemeExtension>()?.errorColor,
           ),
         );
       },
@@ -70,7 +70,8 @@ class _RestorePasswordScreenState extends ConsumerState<RestorePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).extension<IdentityThemeExtension>() ??
+    final theme =
+        Theme.of(context).extension<IdentityThemeExtension>() ??
         IdentityThemeExtension.fallback();
 
     return Scaffold(
@@ -124,8 +125,9 @@ class _RestorePasswordScreenState extends ConsumerState<RestorePasswordScreen> {
                   SizedBox(height: theme.spacing * 2),
                   IdentityButton(
                     text: widget.messages.sendResetLinkButton,
-                    isLoading:
-                        ref.watch(identitySessionStoreProvider).isLoading,
+                    isLoading: ref
+                        .watch(identitySessionStoreProvider)
+                        .isLoading,
                     onPressed: _submit,
                   ),
                 ],
