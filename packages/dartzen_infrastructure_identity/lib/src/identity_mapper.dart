@@ -1,7 +1,8 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_identity_domain/dartzen_identity_domain.dart';
-import 'package:dartzen_infrastructure_identity/src/claims_extractor.dart';
 import 'package:meta/meta.dart';
+
+import 'claims_extractor.dart';
 
 /// Concrete mapper that translates external facts into domain [Identity].
 ///
