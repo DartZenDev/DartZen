@@ -33,7 +33,8 @@ class MockIdentityRepository implements contract.IdentityRepository {
 
     return const ZenResult.err(
       ZenUnauthorizedError(
-          'Invalid email or password (try password="password")'),
+        'Invalid email or password (try password="password")',
+      ),
     );
   }
 

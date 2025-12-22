@@ -25,8 +25,9 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
-        identityRepositoryProvider
-            .overrideWith((ref) => MockIdentityRepository()),
+        identityRepositoryProvider.overrideWith(
+          (ref) => MockIdentityRepository(),
+        ),
       ],
       child: const ExampleApp(),
     ),
@@ -74,7 +75,8 @@ class _ExampleAppState extends ConsumerState<ExampleApp> {
   Widget build(BuildContext context) {
     if (!_messagesLoaded) {
       return const MaterialApp(
-          home: Scaffold(body: Center(child: CircularProgressIndicator())));
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
     }
 
     // Router configuration must be rebuilt if auth state changes to support redirection?
@@ -88,7 +90,8 @@ class _ExampleAppState extends ConsumerState<ExampleApp> {
         final authState = ref.read(identitySessionStoreProvider);
         final isAuthenticated = authState.value != null;
 
-        final isLoginRoute = state.uri.path == '/login' ||
+        final isLoginRoute =
+            state.uri.path == '/login' ||
             state.uri.path == '/register' ||
             state.uri.path == '/restore-password';
 
@@ -133,17 +136,13 @@ class _ExampleAppState extends ConsumerState<ExampleApp> {
         // Main Authenticated Routes using HomeScreen wrapper
         GoRoute(
           path: '/profile',
-          builder: (context, state) => HomeScreen(
-            initialIndex: 0,
-            messages: _identityMessages,
-          ),
+          builder: (context, state) =>
+              HomeScreen(initialIndex: 0, messages: _identityMessages),
         ),
         GoRoute(
           path: '/roles',
-          builder: (context, state) => HomeScreen(
-            initialIndex: 1,
-            messages: _identityMessages,
-          ),
+          builder: (context, state) =>
+              HomeScreen(initialIndex: 1, messages: _identityMessages),
         ),
       ],
     );
@@ -153,9 +152,7 @@ class _ExampleAppState extends ConsumerState<ExampleApp> {
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,
-        extensions: [
-          IdentityThemeExtension.fallback(),
-        ],
+        extensions: [IdentityThemeExtension.fallback()],
       ),
       routerConfig: router,
     );
@@ -216,18 +213,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           id: 'profile',
           label: widget.messages.profileTitle,
           icon: Icons.person,
-          builder: (context) => ProfileScreen(
-            messages: widget.messages,
-            onLogoutSuccess: () {},
-          ),
+          builder: (context) =>
+              ProfileScreen(messages: widget.messages, onLogoutSuccess: () {}),
         ),
         ZenNavigationItem(
           id: 'roles',
           label: 'Roles',
           icon: Icons.security,
-          builder: (context) => AuthorityRolesScreen(
-            messages: widget.messages,
-          ),
+          builder: (context) => AuthorityRolesScreen(messages: widget.messages),
         ),
       ],
     );
@@ -239,5 +232,4 @@ class IdentityListenable extends ChangeNotifier {
   IdentityListenable(WidgetRef ref) {
     ref.listen(identitySessionStoreProvider, (prev, next) => notifyListeners());
   }
-
 }
