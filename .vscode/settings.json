@@ -1,38 +1,39 @@
 {
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
+  },
+  "[dart]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-        "source.fixAll": "always",
-        "source.organizeImports": "always"
-    },
-    "[dart]": {
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "always",
-            "source.organizeImports": "always"
-        }
-    },
-    "cSpell.words": [
-        "Behaviour",
-        "buildlog",
-        "cupertino",
-        "dartdoc",
-        "dartzen",
-        "firestore",
-        "fixarray",
-        "fixint",
-        "fixmap",
-        "fixstr",
-        "goldens",
-        "inavigation",
-        "Memorystore",
-        "mocktail",
-        "msgpack",
-        "pubspec",
-        "riverpod",
-        "Schyler",
-        "SETEX",
-        "simplecast",
-        "unawaited",
-        "unrepresentable"
-    ]
+      "source.fixAll": "always",
+      "source.organizeImports": "always"
+    }
+  },
+  "cSpell.words": [
+    "Behaviour",
+    "buildlog",
+    "cupertino",
+    "dartdoc",
+    "dartzen",
+    "devstorage",
+    "firestore",
+    "fixarray",
+    "fixint",
+    "fixmap",
+    "fixstr",
+    "goldens",
+    "inavigation",
+    "Memorystore",
+    "mocktail",
+    "msgpack",
+    "pubspec",
+    "riverpod",
+    "Schyler",
+    "SETEX",
+    "simplecast",
+    "unawaited",
+    "unrepresentable"
+  ]
 }

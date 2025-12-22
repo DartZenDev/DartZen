@@ -5,7 +5,8 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**The opinionated, scalable core starter kit for Dart & Flutter.**  
+**The opinionated, scalable core starter kit for Dart & Flutter.**
+
 Minimalist architecture, domain-first approach, and developer zen.
 
 ## 🎯 Philosophy
@@ -21,7 +22,6 @@ DartZen embraces **minimalism**, **scalability**, and **developer zen**. Built o
 - [Identity Model Philosophy](docs/identity_model_philosophy.md) — Establishes identity as a stable domain concept, independent of authentication details.
 - [Identity Domain](docs/identity_domain.md) — Defines the identity domain model and its lifecycle.
 - [Server Philosophy](docs/server_philosophy.md) — Defines the server as an application boundary in the DartZen ecosystem.
-
 
 ## 📦 Repository Structure
 
@@ -52,6 +52,8 @@ dartzen/
 - **`dartzen_infrastructure_identity`**: Infrastructure adapters for identity — maps external IdPs, handles lifecycle hooks, and enforces domain purity.
 - **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 - **`dartzen_infrastructure_cache`**: Transparent, high-performance caching accelerator for DartZen Identity infrastructure.
+- **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
+- **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen
 
 ## 📄 License
 
