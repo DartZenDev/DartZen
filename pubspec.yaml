@@ -20,6 +20,8 @@ workspace:
   - packages/dartzen_infrastructure_identity
   - packages/dartzen_infrastructure_firestore
   - packages/dartzen_infrastructure_cache
+  - packages/dartzen_ui_identity
+  - packages/dartzen_ui_identity/example
 
 dependency_overrides:
   cli_util: ^0.4.2
@@ -119,7 +121,19 @@ melos:
       description: Run the app on Linux (release mode).
     example:navigation:web:
       exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
-      scope: dartzen_navigation_example
+      packageFilters:
+        scope: dartzen_navigation_example
     example:navigation:ios:
       exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
-      scope: dartzen_navigation_example
+      packageFilters:
+        scope: dartzen_navigation_example
+    example:identity:web:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
+      packageFilters:
+        scope: dartzen_ui_identity_example
+    example:identity:ios:
+      exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
+      packageFilters:
+        scope: dartzen_ui_identity_example
+
+

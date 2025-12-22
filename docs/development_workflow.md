@@ -65,6 +65,8 @@
 |---------|-------------|
 | `melos run example:navigation:web` | Run DartZen Navigation package example for Web in Debug mode |
 | `melos run example:navigation:ios` | Run DartZen Navigation package example for iOS in Debug mode |
+| `melos run example:identity:web` | Run DartZen Identity package example for Web in Debug mode |
+| `melos run example:identity:ios` | Run DartZen Identity package example for iOS in Debug mode |
 
 ## 🛠️ Making Changes
 
