@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_identity_domain/dartzen_identity_domain.dart';
 
+import 'l10n/firestore_messages.dart';
 import 'models/infrastructure_errors.dart';
 
 /// Pure function mapper between [Identity] domain aggregate and Firestore documents.
@@ -9,7 +10,28 @@ import 'models/infrastructure_errors.dart';
 /// This mapper enforces the collection schema and type conversion.
 /// It contains NO business logic.
 class FirestoreIdentityMapper {
+  final FirestoreMessages _messages;
+
+  /// Creates a [FirestoreIdentityMapper].
+  const FirestoreIdentityMapper(this._messages);
+
+  /// Stable string tokens for lifecycle states.
+  /// These tokens are persisted and must remain stable across enum renames.
+  static const String _tokenPending = 'pending';
+  static const String _tokenActive = 'active';
+  static const String _tokenRevoked = 'revoked';
+  static const String _tokenDisabled = 'disabled';
+
   /// Field names for Firestore documents.
+  ///
+  /// These field names represent the stable schema contract with Firestore.
+  /// Changing these will break compatibility with existing stored documents.
+  ///
+  /// [_fieldLifecycleState]: Current state token (required) - see [_tokenPending], etc.
+  /// [_fieldLifecycleReason]: Optional reason for state transitions (e.g., revocation reason).
+  /// [_fieldRoles]: Array of role names granted to this identity.
+  /// [_fieldCapabilities]: Array of capability IDs granted to this identity.
+  /// [_fieldCreatedAt]: Firestore timestamp of identity creation (required for audit trail).
   static const String _fieldLifecycleState = 'lifecycle_state';
   static const String _fieldLifecycleReason = 'lifecycle_reason';
   static const String _fieldRoles = 'roles';
@@ -17,8 +39,15 @@ class FirestoreIdentityMapper {
   static const String _fieldCreatedAt = 'created_at';
 
   /// Maps a domain [Identity] to a Firestore JSON map.
-  static Map<String, dynamic> toMap(Identity identity) => {
-    _fieldLifecycleState: identity.lifecycle.state.name,
+  ///
+  /// Design rationale:
+  /// - Uses stable tokens for lifecycle_state instead of enum.name to prevent
+  ///   storage brittleness if domain enums are renamed.
+  /// - lifecycle_reason is optional - only present for revoked/disabled states.
+  /// - roles and capabilities are stored as simple string arrays for query efficiency.
+  /// - created_at stored as Firestore Timestamp for native date queries and indexing.
+  Map<String, dynamic> toMap(Identity identity) => {
+    _fieldLifecycleState: _stateToToken(identity.lifecycle.state),
     if (identity.lifecycle.reason != null)
       _fieldLifecycleReason: identity.lifecycle.reason,
     _fieldRoles: identity.authority.roles.map((r) => r.name).toList(),
@@ -30,13 +59,51 @@ class FirestoreIdentityMapper {
     ),
   };
 
+  /// Converts [IdentityState] to stable storage token.
+  static String _stateToToken(IdentityState state) {
+    switch (state) {
+      case IdentityState.pending:
+        return _tokenPending;
+      case IdentityState.active:
+        return _tokenActive;
+      case IdentityState.revoked:
+        return _tokenRevoked;
+      case IdentityState.disabled:
+        return _tokenDisabled;
+    }
+  }
+
+  /// Converts stable storage token to [IdentityState].
+  ZenResult<IdentityState> _tokenToState(String token) {
+    switch (token) {
+      case _tokenPending:
+        return const ZenResult.ok(IdentityState.pending);
+      case _tokenActive:
+        return const ZenResult.ok(IdentityState.active);
+      case _tokenRevoked:
+        return const ZenResult.ok(IdentityState.revoked);
+      case _tokenDisabled:
+        return const ZenResult.ok(IdentityState.disabled);
+      default:
+        return ZenResult.err(
+          ZenInfrastructureError(
+            _messages.unknownLifecycleState(),
+            errorCode: InfrastructureErrorCode.corruptedData,
+          ),
+        );
+    }
+  }
+
   /// Maps a Firestore [DocumentSnapshot] to a domain [Identity].
   ///
   /// returns [ZenResult] with [Identity] or error if mapping fails.
-  static ZenResult<Identity> fromDocument(DocumentSnapshot doc) {
+  ZenResult<Identity> fromDocument(DocumentSnapshot doc) {
     if (!doc.exists) {
       return ZenResult.err(
-        ZenInfrastructureError('Document does not exist: ${doc.id}'),
+        ZenInfrastructureError(
+          _messages.documentNotFound(),
+          errorCode: InfrastructureErrorCode.corruptedData,
+        ),
       );
     }
 
@@ -44,7 +111,10 @@ class FirestoreIdentityMapper {
       final data = doc.data() as Map<String, dynamic>?;
       if (data == null) {
         return ZenResult.err(
-          ZenInfrastructureError('Document data is null: ${doc.id}'),
+          ZenInfrastructureError(
+            _messages.documentDataNull(),
+            errorCode: InfrastructureErrorCode.corruptedData,
+          ),
         );
       }
 
@@ -62,27 +132,18 @@ class FirestoreIdentityMapper {
       if (stateStr == null) {
         return ZenResult.err(
           ZenInfrastructureError(
-            'Missing lifecycle state in document: ${doc.id}',
+            _messages.missingLifecycleState(),
             errorCode: InfrastructureErrorCode.corruptedData,
           ),
         );
       }
 
-      // Fail loudly on unknown lifecycle states to maintain data integrity
-      final stateIndex = IdentityState.values.indexWhere(
-        (e) => e.name == stateStr,
-      );
-
-      if (stateIndex == -1) {
-        return ZenResult.err(
-          ZenInfrastructureError(
-            'Unknown lifecycle state "$stateStr" in document: ${doc.id}',
-            errorCode: InfrastructureErrorCode.corruptedData,
-          ),
-        );
+      // Use stable token mapping instead of enum name lookup
+      final stateResult = _tokenToState(stateStr);
+      if (stateResult.isFailure) {
+        return ZenResult.err(stateResult.errorOrNull!);
       }
-
-      final targetState = IdentityState.values[stateIndex];
+      final targetState = stateResult.dataOrNull!;
 
       final lifecycleResult = _reconstructLifecycle(targetState, reason);
       if (lifecycleResult.isFailure) {
@@ -105,7 +166,10 @@ class FirestoreIdentityMapper {
       final timestamp = data[_fieldCreatedAt] as Timestamp?;
       if (timestamp == null) {
         return ZenResult.err(
-          ZenInfrastructureError('Missing created_at in document: ${doc.id}'),
+          ZenInfrastructureError(
+            _messages.missingTimestamp(),
+            errorCode: InfrastructureErrorCode.corruptedData,
+          ),
         );
       }
       final createdAt = ZenTimestamp.from(timestamp.toDate());
@@ -121,7 +185,8 @@ class FirestoreIdentityMapper {
     } catch (e, stack) {
       return ZenResult.err(
         ZenInfrastructureError(
-          'Failed to map identity from document',
+          _messages.corruptedData(),
+          errorCode: InfrastructureErrorCode.corruptedData,
           originalError: e,
           stackTrace: stack,
         ),
