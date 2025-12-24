@@ -53,7 +53,8 @@ dartzen/
 - **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 - **`dartzen_infrastructure_cache`**: Transparent, high-performance caching accelerator for DartZen Identity infrastructure.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
-- **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen
+- **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen.
+- **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 
 ## 📄 License
 

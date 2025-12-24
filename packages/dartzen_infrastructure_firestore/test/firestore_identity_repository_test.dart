@@ -4,6 +4,8 @@ import 'package:dartzen_infrastructure_firestore/dartzen_infrastructure_firestor
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'test_helpers.dart';
+
 void main() {
   group('FirestoreIdentityRepository', () {
     late FakeFirebaseFirestore firestore;
@@ -11,7 +13,10 @@ void main() {
 
     setUp(() {
       firestore = FakeFirebaseFirestore();
-      repository = FirestoreIdentityRepository(firestore: firestore);
+      repository = FirestoreIdentityRepository(
+        firestore: firestore,
+        messages: createTestMessages(),
+      );
     });
 
     final testId = IdentityId.create('user-123').dataOrNull!;

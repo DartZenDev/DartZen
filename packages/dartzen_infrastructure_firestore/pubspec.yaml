@@ -17,6 +17,8 @@ dependencies:
     path: ../dartzen_identity_contract
   dartzen_identity_domain:
     path: ../dartzen_identity_domain
+  dartzen_localization:
+    path: ../dartzen_localization
   flutter:
     sdk: flutter
   meta: ^1.11.0

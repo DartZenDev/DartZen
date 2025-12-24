@@ -6,12 +6,16 @@ import 'package:dartzen_infrastructure_firestore/src/models/infrastructure_error
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'test_helpers.dart';
+
 void main() {
   group('FirestoreIdentityMapper', () {
     late FakeFirebaseFirestore firestore;
+    late FirestoreIdentityMapper mapper;
 
     setUp(() {
       firestore = FakeFirebaseFirestore();
+      mapper = FirestoreIdentityMapper(createTestMessages());
     });
 
     final testId = IdentityId.create('test-id').dataOrNull!;
@@ -27,7 +31,7 @@ void main() {
     );
 
     test('toMap converts Identity to Firestore map correctly', () {
-      final map = FirestoreIdentityMapper.toMap(testIdentity);
+      final map = mapper.toMap(testIdentity);
 
       expect(map['lifecycle_state'], 'pending');
       expect(map['roles'], contains('admin'));
@@ -46,7 +50,7 @@ void main() {
       });
 
       final doc = await firestore.collection('identities').doc('test-id').get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isSuccess, isTrue);
       final identity = result.dataOrNull!;
@@ -61,7 +65,7 @@ void main() {
           .collection('identities')
           .doc('missing-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isFailure, isTrue);
       expect(result.errorOrNull, isA<ZenInfrastructureError>());
@@ -79,7 +83,7 @@ void main() {
           .collection('identities')
           .doc('active-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isSuccess, isTrue);
       expect(result.dataOrNull!.lifecycle.state, IdentityState.active);
@@ -98,7 +102,7 @@ void main() {
           .collection('identities')
           .doc('revoked-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isSuccess, isTrue);
       expect(result.dataOrNull!.lifecycle.state, IdentityState.revoked);
@@ -118,7 +122,7 @@ void main() {
           .collection('identities')
           .doc('disabled-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isSuccess, isTrue);
       expect(result.dataOrNull!.lifecycle.state, IdentityState.disabled);
@@ -137,7 +141,7 @@ void main() {
           .collection('identities')
           .doc('invalid-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isFailure, isTrue);
       expect(result.errorOrNull, isA<ZenInfrastructureError>());
@@ -158,7 +162,7 @@ void main() {
             .collection('identities')
             .doc('no-reason-id')
             .get();
-        final result = FirestoreIdentityMapper.fromDocument(doc);
+        final result = mapper.fromDocument(doc);
 
         expect(result.isSuccess, isTrue);
         expect(result.dataOrNull!.lifecycle.state, IdentityState.disabled);
@@ -179,7 +183,7 @@ void main() {
           .collection('identities')
           .doc('full-authority-id')
           .get();
-      final result = FirestoreIdentityMapper.fromDocument(doc);
+      final result = mapper.fromDocument(doc);
 
       expect(result.isSuccess, isTrue);
       final identity = result.dataOrNull!;

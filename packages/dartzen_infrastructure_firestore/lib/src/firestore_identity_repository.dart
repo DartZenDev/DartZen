@@ -14,15 +14,20 @@ import 'models/infrastructure_errors.dart';
 class FirestoreIdentityRepository implements IdentityProvider {
   final FirebaseFirestore _firestore;
   final String _collectionPath;
+  final FirestoreMessages _messages;
+  final FirestoreIdentityMapper _mapper;
 
   /// Creates a [FirestoreIdentityRepository].
   ///
   /// [collectionPath] defaults to 'identities'.
   FirestoreIdentityRepository({
     required FirebaseFirestore firestore,
+    required FirestoreMessages messages,
     String collectionPath = 'identities',
-  }) : _firestore = firestore,
-       _collectionPath = collectionPath;
+  })  : _firestore = firestore,
+        _collectionPath = collectionPath,
+        _messages = messages,
+        _mapper = FirestoreIdentityMapper(messages);
 
   /// Persistence: Saves the identity aggregate to Firestore.
   ///
@@ -30,11 +35,12 @@ class FirestoreIdentityRepository implements IdentityProvider {
   Future<ZenResult<void>> save(Identity identity) async {
     try {
       final docRef = _collection(identity.id.value);
-      final data = FirestoreIdentityMapper.toMap(identity);
+      final data = _mapper.toMap(identity);
 
       await docRef.set(data);
       return const ZenResult.ok(null);
     } catch (e, stack) {
+      // Log identity ID only - no user data or sensitive fields
       ZenLogger.instance.error(
         'Failed to save identity: ${identity.id.value}',
         e,
@@ -42,7 +48,7 @@ class FirestoreIdentityRepository implements IdentityProvider {
       );
       return ZenResult.err(
         ZenInfrastructureError(
-          FirestoreMessages.storageOperationFailed(),
+          _messages.storageOperationFailed(),
           errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
@@ -58,18 +64,20 @@ class FirestoreIdentityRepository implements IdentityProvider {
       final snapshot = await docRef.get();
 
       if (!snapshot.exists) {
+        // Log identity ID only - not found is not an error condition
         ZenLogger.instance.warn('Identity not found: ${id.value}');
         return ZenResult.err(
-          ZenNotFoundError(FirestoreMessages.identityNotFound()),
+          ZenNotFoundError(_messages.identityNotFound()),
         );
       }
 
-      return FirestoreIdentityMapper.fromDocument(snapshot);
+      return _mapper.fromDocument(snapshot);
     } catch (e, stack) {
+      // Log identity ID only - no user data or sensitive fields
       ZenLogger.instance.error('Failed to get identity: ${id.value}', e, stack);
       return ZenResult.err(
         ZenInfrastructureError(
-          FirestoreMessages.storageOperationFailed(),
+          _messages.storageOperationFailed(),
           errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
@@ -85,6 +93,7 @@ class FirestoreIdentityRepository implements IdentityProvider {
       await docRef.delete();
       return const ZenResult.ok(null);
     } catch (e, stack) {
+      // Log identity ID only - no user data or sensitive fields
       ZenLogger.instance.error(
         'Failed to delete identity: ${id.value}',
         e,
@@ -92,7 +101,7 @@ class FirestoreIdentityRepository implements IdentityProvider {
       );
       return ZenResult.err(
         ZenInfrastructureError(
-          FirestoreMessages.storageOperationFailed(),
+          _messages.storageOperationFailed(),
           errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
@@ -111,27 +120,33 @@ class FirestoreIdentityRepository implements IdentityProvider {
       final snapshot = await docRef.get();
 
       if (!snapshot.exists) {
+        // Log subject ID only - not found is not an error condition
         ZenLogger.instance.warn('External identity not found: $subject');
         return ZenResult.err(
-          ZenNotFoundError(FirestoreMessages.identityNotFound()),
+          ZenNotFoundError(_messages.identityNotFound()),
         );
       }
 
       final data = snapshot.data();
       if (data == null) {
+        // Log subject ID only - indicates data corruption
         ZenLogger.instance.error('Document data is null: $subject');
         return ZenResult.err(
           ZenInfrastructureError(
-            FirestoreMessages.corruptedData(),
+            _messages.corruptedData(),
             errorCode: InfrastructureErrorCode.corruptedData,
           ),
         );
       }
 
       return ZenResult.ok(
-        FirestoreExternalIdentity(subject: snapshot.id, claims: data),
+        FirestoreExternalIdentity(
+          subject: snapshot.id,
+          claims: _normalizeClaims(data),
+        ),
       );
     } catch (e, stack) {
+      // Log subject ID only - no user data or sensitive fields
       ZenLogger.instance.error(
         'Failed to fetch external identity: $subject',
         e,
@@ -139,7 +154,7 @@ class FirestoreIdentityRepository implements IdentityProvider {
       );
       return ZenResult.err(
         ZenInfrastructureError(
-          FirestoreMessages.storageOperationFailed(),
+          _messages.storageOperationFailed(),
           errorCode: InfrastructureErrorCode.storageFailure,
           originalError: e,
           stackTrace: stack,
@@ -149,10 +164,39 @@ class FirestoreIdentityRepository implements IdentityProvider {
   }
 
   @override
-  Future<ZenResult<IdentityId>> resolveId(ExternalIdentity external) async =>
-      IdentityId.create(external.subject);
+  Future<ZenResult<IdentityId>> resolveId(ExternalIdentity external) =>
+      Future.value(IdentityId.create(external.subject));
 
   // --- Helpers ---
+
+  /// Normalizes claims to prevent Firestore SDK types from leaking to domain.
+  ///
+  /// Converts Timestamp objects to ISO 8601 strings.
+  Map<String, dynamic> _normalizeClaims(Map<String, dynamic> raw) {
+    final normalized = <String, dynamic>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is Timestamp) {
+        normalized[entry.key] = value.toDate().toIso8601String();
+      } else if (value is Map) {
+        normalized[entry.key] = _normalizeClaims(
+          Map<String, dynamic>.from(value),
+        );
+      } else if (value is List) {
+        normalized[entry.key] = value.map((item) {
+          if (item is Timestamp) {
+            return item.toDate().toIso8601String();
+          } else if (item is Map) {
+            return _normalizeClaims(Map<String, dynamic>.from(item));
+          }
+          return item;
+        }).toList();
+      } else {
+        normalized[entry.key] = value;
+      }
+    }
+    return normalized;
+  }
 
   DocumentReference<Map<String, dynamic>> _collection(String id) =>
       _firestore.collection(_collectionPath).doc(id);
