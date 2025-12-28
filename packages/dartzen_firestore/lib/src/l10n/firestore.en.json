@@ -1,0 +1,12 @@
+{
+  "firestore.error.permission_denied": "Permission denied",
+  "firestore.error.not_found": "Document not found",
+  "firestore.error.timeout": "Operation timed out",
+  "firestore.error.unavailable": "Firestore service unavailable",
+  "firestore.error.corrupted_data": "Corrupted or invalid data",
+  "firestore.error.operation_failed": "Firestore operation failed",
+  "firestore.error.unknown": "Unknown Firestore error",
+  "firestore.connection.emulator": "Connected to Firestore emulator at {host}:{port}",
+  "firestore.connection.production": "Connected to production Firestore",
+  "firestore.connection.emulator_unavailable": "Firestore emulator is configured but not running at {host}:{port}"
+}

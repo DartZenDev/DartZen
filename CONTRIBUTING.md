@@ -15,7 +15,7 @@ Thank you for your interest in contributing to DartZen! This guide will help you
 
 ### Prerequisites
 
-- Dart SDK ≥ 3.5.0
+- Dart SDK ≥ 3.10.3
 - Git
 - [Melos](https://melos.invertase.dev/) CLI tool
 

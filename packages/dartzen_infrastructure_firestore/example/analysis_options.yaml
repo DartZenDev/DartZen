@@ -1,5 +1,0 @@
-# Disable lints for example code
-analyzer:
-  errors:
-    avoid_print: ignore
-

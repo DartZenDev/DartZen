@@ -32,11 +32,10 @@ You MUST follow documents in this strict order of priority:
 1. This implementation plan [PACKAGE INSTRUCTIONS](#package-instructions) section below (`.github/copilot-instructions.md`)
 
 2. Architectural & Philosophical Canon:
-   - `docs/dartzen_contract_model.md`
-   - `docs/infrastructure_philosophy.md`
-   - `docs/identity_model_philosophy.md`
-   - `docs/identity_domain.md`
-   - `docs/server_philosophy.md`
+   - `docs/zen_architecture.md`
+   - `docs/gcp_native.md`
+   - `docs/packages_overview.md`
+   - `docs/server_runtime.md`
 
 3. Root `README.md` (monorepo intent and scope)
 

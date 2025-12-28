@@ -11,6 +11,7 @@ workspace:
   - packages/dartzen_navigation
   - packages/dartzen_navigation/example
   - packages/dartzen_msgpack
+  - packages/dartzen_firestore
   - packages/dartzen_transport
   - packages/dartzen_server_transport
   - packages/dartzen_client_transport
@@ -18,7 +19,6 @@ workspace:
   - packages/dartzen_identity_domain
   - packages/dartzen_identity_contract
   - packages/dartzen_infrastructure_identity
-  - packages/dartzen_infrastructure_firestore
   - packages/dartzen_infrastructure_cache
   - packages/dartzen_infrastructure_storage
   - packages/dartzen_ui_identity

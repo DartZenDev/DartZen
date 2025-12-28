@@ -114,8 +114,8 @@ class IdentityResolver {
           subject: _hashSubject(claims.subject),
           providerId: claims.providerId,
         ),
-        e,
-        stackTrace,
+        error: e,
+        stackTrace: stackTrace,
       );
 
       return ZenResult.err(ZenValidationError(_messages.mappingFailed()));
