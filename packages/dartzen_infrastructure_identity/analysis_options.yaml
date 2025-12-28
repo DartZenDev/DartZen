@@ -1,1 +1,49 @@
 include: ../dartzen_core/analysis_options.yaml
+# Additional strict linting rules for dartzen_infrastructure_identity
+linter:
+  rules:
+    # Style rules
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    unnecessary_final: false
+    
+    # Type safety
+    avoid_dynamic_calls: true
+    avoid_type_to_string: true
+    no_adjacent_strings_in_list: true
+    
+    # Error prevention
+    avoid_empty_else: true
+    avoid_relative_lib_imports: true
+    avoid_returning_null_for_future: true
+    avoid_slow_async_io: true
+    cancel_subscriptions: true
+    close_sinks: true
+    
+    # Code quality
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    unnecessary_const: false
+    unnecessary_new: true
+    
+    # Documentation
+    public_member_api_docs: true
+    
+    # Best practices
+    always_declare_return_types: true
+    avoid_bool_literals_in_conditional_expressions: true
+    avoid_catches_without_on_clauses: false
+    avoid_catching_errors: true
+    avoid_redundant_argument_values: true
+    cascade_invocations: false
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    
+    # Infrastructure-specific rules
+    # Ensure all persistence operations are properly awaited
+    unawaited_futures: true
+    # No print statements in infrastructure layer
+    avoid_print: true

@@ -49,7 +49,7 @@ dartzen/
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, and WebSocket communication.
 - **`dartzen_identity_domain`**: Pure identity domain for DartZen — defines value objects, lifecycle, roles, and authority without any infrastructure or serialization.
 - **`dartzen_identity_contract`**: Serializable contract layer for the identity domain — exposes domain models, value objects, and standardized error types for transport and UI layers.
-- **`dartzen_infrastructure_identity`**: Infrastructure adapters for identity — maps external IdPs, handles lifecycle hooks, and enforces domain purity.
+- **`dartzen_infrastructure_identity`**: External authentication mapping adapter for DartZen identity — bridges verified auth facts to domain identity operations without embedding auth or domain logic.
 - **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 - **`dartzen_infrastructure_cache`**: Transparent, high-performance caching accelerator for DartZen Identity infrastructure.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
