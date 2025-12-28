@@ -2,9 +2,7 @@ name: dartzen
 repository: https://github.com/DartZenDev/DartZen
 
 packages:
-  - packages/*
-  - packages/dartzen_navigation/example
-  - packages/dartzen_ui_identity/example
+  - packages/**
 
 
 command:
