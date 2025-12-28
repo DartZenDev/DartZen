@@ -1,5 +1,4 @@
 import 'package:dartzen_localization/dartzen_localization.dart';
-import 'package:dartzen_localization/src/zen_localization_loader.dart';
 import 'package:test/test.dart';
 
 class MockLoader implements ZenLocalizationLoader {

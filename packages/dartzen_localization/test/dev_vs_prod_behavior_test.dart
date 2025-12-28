@@ -1,8 +1,6 @@
 import 'package:dartzen_localization/dartzen_localization.dart';
-import 'package:dartzen_localization/src/zen_localization_loader.dart'; // Import mock target
 import 'package:test/test.dart';
 
-// Copy of MockLoader to avoid dependency on other test file
 class MockLoader implements ZenLocalizationLoader {
   final Map<String, String> files = {};
 

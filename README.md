@@ -15,13 +15,13 @@ DartZen embraces **minimalism**, **scalability**, and **developer zen**. Built o
 
 ## 📖 Documentation
 
-- [DartZen Contract Model](docs/dartzen_contract_model.md) — Defines the shared contract and semantic language between client and server.
-- [Development Workflow](docs/development_workflow.md) — Describes how the repository is developed, tested, and maintained.
-- [Versioning and Releases](docs/versioning_and_releases.md) — Explains how independent versioning and SemVer are applied in DartZen.
-- [Infrastructure Philosophy](docs/infrastructure_philosophy.md) — Clarifies how DartZen interacts with physical systems while keeping the domain pure.
-- [Identity Model Philosophy](docs/identity_model_philosophy.md) — Establishes identity as a stable domain concept, independent of authentication details.
-- [Identity Domain](docs/identity_domain.md) — Defines the identity domain model and its lifecycle.
-- [Server Philosophy](docs/server_philosophy.md) — Defines the server as an application boundary in the DartZen ecosystem.
+- [Zen Architecture](docs/zen_architecture.md): Explains the core principles behind DartZen: product-first design, minimal cognitive load, zero magic, and explicit integrations.
+- [GCP-Native Approach](docs/gcp_native.md): Describes how DartZen is built around Google Cloud Platform and Firebase as first-class dependencies, not abstracted infrastructure.
+- [Development Workflow](docs/development_workflow.md): How the monorepo is developed, tested, and maintained, including local development, emulators, and CI.
+- [Local Development & Emulators](docs/local_development.md): How to run DartZen locally using Firebase and GCP emulators, environment variables, and provided scripts.
+- [Packages Overview](docs/packages_overview.md): A high-level map of DartZen packages, their responsibilities, and how they are meant to be used together.
+- [Server Runtime](docs/server_runtime.md): Defines the DartZen server as a GCP-native runtime built on Shelf, focused on clarity, performance, and explicit behavior.
+- [Versioning and Releases](docs/versioning_and_releases.md): Explains independent package versioning, SemVer, and release strategy within the DartZen monorepo.
 
 ## 📦 Repository Structure
 
@@ -44,17 +44,16 @@ dartzen/
 - **`dartzen_client_transport`**: Minimal HTTP client wrapper for DartZen transport layer.
 - **`dartzen_localization`**: Foundational localization package for the DartZen ecosystem.
 - **`dartzen_msgpack`**: Minimal MessagePack implementation for the DartZen ecosystem.
+- **`dartzen_firestore`**: Firestore operations and converters for the DartZen ecosystem.
 - **`dartzen_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
 - **`dartzen_server_transport`**: Minimal Shelf middleware for DartZen transport layer.
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, and WebSocket communication.
 - **`dartzen_identity_domain`**: Pure identity domain for DartZen — defines value objects, lifecycle, roles, and authority without any infrastructure or serialization.
 - **`dartzen_identity_contract`**: Serializable contract layer for the identity domain — exposes domain models, value objects, and standardized error types for transport and UI layers.
 - **`dartzen_infrastructure_identity`**: External authentication mapping adapter for DartZen identity — bridges verified auth facts to domain identity operations without embedding auth or domain logic.
-- **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 - **`dartzen_infrastructure_cache`**: Transparent, high-performance caching accelerator for DartZen Identity infrastructure.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
 - **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen.
-- **`dartzen_infrastructure_firestore`**: Firestore persistence adapter for DartZen identity — implements storage, retrieval, and cleanup while respecting domain contracts.
 
 ## 📄 License
 
