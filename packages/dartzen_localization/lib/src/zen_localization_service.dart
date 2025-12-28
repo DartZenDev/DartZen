@@ -50,8 +50,8 @@ class ZenLocalizationService {
       }
       ZenLogger.instance.error(
         'Failed to load global messages for $language: $e',
-        e,
-        st,
+        error: e,
+        stackTrace: st,
       );
     }
   }
@@ -82,8 +82,8 @@ class ZenLocalizationService {
       }
       ZenLogger.instance.error(
         'Failed to load module messages for $module ($language): $e',
-        e,
-        st,
+        error: e,
+        stackTrace: st,
       );
     }
   }

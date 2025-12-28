@@ -9,6 +9,16 @@ import 'package:dartzen_localization/dartzen_localization.dart';
 ///
 /// Provides a type-safe API for batch operations with error normalization
 /// and optional telemetry.
+///
+/// Example:
+/// ```dart
+/// final batch = FirestoreBatch(firestore, localization: localization);
+/// batch.set(doc1, {'name': 'Alice'});
+/// batch.update(doc2, {'status': 'active'});
+/// batch.delete(doc3);
+///
+/// final result = await batch.commit();
+/// ```
 final class FirestoreBatch {
   final WriteBatch _batch;
   final FirestoreTelemetry _telemetry;
@@ -73,25 +83,34 @@ final class FirestoreBatch {
   ///
   /// Returns [ZenResult] with success or normalized error.
   /// Calls telemetry hooks on completion.
-  Future<ZenResult<void>> commit() async {
+  Future<ZenResult<void>> commit({Map<String, dynamic>? metadata}) async {
     final stopwatch = Stopwatch()..start();
+    final combinedMetadata = {
+      if (metadata != null) ...metadata,
+      'batchSize': _operationCount,
+    };
 
     try {
       await _batch.commit();
       stopwatch.stop();
 
-      _telemetry.onBatchCommit(_operationCount, stopwatch.elapsed);
+      _telemetry.onBatchCommit(
+        _operationCount,
+        stopwatch.elapsed,
+        metadata: combinedMetadata,
+      );
       return const ZenResult.ok(null);
     } catch (e, stack) {
       stopwatch.stop();
 
       final error = FirestoreErrorMapper.mapException(e, stack, _messages);
-      _telemetry.onError('batch_commit', error);
+      _telemetry.onError('batch_commit', error, metadata: combinedMetadata);
 
       ZenLogger.instance.error(
-        'Firestore batch commit failed ($_operationCount operations)',
-        e,
-        stack,
+        'Firestore batch commit failed',
+        error: e,
+        stackTrace: stack,
+        internalData: combinedMetadata,
       );
 
       return ZenResult.err(error);

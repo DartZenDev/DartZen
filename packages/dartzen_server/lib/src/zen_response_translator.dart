@@ -34,8 +34,8 @@ class ZenResponseTranslator {
           // Log all errors using ZenLogger
           ZenLogger.instance.error(
             'Request $requestId failed with status $status: ${error.message}',
-            error,
-            error.stackTrace,
+            error: error,
+            stackTrace: error.stackTrace,
           );
 
           // Hide internal error details in production for 500 errors

@@ -73,7 +73,7 @@ abstract final class FirestoreConnection {
         ZenLogger.instance.warn(messages.emulatorConnection(host, port));
       } catch (e) {
         final errorMessage = messages.emulatorUnavailable(host, port);
-        ZenLogger.instance.error(errorMessage, e);
+        ZenLogger.instance.error(errorMessage, error: e);
 
         throw StateError(
           '$errorMessage. '

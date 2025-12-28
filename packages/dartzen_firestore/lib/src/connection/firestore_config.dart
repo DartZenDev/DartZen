@@ -2,7 +2,30 @@ import 'package:meta/meta.dart';
 
 /// Immutable configuration for Firestore connection.
 ///
-/// Determines whether to connect to production Firestore or the emulator.
+/// This configuration follows the **Environment Is Explicit** principle. It requires
+/// an explicit decision between production and emulator modes, preventing accidental
+/// production data leakage during development.
+///
+/// ### Environment Configuration
+///
+/// - **Development (Emulator)**: Use [FirestoreConfig.emulator]. Typically used
+///   with the Firebase Local Emulator Suite.
+/// - **Production**: Use [FirestoreConfig.production]. Connects to the real
+///   Google Cloud Firestore instance.
+/// - **Automatic**: Use [FirestoreConfig.fromEnvironment] to detect the
+///   mode based on `FIRESTORE_EMULATOR_HOST` and `GCP_PROJECT` environment variables.
+///
+/// Example:
+/// ```dart
+/// // Manual production config
+/// const config = FirestoreConfig.production();
+///
+/// // Manual emulator config
+/// const config = FirestoreConfig.emulator(host: 'localhost', port: 8080);
+///
+/// // Environment-driven config
+/// final config = FirestoreConfig.fromEnvironment();
+/// ```
 @immutable
 final class FirestoreConfig {
   /// Whether this configuration is for production.

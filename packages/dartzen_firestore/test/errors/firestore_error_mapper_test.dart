@@ -18,7 +18,6 @@ void main() {
       config: const ZenLocalizationConfig(isProduction: false),
       loader: MockLocalizationLoader(),
     );
-    // Note: We don't loadModuleMessages here because we want to test with a dummy set
     messages = FirestoreMessages(localization, 'en');
   });
 
@@ -36,6 +35,113 @@ void main() {
       );
 
       expect(error, isA<ZenUnauthorizedError>());
+      expect(
+        error.internalData?['errorCode'],
+        equals(FirestoreErrorCodes.permissionDenied),
+      );
+    });
+
+    test('maps not-found to ZenNotFoundError', () {
+      final exception = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'not-found',
+      );
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenNotFoundError>());
+    });
+
+    test('maps already-exists to ZenConflictError', () {
+      final exception = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'already-exists',
+      );
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenConflictError>());
+    });
+
+    test('maps unavailable to ZenUnknownError with metadata', () {
+      final exception = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'unavailable',
+      );
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenUnknownError>());
+      expect(
+        error.internalData?['errorCode'],
+        equals(FirestoreErrorCodes.unavailable),
+      );
+    });
+
+    test('maps deadline-exceeded to ZenUnknownError with metadata', () {
+      final exception = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'deadline-exceeded',
+      );
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenUnknownError>());
+      expect(
+        error.internalData?['errorCode'],
+        equals(FirestoreErrorCodes.timeout),
+      );
+    });
+
+    test('maps unknown FirebaseException code to operation-failed', () {
+      final exception = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'some-random-code',
+      );
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenUnknownError>());
+      expect(
+        error.internalData?['errorCode'],
+        equals(FirestoreErrorCodes.operationFailed),
+      );
+    });
+
+    test('maps non-Firebase exception to unknown error', () {
+      final exception = Exception('Something went wrong');
+
+      final error = FirestoreErrorMapper.mapException(
+        exception,
+        StackTrace.current,
+        messages,
+      );
+
+      expect(error, isA<ZenUnknownError>());
+      expect(
+        error.internalData?['originalError'],
+        equals('Exception: Something went wrong'),
+      );
     });
 
     test('preserves original error in internalData', () {

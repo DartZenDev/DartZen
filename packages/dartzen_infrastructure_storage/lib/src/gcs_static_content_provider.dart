@@ -60,7 +60,11 @@ class GcsStaticContentProvider implements ZenStaticContentProvider {
       return String.fromCharCodes(bytes);
     } catch (e, stackTrace) {
       // Log the error for debugging purposes
-      ZenLogger.instance.error('Error fetching object from GCS', e, stackTrace);
+      ZenLogger.instance.error(
+        'Error fetching object from GCS',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }

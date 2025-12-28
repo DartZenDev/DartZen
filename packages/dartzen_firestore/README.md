@@ -47,13 +47,6 @@ dependencies:
     path: ../dartzen_firestore
 ```
 
-### External Usage
-
-```yaml
-dependencies:
-  dartzen_firestore: ^latest_version
-```
-
 ## 🚀 Usage
 
 ### Connection Management
@@ -63,47 +56,14 @@ import 'package:dartzen_firestore/dartzen_firestore.dart';
 
 // Automatic environment detection
 final config = FirestoreConfig.fromEnvironment();
-await FirestoreConnection.initialize(config);
+await FirestoreConnection.initialize(config, localization: localization);
 
 // Or explicit configuration
 final config = FirestoreConfig.emulator(host: 'localhost', port: 8080);
-await FirestoreConnection.initialize(config);
+await FirestoreConnection.initialize(config, localization: localization);
 
 // Access Firestore instance
 final firestore = FirestoreConnection.instance;
-```
-
-### Type Converters
-
-```dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dartzen_firestore/dartzen_firestore.dart';
-
-// Timestamp conversion
-final timestamp = Timestamp.now();
-final zenTimestamp = FirestoreConverters.timestampToZenTimestamp(timestamp);
-final backToTimestamp = FirestoreConverters.zenTimestampToTimestamp(zenTimestamp);
-
-// Claims normalization (removes Firestore SDK types)
-final rawClaims = {
-  'created_at': Timestamp.now(),
-  'metadata': {'updated': Timestamp.now()},
-};
-final normalized = FirestoreConverters.normalizeClaims(rawClaims);
-// Result: {'created_at': '2024-01-01T00:00:00.000Z', 'metadata': {'updated': '2024-01-01T00:00:00.000Z'}}
-```
-
-### Error Handling
-
-```dart
-import 'package:dartzen_firestore/dartzen_firestore.dart';
-
-try {
-  await firestore.collection('users').doc('123').get();
-} catch (e, stack) {
-  final error = FirestoreErrorMapper.mapException(e, stack);
-  // Returns appropriate ZenError (ZenUnauthorizedError, ZenNotFoundError, etc.)
-}
 ```
 
 ### Batch Operations
@@ -111,7 +71,8 @@ try {
 ```dart
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 
-final batch = FirestoreBatch(firestore);
+// Initialize batch with localization
+final batch = FirestoreBatch(firestore, localization: localization);
 
 batch.set(
   firestore.collection('users').doc('123'),
@@ -125,9 +86,11 @@ batch.update(
 
 batch.delete(firestore.collection('users').doc('789'));
 
-final result = await batch.commit();
+// Commit with optional telemetry metadata
+final result = await batch.commit(metadata: {'targetModule': 'catalog'});
+
 result.fold(
-  (success) => print('Batch committed successfully'),
+  (_) => print('Batch committed successfully'),
   (error) => print('Batch failed: $error'),
 );
 ```
@@ -139,7 +102,7 @@ import 'package:dartzen_firestore/dartzen_firestore.dart';
 
 final result = await FirestoreTransaction.run<int>(
   firestore,
-  (transaction) async {
+  (Transaction transaction) async {
     final docRef = firestore.collection('counters').doc('global');
     final snapshot = await transaction.get(docRef);
     
@@ -153,22 +116,10 @@ final result = await FirestoreTransaction.run<int>(
     transaction.update(docRef, {'value': newValue});
     return ZenResult.ok(newValue);
   },
+  localization: localization,
+  metadata: {'operation': 'increment_counter'},
 );
 ```
-
-## 🔧 Emulator Configuration
-
-### Environment Variables
-
-Set `FIRESTORE_EMULATOR_HOST` to connect to the Firestore emulator:
-
-```bash
-export FIRESTORE_EMULATOR_HOST=localhost:8080
-```
-
-### Runtime Check
-
-`dartzen_firestore` performs a runtime check when connecting to the emulator. If the emulator is configured but not running, initialization will fail fast with a clear error message.
 
 ## 🐞 Error Handling Philosophy
 
@@ -179,67 +130,36 @@ All Firestore exceptions are mapped to semantic `ZenError` types:
 | `permission-denied` | `ZenUnauthorizedError` |
 | `not-found` | `ZenNotFoundError` |
 | `already-exists` | `ZenConflictError` |
-| `unavailable` | `ZenInfrastructureError` (with error code) |
-| `deadline-exceeded` | `ZenInfrastructureError` (timeout) |
+| `unavailable` | `ZenUnknownError` (with error code) |
+| `deadline-exceeded` | `ZenUnknownError` (timeout) |
 | Other | `ZenUnknownError` |
 
 Error messages are localized using `dartzen_localization`.
 
-## 📊 Telemetry (Optional)
+## 📊 Telemetry
 
-Implement the `FirestoreTelemetry` interface to track Firestore operations:
+Implement the `FirestoreTelemetry` interface to track Firestore operations with metadata support:
 
 ```dart
 class MyTelemetry implements FirestoreTelemetry {
   @override
-  void onRead(String collection, String? documentId, Duration duration) {
-    // Track read operation
+  void onRead(String path, Duration latency, {Map<String, dynamic>? metadata}) {
+    // Track read
   }
 
   @override
-  void onWrite(String collection, String? documentId, Duration duration) {
-    // Track write operation
+  void onBatchCommit(int count, Duration latency, {Map<String, dynamic>? metadata}) {
+    // Track batch
   }
 
   @override
-  void onBatchCommit(int operationCount, Duration duration) {
-    // Track batch commit
-  }
-
-  @override
-  void onTransactionComplete(Duration duration, bool success) {
-    // Track transaction
-  }
-
-  @override
-  void onError(String operation, ZenError error) {
+  void onError(String op, ZenError error, {Map<String, dynamic>? metadata}) {
     // Track error
   }
+  
+  // ... other hooks
 }
-
-// Use with batch/transaction
-final batch = FirestoreBatch(firestore, telemetry: MyTelemetry());
 ```
-
-## 🚫 What This Package Does NOT Do
-
-1. **No domain logic** — No Identity, Payments, or feature-specific code
-2. **No repositories** — No repository pattern or data access abstractions
-3. **No DTOs** — No domain-to-document mapping
-4. **No query builders** — No DSL over Firestore queries
-5. **No schema validation** — No runtime schema enforcement
-6. **No migrations** — No database migration utilities
-7. **No caching** — Use `dartzen_cache` for caching
-8. **No authentication** — Use Firebase Auth and `dartzen_identity`
-9. **No retries/timeouts** — Handled by Firestore SDK
-10. **No multi-database support** — Firestore only
-
-## 🛡️ Stability & Guarantees
-
-* **Version 0.0.1**: Initial release. API may change.
-* **Error Handling**: All operations return `ZenResult` with semantic error types.
-* **Type Safety**: Strict linting and analysis enabled.
-* **Emulator Support**: Automatic detection with runtime validation.
 
 ## 📄 License
 
