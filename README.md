@@ -48,12 +48,10 @@ dartzen/
 - **`dartzen_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
 - **`dartzen_server_transport`**: Minimal Shelf middleware for DartZen transport layer.
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, and WebSocket communication.
-- **`dartzen_identity_domain`**: Pure identity domain for DartZen — defines value objects, lifecycle, roles, and authority without any infrastructure or serialization.
-- **`dartzen_identity_contract`**: Serializable contract layer for the identity domain — exposes domain models, value objects, and standardized error types for transport and UI layers.
-- **`dartzen_infrastructure_identity`**: External authentication mapping adapter for DartZen identity — bridges verified auth facts to domain identity operations without embedding auth or domain logic.
-- **`dartzen_infrastructure_cache`**: Transparent, high-performance caching accelerator for DartZen Identity infrastructure.
+- **`dartzen_cache`**: Simple, explicit, and predictable caching for the DartZen ecosystem with in-memory and GCP Memorystore backends.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
 - **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen.
+- **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
 
 ## 📄 License
 

@@ -1,0 +1,7 @@
+{
+  "identity.error.not_found": "Identity not found: {id}",
+  "identity.error.revoked": "Identity is revoked and cannot perform actions",
+  "identity.error.not_active": "Identity is not active",
+  "identity.error.empty_id": "Identity ID cannot be empty",
+  "identity.error.empty_reason": "Reason cannot be empty"
+}

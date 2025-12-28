@@ -1,0 +1,27 @@
+name: dartzen_cache
+description: Simple, explicit, and predictable caching for the DartZen ecosystem. Supports in-memory and GCP Memorystore (Redis) backends.
+version: 0.0.1
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
+
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+resolution: workspace
+
+topics:
+  - cache
+  - redis
+  - memorystore
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  meta: ^1.11.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

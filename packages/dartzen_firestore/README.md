@@ -39,12 +39,21 @@ Firestore utility toolkit for DartZen packages.
 
 ### In a Melos Workspace
 
-Add dependency to your `pubspec.yaml`:
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   dartzen_firestore:
     path: ../dartzen_firestore
+```
+
+### External Usage
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dartzen_firestore: ^latest_version
 ```
 
 ## 🚀 Usage
@@ -105,14 +114,14 @@ final result = await FirestoreTransaction.run<int>(
   (Transaction transaction) async {
     final docRef = firestore.collection('counters').doc('global');
     final snapshot = await transaction.get(docRef);
-    
+
     if (!snapshot.exists) {
       return const ZenResult.err(ZenNotFoundError('Counter not found'));
     }
-    
+
     final currentValue = snapshot.data()?['value'] as int? ?? 0;
     final newValue = currentValue + 1;
-    
+
     transaction.update(docRef, {'value': newValue});
     return ZenResult.ok(newValue);
   },
@@ -156,7 +165,7 @@ class MyTelemetry implements FirestoreTelemetry {
   void onError(String op, ZenError error, {Map<String, dynamic>? metadata}) {
     // Track error
   }
-  
+
   // ... other hooks
 }
 ```

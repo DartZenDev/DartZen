@@ -16,6 +16,7 @@ Forbidden:
 - architectural creativity
 - "simplifications"
 - adding abstractions not explicitly requested
+- do not introduce subfolder for a single concrete implementation
 
 If you are unsure:
 

@@ -16,10 +16,8 @@ dependencies:
   
   dartzen_core:
     path: ../../dartzen_core
-  dartzen_identity_domain:
-    path: ../../dartzen_identity_domain
-  dartzen_identity_contract:
-    path: ../../dartzen_identity_contract
+  dartzen_identity:
+    path: ../../dartzen_identity
   dartzen_localization:
     path: ../../dartzen_localization
   dartzen_navigation:

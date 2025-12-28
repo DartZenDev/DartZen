@@ -1,0 +1,11 @@
+name: dartzen_cache_example
+description: Example application demonstrating dartzen_cache usage
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.10.3 <4.0.0'
+
+dependencies:
+  dartzen_cache:
+    path: ../

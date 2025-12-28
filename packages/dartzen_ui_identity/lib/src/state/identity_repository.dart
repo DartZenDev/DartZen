@@ -1,4 +1,4 @@
-import 'package:dartzen_identity_contract/dartzen_identity_contract.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for the [IdentityRepository].
