@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_firestore/src/errors/firestore_error_mapper.dart';
-import 'package:dartzen_firestore/src/l10n/firestore_messages.dart';
-import 'package:dartzen_firestore/src/telemetry/firestore_telemetry.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
+
+import '../errors/firestore_error_mapper.dart';
+import '../l10n/firestore_messages.dart';
+import '../telemetry/firestore_telemetry.dart';
 
 /// Helper for running Firestore transactions with [ZenResult] support.
 ///

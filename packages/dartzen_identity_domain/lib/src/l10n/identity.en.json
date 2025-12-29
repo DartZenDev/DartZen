@@ -1,5 +1,0 @@
-{
-  "identity.error.revoked": "This identity has been revoked and cannot perform this action.",
-  "identity.error.inactive": "This identity is not currently active.",
-  "identity.error.insufficient_permissions": "You do not have the required permissions to perform this action."
-}

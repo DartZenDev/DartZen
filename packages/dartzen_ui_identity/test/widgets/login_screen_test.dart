@@ -1,6 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_identity_contract/dartzen_identity_contract.dart'
-    as contract;
+import 'package:dartzen_identity/dartzen_identity.dart' hide IdentityMessages;
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_ui_identity/dartzen_ui_identity.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockIdentityRepository extends Mock
-    implements contract.IdentityRepository {}
+class MockIdentityRepository extends Mock implements IdentityRepository {}
 
 class MockLocalizationService extends Mock implements ZenLocalizationService {}
 
@@ -72,13 +70,11 @@ void main() {
 
   testWidgets('Successful login calls onLoginSuccess', (tester) async {
     bool loginCalled = false;
-    final model = contract.IdentityModel(
-      id: const contract.IdentityId('user-1'),
-      lifecycle: contract.IdentityLifecycleState.active,
-      authority: const contract.Authority(
-        identityId: contract.IdentityId('user-1'),
-      ),
-      createdAt: ZenTimestamp.now(),
+    final model = IdentityContract(
+      id: 'user-1',
+      lifecycle: const IdentityLifecycleContract(state: 'active'),
+      authority: const AuthorityContract(roles: ['USER']),
+      createdAt: ZenTimestamp.now().millisecondsSinceEpoch,
     );
 
     when(

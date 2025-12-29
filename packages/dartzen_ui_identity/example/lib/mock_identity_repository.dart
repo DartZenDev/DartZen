@@ -1,26 +1,22 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_identity_contract/dartzen_identity_contract.dart'
-    as contract;
+import 'package:dartzen_identity/dartzen_identity.dart';
 
 /// One-time setup to create a fake valid identity
-final _mockIdentity = contract.IdentityModel(
-  id: const contract.IdentityId('user-123'),
-  createdAt: ZenTimestamp.now(),
-  authority: const contract.Authority(
-    identityId: contract.IdentityId('user-123'),
-    roles: [
-      contract.Role(id: 'user', name: 'User'),
-      contract.Role(id: 'admin', name: 'Administrator'),
-    ],
+final _mockIdentity = IdentityContract(
+  id: 'user-123',
+  createdAt: ZenTimestamp.now().millisecondsSinceEpoch,
+  authority: const AuthorityContract(
+    roles: ['USER', 'ADMIN'],
+    capabilities: ['can_edit_profile'],
   ),
-  lifecycle: contract.IdentityLifecycleState.active,
+  lifecycle: const IdentityLifecycleContract(state: 'active'),
 );
 
-class MockIdentityRepository implements contract.IdentityRepository {
-  contract.IdentityModel? _currentUser;
+class MockIdentityRepository implements IdentityRepository {
+  IdentityContract? _currentUser;
 
   @override
-  Future<ZenResult<contract.IdentityModel>> loginWithEmail({
+  Future<ZenResult<IdentityContract>> loginWithEmail({
     required String email,
     required String password,
   }) async {
@@ -39,7 +35,7 @@ class MockIdentityRepository implements contract.IdentityRepository {
   }
 
   @override
-  Future<ZenResult<contract.IdentityModel>> registerWithEmail({
+  Future<ZenResult<IdentityContract>> registerWithEmail({
     required String email,
     required String password,
   }) async {
@@ -62,7 +58,7 @@ class MockIdentityRepository implements contract.IdentityRepository {
   }
 
   @override
-  Future<ZenResult<contract.IdentityModel?>> getCurrentIdentity() async {
+  Future<ZenResult<IdentityContract?>> getCurrentIdentity() async {
     await Future.delayed(const Duration(milliseconds: 100));
     return ZenResult.ok(_currentUser);
   }

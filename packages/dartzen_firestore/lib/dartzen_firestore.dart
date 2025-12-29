@@ -18,6 +18,7 @@ export 'src/connection/firestore_connection.dart';
 export 'src/converters/firestore_converters.dart';
 export 'src/errors/firestore_error_codes.dart';
 export 'src/errors/firestore_error_mapper.dart';
+export 'src/firestore_types.dart';
 export 'src/l10n/firestore_messages.dart';
 export 'src/operations/firestore_batch.dart';
 export 'src/operations/firestore_transaction.dart';

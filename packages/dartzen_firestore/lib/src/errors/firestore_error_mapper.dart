@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_firestore/src/errors/firestore_error_codes.dart';
-import 'package:dartzen_firestore/src/l10n/firestore_messages.dart';
 import 'package:firebase_core/firebase_core.dart';
+
+import '../l10n/firestore_messages.dart';
+import 'firestore_error_codes.dart';
 
 /// Maps Firestore exceptions to semantic [ZenError] types.
 ///

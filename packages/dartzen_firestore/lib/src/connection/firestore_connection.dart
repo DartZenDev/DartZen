@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_firestore/src/connection/firestore_config.dart';
-import 'package:dartzen_firestore/src/l10n/firestore_messages.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
+
+import '../l10n/firestore_messages.dart';
+import 'firestore_config.dart';
 
 /// Manages Firestore instance lifecycle and connection.
 ///
