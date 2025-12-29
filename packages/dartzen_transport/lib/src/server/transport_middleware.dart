@@ -1,7 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:shelf/shelf.dart';
+
+import '../zen_decoder.dart';
+import '../zen_encoder.dart';
+import '../zen_transport_header.dart';
 
 /// Creates Shelf middleware for DartZen transport negotiation.
 ///
@@ -113,5 +116,5 @@ Response zenResponse(
 }) => Response(
   statusCode,
   headers: headers,
-  context: {'zen_data': data as Object},
+  context: data != null ? {'zen_data': data} : {},
 );

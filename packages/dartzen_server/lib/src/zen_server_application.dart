@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dartzen_server_transport/dartzen_server_transport.dart';
+import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 

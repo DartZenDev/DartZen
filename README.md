@@ -41,13 +41,10 @@ dartzen/
 ### Packages
 
 - **`dartzen_core`**: Core primitives, shared contracts, result types, and domain value objects — the foundation for all other packages. Does **not** include infrastructure concerns.
-- **`dartzen_client_transport`**: Minimal HTTP client wrapper for DartZen transport layer.
 - **`dartzen_localization`**: Foundational localization package for the DartZen ecosystem.
-- **`dartzen_msgpack`**: Minimal MessagePack implementation for the DartZen ecosystem.
 - **`dartzen_firestore`**: Firestore operations and converters for the DartZen ecosystem.
 - **`dartzen_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
-- **`dartzen_server_transport`**: Minimal Shelf middleware for DartZen transport layer.
-- **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, and WebSocket communication.
+- **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, WebSocket communication, HTTP client, and Shelf middleware.
 - **`dartzen_cache`**: Simple, explicit, and predictable caching for the DartZen ecosystem with in-memory and GCP Memorystore backends.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
 - **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen.

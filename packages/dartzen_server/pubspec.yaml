@@ -13,8 +13,6 @@ dependencies:
     path: ../dartzen_identity
   dartzen_localization:
     path: ../dartzen_localization
-  dartzen_server_transport:
-    path: ../dartzen_server_transport
   dartzen_transport:
     path: ../dartzen_transport
   meta: ^1.15.0

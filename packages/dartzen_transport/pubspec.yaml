@@ -14,8 +14,8 @@ resolution: workspace
 dependencies:
   dartzen_core:
     path: ../dartzen_core
-  dartzen_msgpack:
-    path: ../dartzen_msgpack
+  http: ^1.2.2
+  shelf: ^1.4.1
   web_socket_channel: ^3.0.1
 
 dev_dependencies:

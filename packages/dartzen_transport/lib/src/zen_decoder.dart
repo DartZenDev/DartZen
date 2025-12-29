@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:dartzen_msgpack/dartzen_msgpack.dart' as msgpack;
-
+import 'codecs/msgpack_decoder.dart' as msgpack;
 import 'zen_transport_exception.dart';
 import 'zen_transport_header.dart';
 
@@ -34,5 +33,5 @@ class ZenDecoder {
 
   static Object? _decodeJson(Uint8List bytes) => jsonDecode(utf8.decode(bytes));
 
-  static Object? _decodeMsgpack(Uint8List bytes) => msgpack.decode(bytes);
+  static Object? _decodeMsgpack(Uint8List bytes) => msgpack.decodeValue(bytes);
 }
