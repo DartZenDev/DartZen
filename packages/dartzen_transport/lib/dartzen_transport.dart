@@ -6,6 +6,8 @@
 /// - Transport envelopes (ZenRequest/ZenResponse)
 /// - WebSocket helper with codec support
 /// - Platform-aware treeshaking
+/// - HTTP client wrapper
+/// - Shelf middleware for server integration
 ///
 /// ## Codec Selection
 ///
@@ -16,7 +18,28 @@
 ///
 /// You can override the default by specifying a format explicitly.
 ///
-/// ## Usage
+/// ## Client Usage
+///
+/// ```dart
+/// final client = ZenClient(baseUrl: 'http://localhost:8080');
+/// final response = await client.post('/api/users', {'name': 'Alice'});
+/// print(response['id']);
+/// ```
+///
+/// ## Server Usage
+///
+/// ```dart
+/// final handler = Pipeline()
+///     .addMiddleware(transportMiddleware())
+///     .addHandler(_handleRequest);
+///
+/// Response _handleRequest(Request request) {
+///   final data = {'message': 'Hello'};
+///   return zenResponse(200, data);
+/// }
+/// ```
+///
+/// ## Protocol Usage
 ///
 /// ```dart
 /// // Create a request
@@ -41,6 +64,9 @@
 /// ```
 library;
 
+export 'src/client/zen_client.dart' show ZenClient, requestIdHeaderName;
+export 'src/server/transport_middleware.dart'
+    show transportMiddleware, zenResponse;
 export 'src/zen_codec_selector.dart' show selectDefaultCodec;
 export 'src/zen_decoder.dart' show ZenDecoder;
 export 'src/zen_encoder.dart' show ZenEncoder;

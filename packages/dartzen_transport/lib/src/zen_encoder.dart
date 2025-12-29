@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:dartzen_msgpack/dartzen_msgpack.dart' as msgpack;
-
+import 'codecs/msgpack_encoder.dart' as msgpack;
 import 'zen_transport_exception.dart';
 import 'zen_transport_header.dart';
 
@@ -35,5 +34,5 @@ class ZenEncoder {
   static Uint8List _encodeJson(Object? data) =>
       Uint8List.fromList(utf8.encode(jsonEncode(data)));
 
-  static Uint8List _encodeMsgpack(Object? data) => msgpack.encode(data);
+  static Uint8List _encodeMsgpack(Object? data) => msgpack.encodeValue(data);
 }
