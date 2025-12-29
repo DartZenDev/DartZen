@@ -8,10 +8,19 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'zen_server_config.dart';
 import 'zen_server_router.dart';
 
-/// The main application boundary for the DartZen server.
+/// The main application runtime for DartZen server applications.
 ///
-/// Responsible for lifecycle management, adapter orchestration,
-/// and transport pipeline configuration.
+/// This is the entry point for wiring together:
+/// - Domain features
+/// - Infrastructure utilities
+/// - Transport layer
+///
+/// Responsibilities:
+/// - Process lifecycle (startup and graceful shutdown)
+/// - Request routing
+/// - Middleware pipeline configuration
+///
+/// This is a Shelf-native, GCP-native runtime designed for Cloud Run deployment.
 class ZenServerApplication {
   /// Creates a [ZenServerApplication] with the given [config].
   ZenServerApplication({required this.config});
@@ -22,6 +31,8 @@ class ZenServerApplication {
   HttpServer? _server;
   final List<FutureOr<void> Function()> _onStartup = [];
   final List<FutureOr<void> Function()> _onShutdown = [];
+  StreamSubscription<ProcessSignal>? _sigintSubscription;
+  StreamSubscription<ProcessSignal>? _sigtermSubscription;
 
   /// Registers a hook to be called during server startup.
   void onStartup(FutureOr<void> Function() hook) => _onStartup.add(hook);
@@ -40,26 +51,37 @@ class ZenServerApplication {
     final pipeline = const Pipeline()
         .addMiddleware(logRequests())
         .addMiddleware(transportMiddleware())
-        .addHandler(ZenServerRouter(config.staticContentProvider).router.call);
+        .addHandler(
+          ZenServerRouter(
+            config.contentProvider,
+            contentRoutes: config.contentRoutes,
+          ).router.call,
+        );
 
     // 3. Start the server
     _server = await io.serve(pipeline, config.bindAddress, config.port);
 
     // 4. Setup graceful shutdown
-    ProcessSignal.sigint.watch().listen((_) => stop());
-    ProcessSignal.sigterm.watch().listen((_) => stop());
+    _sigintSubscription = ProcessSignal.sigint.watch().listen((_) => stop());
+    _sigtermSubscription = ProcessSignal.sigterm.watch().listen((_) => stop());
   }
 
   /// Stops the server gracefully.
   Future<void> stop() async {
     if (_server == null) return;
 
-    // 1. Execute shutdown hooks
+    // 1. Cancel signal listeners
+    await _sigintSubscription?.cancel();
+    await _sigtermSubscription?.cancel();
+    _sigintSubscription = null;
+    _sigtermSubscription = null;
+
+    // 2. Execute shutdown hooks
     for (final hook in _onShutdown) {
       await hook();
     }
 
-    // 2. Close the server
+    // 3. Close the server
     await _server?.close(force: true);
     _server = null;
   }

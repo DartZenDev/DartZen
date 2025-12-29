@@ -2,11 +2,18 @@ import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:shelf/shelf.dart';
 
-/// Translates domain [ZenResult] into transport-level responses.
+/// Translates domain [ZenResult] into Shelf HTTP responses.
 ///
-/// The translation follows a strict order:
-/// 1. Map [ZenResult] to [ZenResponse] (preserving domain meaning).
-/// 2. Map [ZenResponse] to [Response] (protocol-specific adapter).
+/// This is the bridge between domain logic and HTTP transport.
+///
+/// Translation follows a strict order:
+/// 1. Map [ZenResult] to [ZenResponse] (preserving domain meaning)
+/// 2. Map [ZenResponse] to Shelf [Response] (HTTP adapter)
+///
+/// The actual encoding of the response body is handled by the
+/// `transportMiddleware` from `dartzen_transport`, which automatically
+/// selects the appropriate format (JSON or MessagePack) based on
+/// environment and platform.
 class ZenResponseTranslator {
   /// Translates a [ZenResult] into a Shelf [Response].
   ///

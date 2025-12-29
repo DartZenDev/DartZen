@@ -1,0 +1,5 @@
+{
+  "server.health.ok": "Server is healthy",
+  "server.error.unknown": "An unexpected server error occurred",
+  "server.error.not_found": "Resource not found"
+}

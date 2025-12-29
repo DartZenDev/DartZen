@@ -49,6 +49,7 @@ dartzen/
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
 - **`dartzen_storage`**: Google Cloud Storage reader for the DartZen ecosystem.
 - **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
+- **`dartzen_ui_identity`**: Cross-platform, adaptive UI components and screens for DartZen Identity flows.
 
 ## 📄 License
 

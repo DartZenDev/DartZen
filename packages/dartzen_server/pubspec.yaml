@@ -1,5 +1,5 @@
 name: dartzen_server
-description: The application boundary and orchestration layer for the DartZen ecosystem.
+description: Application runtime and orchestration layer for DartZen server applications on GCP.
 version: 0.0.1
 publish_to: none
 
@@ -9,8 +9,6 @@ environment:
 dependencies:
   dartzen_core:
     path: ../dartzen_core
-  dartzen_identity:
-    path: ../dartzen_identity
   dartzen_localization:
     path: ../dartzen_localization
   dartzen_storage:
