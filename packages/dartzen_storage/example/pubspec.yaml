@@ -1,0 +1,13 @@
+name: dartzen_storage_example
+description: Example application for dartzen_storage
+publish_to: none
+
+environment:
+  sdk: ">=3.10.2 <4.0.0"
+
+dependencies:
+  dartzen_storage:
+    path: ../
+  gcloud: ^0.8.12
+  googleapis: ^14.0.0
+  googleapis_auth: ^1.6.0

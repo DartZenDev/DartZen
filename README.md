@@ -47,7 +47,7 @@ dartzen/
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, WebSocket communication, HTTP client, and Shelf middleware.
 - **`dartzen_cache`**: Simple, explicit, and predictable caching for the DartZen ecosystem with in-memory and GCP Memorystore backends.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
-- **`dartzen_infrastructure_storage`**: External static content storage providers for DartZen.
+- **`dartzen_storage`**: Google Cloud Storage reader for the DartZen ecosystem.
 - **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
 
 ## 📄 License
