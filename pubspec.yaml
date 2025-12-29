@@ -15,7 +15,7 @@ workspace:
   - packages/dartzen_localization
   - packages/dartzen_identity
   - packages/dartzen_cache
-  - packages/dartzen_infrastructure_storage
+  - packages/dartzen_storage
   - packages/dartzen_ui_identity
   - packages/dartzen_ui_identity/example
 
@@ -49,12 +49,12 @@ melos:
     test:
       run: |
         melos exec --ignore="dartzen_navigation_example,dartzen_ui_identity,dartzen_identity,dartzen_firestore,dartzen_cache" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
-        melos exec --scope="dartzen_transport,dartzen_infrastructure_storage,dartzen_localization" -- "dart test"
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization" -- "dart test"
       description: Run all Dart & Flutter tests
     test:coverage:
       run: |
         melos exec --ignore="dartzen_navigation_example,dartzen_ui_identity,dartzen_identity,dartzen_firestore,dartzen_cache" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
-        melos exec --scope="dartzen_transport,dartzen_infrastructure_storage,dartzen_localization" -- "dart test --coverage=coverage"
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization" -- "dart test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage
     publish:
       exec: dart pub publish --dry-run

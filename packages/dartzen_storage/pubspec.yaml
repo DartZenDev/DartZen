@@ -1,5 +1,5 @@
-name: dartzen_infrastructure_storage
-description: Storage-backed static content providers for the DartZen ecosystem.
+name: dartzen_storage
+description: Google Cloud Storage reader for the DartZen ecosystem.
 version: 0.0.1
 publish_to: none
 
@@ -11,8 +11,6 @@ resolution: workspace
 dependencies:
   dartzen_core:
     path: ../dartzen_core
-  dartzen_server:
-    path: ../dartzen_server
   gcloud: ^0.8.12
   googleapis: ^14.0.0
   googleapis_auth: ^1.6.0

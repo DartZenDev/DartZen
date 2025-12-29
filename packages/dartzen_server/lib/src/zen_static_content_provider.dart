@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:dartzen_storage/dartzen_storage.dart';
+
 /// Interface for providing static content to the server.
 ///
 /// This abstraction ensures that the server does not own or hardcode
@@ -14,6 +16,39 @@ abstract interface class ZenStaticContentProvider {
   /// The [key] is an opaque identifier with no semantic meaning to the server.
   /// Returns `null` when content is not available for the given key.
   Future<String?> getByKey(String key);
+}
+
+/// A [ZenStaticContentProvider] backed by a [ZenStorageReader].
+///
+/// This provider adapts the platform-level storage reader to the server's
+/// static content interface. It converts storage objects to strings.
+///
+/// Example:
+/// ```dart
+/// final storageReader = GcsStorageReader(
+///   storage: storage,
+///   bucket: 'my-bucket',
+/// );
+///
+/// final provider = StorageStaticContentProvider(
+///   reader: storageReader,
+/// );
+/// ```
+class StorageStaticContentProvider implements ZenStaticContentProvider {
+  /// Creates a [StorageStaticContentProvider].
+  ///
+  /// The [reader] is used to fetch objects from storage.
+  const StorageStaticContentProvider({
+    required ZenStorageReader reader,
+  }) : _reader = reader;
+
+  final ZenStorageReader _reader;
+
+  @override
+  Future<String?> getByKey(String key) async {
+    final object = await _reader.read(key);
+    return object?.asString();
+  }
 }
 
 /// A [ZenStaticContentProvider] that reads content from the file system.
