@@ -16,9 +16,11 @@ void main() {
       app = ZenServerApplication(
         config: const ZenServerConfig(
           port: port,
-          staticContentProvider: MemoryStaticContentProvider({
-            'terms': '<html><body><h1>Terms & Conditions</h1></body></html>',
+          contentProvider: MemoryContentProvider({
+            'terms.html':
+                '<html><body><h1>Terms & Conditions</h1></body></html>',
           }),
+          contentRoutes: {'/terms': 'terms.html'},
         ),
       );
     });

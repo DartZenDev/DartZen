@@ -5,33 +5,79 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-The application boundary and orchestration layer for the DartZen ecosystem.
+The application runtime and orchestration layer for DartZen server applications.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
-## 🎯 Purpose
+## 🎯 What This Package Is
 
-`dartzen_server` acts as the stage where infrastructure adapters and transport protocols meet the domain. It is an **application boundary**, not a domain owner.
+`dartzen_server` is the **application boundary** and **runtime entry point** for DartZen server applications running on Google Cloud Platform.
 
-Its primary responsibilities are:
+It wires together:
 
-- **Application Lifecycle**: Managing startup and graceful shutdown of the server process.
-- **Orchestration**: Coordinating calls between domain use cases and infrastructure adapters (e.g., mapping an HTTP request to a domain call).
-- **Transport Translation**: Mapping domain results (`ZenResult`) to transport-agnostic responses (`ZenResponse`) and then to protocol-specific responses (e.g., Shelf `Response`).
-- **Static Content**: Serving essential static resources like Terms & Conditions.
+- Domain features (e.g., `dartzen_identity`)
+- Infrastructure utilities (`dartzen_firestore`, `dartzen_cache`, `dartzen_storage`)
+- Transport layer (`dartzen_transport`)
 
-## 🧘🏻 Server Philosophy
+Its responsibilities are:
 
-1.  **Does not own meaning**: It translates signals but does not define business rules.
-2.  **Is protocol-agnostic**: While it currently uses Shelf for HTTP, the core orchestration logic is separated from transport concerns.
-3.  **Invokes Domain**: It calls domain use cases, passes domain value objects, and receives `ZenResult`.
-4.  **Coordinates Infrastructure**: It is the only place where adapter coordination (e.g., Firestore + Cache) is allowed.
+- **Process Lifecycle**: Server startup and graceful shutdown
+- **Request Routing**: Mapping HTTP paths to handlers
+- **Domain Invocation**: Calling domain logic and receiving `ZenResult`
+- **Response Translation**: Converting `ZenResult` into HTTP responses via `dartzen_transport`
+- **Content Serving**: Providing opaque bytes/strings (content source is `dartzen_storage`)
 
-## 🏗️ Boundary Rules
+## 🧘🏻 What This Package Is NOT
 
-- **No Domain Logic**: Business invariants and rules live in the domain packages, never here.
-- **No Domain Models**: Domain types are consumed from `dartzen_core` or specific contract packages.
-- **Pure Transport**: Handlers should only handle request parsing, domain invocation, and response formatting.
+`dartzen_server` does **not**:
+
+- Abstract over multiple server runtimes (it is Shelf-native)
+- Define or own transport formats (that's `dartzen_transport`)
+- Provide multi-cloud abstractions (it is GCP-native)
+- Embed storage or caching logic (those are in dedicated packages)
+- Auto-wire infrastructure (wiring is explicit)
+- Own domain logic or business rules
+
+## 🏗️ Architecture
+
+`dartzen_server` is built on **Shelf** and designed specifically for **Google Cloud Platform** deployment (Cloud Run, Cloud Run Jobs).
+
+### Explicit Wiring
+
+Everything is wired explicitly in code:
+
+- No hidden dependency injection
+- No auto-discovery
+- No reflection-based behavior
+- No magic middleware chains
+
+### Application Boundary
+
+The server is an orchestration layer:
+
+- Domain logic lives in feature packages
+- Infrastructure adapters live in utility packages
+- The server only connects them
+
+### Responsibility Boundaries
+
+Clear separation of concerns:
+
+- **`dartzen_storage`**: Fetches bytes and content type from GCS
+- **`dartzen_server`**: Produces HTTP responses with correct `Content-Type` headers
+- **`dartzen_transport`**: Handles API encoding/envelopes (not file serving)
+
+The server does not detect, infer, or override content types—it passes through metadata from storage.
+
+### GCP-Native Design
+
+The runtime aligns with GCP primitives:
+
+- Cloud Run for HTTP services
+- Cloud Run Jobs for background tasks
+- Firestore for persistence
+- Cloud Storage for blobs
+- Memorystore for caching
 
 ## 📦 Installation
 
@@ -42,7 +88,7 @@ If you are working within the DartZen monorepo, add dependency to your `pubspec.
 ```yaml
 dependencies:
   dartzen_server:
-    path: path/to/dartzen_server
+    path: ../dartzen_server
 ```
 
 ### External Usage
@@ -56,6 +102,8 @@ dependencies:
 
 ## 🚀 Usage
 
+### Basic Server Application
+
 ```dart
 import 'package:dartzen_server/dartzen_server.dart';
 
@@ -68,18 +116,67 @@ void main() async {
 }
 ```
 
-## 🚀 Usage Examples
-
-### Starting the Server
+### With Lifecycle Hooks
 
 ```dart
 import 'package:dartzen_server/dartzen_server.dart';
 
 void main() async {
   final app = ZenServerApplication(
+    config: ZenServerConfig(port: 8080),
+  );
+
+  // Register startup hook
+  app.onStartup(() async {
+    print('🚀 Server starting...');
+    // Initialize resources (e.g., database connections)
+  });
+
+  // Register shutdown hook
+  app.onShutdown(() async {
+    print('🛑 Server shutting down...');
+    // Cleanup resources
+  });
+
+  await app.run();
+  print('✅ Server listening on http://localhost:8080');
+}
+```
+
+### Serving Content
+
+`dartzen_server` provides **content routing infrastructure only**—it does not ship any content, routes, or assumptions about what content exists.
+
+All content routing decisions belong to the **application layer**.
+
+```dart
+import 'package:dartzen_server/dartzen_server.dart';
+import 'package:dartzen_storage/dartzen_storage.dart';
+import 'package:gcloud/storage.dart';
+
+void main() async {
+  // Configure content provider (where bytes come from)
+  final storage = Storage(authClient, project);
+  final storageReader = GcsStorageReader(
+    storage: storage,
+    bucket: 'my-content-bucket',
+    prefix: 'static/',
+  );
+
+  final contentProvider = StorageContentProvider(
+    reader: storageReader,
+  );
+
+  final app = ZenServerApplication(
     config: ZenServerConfig(
       port: 8080,
-      staticContentProvider: FileStaticContentProvider('public'),
+      contentProvider: contentProvider,
+      // Application defines what routes exist
+      contentRoutes: {
+        '/terms': 'legal/terms.html',
+        '/privacy': 'legal/privacy.html',
+        '/docs/api': 'documentation/api.json',
+      },
     ),
   );
 
@@ -87,35 +184,118 @@ void main() async {
 }
 ```
 
-And put your static files (e.g., `terms.html`, `privacy.html`) in the `public` directory.
+#### Content Type Handling
 
-```text
-public/
-  └── terms.html
-```
+Content is served with correct `Content-Type` headers:
+- Content type comes from storage metadata (GCS via `dartzen_storage`)
+- No detection or inference logic in the server
+- Falls back to `application/octet-stream` if unknown
 
-### Translating Domain Results to HTTP Responses
+The server is a **pure transport coordinator**—it moves bytes and metadata from storage to HTTP responses without semantic understanding.
 
-```dart
-import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_server/dartzen_server.dart';
+#### Key Principles
 
-void main() {
-  const result = ZenResult.ok({'key': 'value'});
-  final response = ZenResponseTranslator.translate(
-    result: result,
-    requestId: '12345',
-    format: ZenTransportFormat.json,
-  );
-
-  print(response.statusCode); // 200
-  print(response.context['zen_data']);
-}
+- **No embedded content**: The server package contains no HTML, JSON, or static files
+- **No hardcoded routes**: All HTTP path → content key mappings are defined by the application
+- **Opaque content keys**: The server does not interpret keys (they are not file paths)
+- **Storage-agnostic interface**: Content can come from GCS, filesystem, memory, or any `ZenContentProvider` implementation
+  address: '0.0.0.0',         // Bind address
+  port: 8080,                  // Port to listen on
+  contentProvider: myProvider, // Optional content provider
+);
 ```
 
 ## 🐛 Error Handling
 
-The server follows the `ZenResult` pattern. Domain failures are captured as `ZenFailure` and translated into `ZenResponse` with appropriate semantic error codes and localizable messages.
+The server follows the `ZenResult` pattern:
+
+1. Domain logic returns `ZenResult<T>`
+2. `ZenResponseTranslator` maps `ZenResult` to `ZenResponse`
+3. `dartzen_transport` middleware encodes the response
+
+Domain errors are automatically mapped to HTTP status codes:
+
+- `ZenValidationError` → 400
+- `ZenUnauthorizedError` → 401
+- `ZenNotFoundError` → 404
+- `ZenConflictError` → 409
+- Other errors → 500
+
+In production, internal error details (500 errors) are hidden from clients.
+
+## 🌐 Localization
+
+`dartzen_server` follows the mandatory DartZen localization pattern.
+
+### Message Layer
+
+All localization keys are encapsulated in `ServerMessages` (`lib/src/l10n/server_messages.dart`).
+
+Direct calls to `ZenLocalizationService.translate` are **forbidden** outside this class.
+
+### Translation File
+
+Translations are stored in `lib/src/l10n/server.en.json`:
+
+```json
+{
+  "server.health.ok": "Server is healthy",
+  "server.error.unknown": "An unexpected server error occurred",
+  "server.error.not_found": "Resource not found"
+}
+```
+
+### Usage
+
+```dart
+import 'package:dartzen_localization/dartzen_localization.dart';
+import 'package:dartzen_server/dartzen_server.dart';
+
+// 1. Initialize localization service
+final localization = ZenLocalizationService(
+  config: const ZenLocalizationConfig(),
+);
+
+// 2. Load server module translations
+await localization.loadModuleMessages(
+  'server',
+  'en',
+  modulePath: 'packages/dartzen_server/lib/src/l10n',
+);
+
+// 3. Create message accessor
+final messages = ServerMessages(localization, 'en');
+
+// 4. Use localized messages
+final healthMessage = messages.healthOk();
+final errorMessage = messages.errorNotFound();
+```
+
+### Rules
+
+- **Package-scoped**: Each package defines its own messages layer
+- **No direct calls**: `ZenLocalizationService.translate` may only be called inside `ServerMessages`
+- **Explicit ownership**: The server package owns its localization keys
+- **No global managers**: No application-wide message managers allowed
+
+## 📐 Design Philosophy
+
+Following the **Zen Architecture**:
+
+- **Explicit over implicit**: All configuration is visible
+- **No hidden global state**: Everything is passed explicitly
+- **Deterministic behavior**: Same inputs → same outputs
+- **Fail fast in dev/test**: Errors are clear and immediate
+- **Safe UX in production**: Generic error messages for internal failures
+- **Clear ownership boundaries**: Server orchestrates, doesn't own
+
+## 🧪 Testing
+
+See the `/test` directory for examples:
+
+- `zen_response_translator_test.dart` - Response translation logic
+- `server_lifecycle_test.dart` - Startup/shutdown behavior
+- `error_mapping_test.dart` - Error code mapping
 
 ## 📄 License
 
