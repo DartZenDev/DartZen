@@ -1,45 +1,12 @@
 import 'dart:convert';
 
 import 'package:dartzen_firestore/dartzen_firestore.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
-class MockLocalizationLoader extends ZenLocalizationLoader {
-  final Map<String, String> _files = {};
-
-  void addFile(String path, Map<String, dynamic> content) {
-    _files[path] = jsonEncode(content);
-  }
-
-  @override
-  Future<String> load(String path) async =>
-      _files[path] ?? (throw Exception('File not found: $path'));
-}
-
 void main() {
-  late ZenLocalizationService localization;
-  late MockLocalizationLoader loader;
-
   setUp(() async {
-    loader = MockLocalizationLoader();
-    localization = ZenLocalizationService(
-      config: const ZenLocalizationConfig(isProduction: false),
-      loader: loader,
-    );
-
-    loader.addFile('lib/src/l10n/firestore.en.json', {
-      'firestore.error.permission_denied': 'Permission denied',
-      'firestore.error.not_found': 'Document not found',
-      'firestore.error.timeout': 'Operation timed out',
-      'firestore.error.unavailable': 'Firestore service unavailable',
-      'firestore.error.corrupted_data': 'Corrupted or invalid data',
-      'firestore.error.operation_failed': 'Firestore operation failed',
-      'firestore.error.unknown': 'Unknown Firestore error',
-      'firestore.connection.emulator': 'Connecting to emulator...',
-      'firestore.connection.emulator_unavailable': 'Emulator unavailable',
-    });
   });
 
   group('FirestoreBatch', () {
@@ -68,7 +35,7 @@ void main() {
         httpClient: mockClient,
       );
 
-      final batch = FirestoreBatch(localization: localization);
+      final batch = FirestoreBatch();
       batch.set('users/1', {'name': 'Alice'});
       batch.update('users/2', {'age': 31});
       batch.delete('users/3');
@@ -116,7 +83,7 @@ void main() {
         }),
       );
 
-      final batch = FirestoreBatch(localization: localization);
+      final batch = FirestoreBatch();
       for (var i = 0; i < 500; i++) {
         batch.delete('users/$i');
       }

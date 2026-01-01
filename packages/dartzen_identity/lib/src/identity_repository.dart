@@ -1,6 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 
 import 'identity_mapper.dart';
 import 'identity_models.dart';
@@ -9,12 +8,8 @@ import 'identity_models.dart';
 ///
 /// Encapsulates all Firestore access for identity management.
 final class FirestoreIdentityRepository {
-  final ZenLocalizationService _localization;
-
   /// Creates a [FirestoreIdentityRepository].
-  const FirestoreIdentityRepository({
-    required ZenLocalizationService localization,
-  }) : _localization = localization;
+  const FirestoreIdentityRepository();
 
   String _docPath(String id) => 'identities/$id';
 
@@ -22,7 +17,7 @@ final class FirestoreIdentityRepository {
   Future<ZenResult<void>> createIdentity(Identity identity) async =>
       ZenTry.callAsync(() async {
         try {
-          final batch = FirestoreBatch(localization: _localization);
+          final batch = FirestoreBatch();
           batch.set(
             _docPath(identity.id.value),
             IdentityMapper.toFirestore(identity),

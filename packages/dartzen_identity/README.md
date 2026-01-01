@@ -1,6 +1,6 @@
 # DartZen Identity
 
-[![pub package](https://img.shields.io/pub/v/dartzen_infrastructure_identity.svg)](https://pub.dev/packages/dartzen_infrastructure_identity)
+[![pub package](https://img.shields.io/pub/v/dartzen_identity.svg)](https://pub.dev/packages/dartzen_identity)
 [![codecov](https://codecov.io/gh/DartZenDev/DartZen/graph/badge.svg?token=HD0SYZB0VB)](https://codecov.io/gh/DartZenDev/DartZen)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)

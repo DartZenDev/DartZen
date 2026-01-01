@@ -3,44 +3,16 @@ import 'dart:convert';
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 import 'package:dartzen_identity/dartzen_identity.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
-class MockLocalizationLoader extends ZenLocalizationLoader {
-  final Map<String, String> _files = {};
-
-  void addFile(String path, Map<String, dynamic> content) {
-    _files[path] = jsonEncode(content);
-  }
-
-  @override
-  Future<String> load(String path) async =>
-      _files[path] ?? (throw Exception('File not found: $path'));
-}
-
 void main() {
   group('FirestoreIdentityRepository', () {
-    late ZenLocalizationService localization;
-    late MockLocalizationLoader loader;
     late FirestoreIdentityRepository repo;
 
     setUp(() async {
-      loader = MockLocalizationLoader();
-      localization = ZenLocalizationService(
-        config: const ZenLocalizationConfig(isProduction: false),
-        loader: loader,
-      );
-
-      // Register firestore and identity module messages
-      loader.addFile('lib/src/l10n/firestore.en.json', {
-        'firestore.connection.emulator': 'Connecting to emulator...',
-        'firestore.error.not_found': 'Document not found',
-      });
-      loader.addFile('lib/src/l10n/identity.en.json', {});
-
-      repo = FirestoreIdentityRepository(localization: localization);
+      repo = const FirestoreIdentityRepository();
     });
 
     test(
