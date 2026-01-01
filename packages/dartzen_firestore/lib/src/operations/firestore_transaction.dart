@@ -1,11 +1,8 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 
 import '../connection/firestore_connection.dart';
 import '../converters/firestore_converters.dart';
-import '../errors/firestore_error_mapper.dart';
 import '../firestore_types.dart';
-import '../l10n/firestore_messages.dart';
 import '../telemetry/firestore_telemetry.dart';
 
 /// Transaction helper for REST API.
@@ -62,11 +59,8 @@ abstract final class FirestoreTransaction {
   static Future<ZenResult<T>> run<T>(
     Future<ZenResult<T>> Function(Transaction transaction) operation, {
     FirestoreTelemetry telemetry = const NoOpFirestoreTelemetry(),
-    required ZenLocalizationService localization,
-    String language = 'en',
     Map<String, dynamic>? metadata,
   }) async {
-    final messages = FirestoreMessages(localization, language);
     final stopwatch = Stopwatch()..start();
 
     try {
@@ -92,7 +86,10 @@ abstract final class FirestoreTransaction {
       return result;
     } catch (e, stack) {
       stopwatch.stop();
-      final error = FirestoreErrorMapper.mapException(e, stack, messages);
+      final error = ZenUnknownError(
+        'Firestore transaction failed: ${e.toString()}',
+        stackTrace: stack,
+      );
       telemetry.onTransactionComplete(
         stopwatch.elapsed,
         false,
