@@ -60,24 +60,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-      listenable: widget.appState,
-      builder: (context, _) {
-        final messages = ClientMessages(
-          widget.appState.localization!,
-          widget.appState.language,
-        );
+        listenable: widget.appState,
+        builder: (context, _) {
+          final messages = ClientMessages(
+            widget.appState.localization!,
+            widget.appState.language,
+          );
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(messages.profileTitle()),
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _buildContent(messages),
-          ),
-        );
-      },
-    );
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(messages.profileTitle()),
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildContent(messages),
+            ),
+          );
+        },
+      );
 
   Widget _buildContent(ClientMessages messages) {
     if (_isLoading) {
@@ -106,14 +106,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildField(String label, String value) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Text(value),
-      ],
-    );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(value),
+        ],
+      );
 }

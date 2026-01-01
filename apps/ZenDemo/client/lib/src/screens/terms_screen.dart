@@ -59,24 +59,24 @@ class _TermsScreenState extends State<TermsScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-      listenable: widget.appState,
-      builder: (context, _) {
-        final messages = ClientMessages(
-          widget.appState.localization!,
-          widget.appState.language,
-        );
+        listenable: widget.appState,
+        builder: (context, _) {
+          final messages = ClientMessages(
+            widget.appState.localization!,
+            widget.appState.language,
+          );
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(messages.termsTitle()),
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _buildContent(messages),
-          ),
-        );
-      },
-    );
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(messages.termsTitle()),
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildContent(messages),
+            ),
+          );
+        },
+      );
 
   Widget _buildContent(ClientMessages messages) {
     if (_isLoading) {

@@ -86,10 +86,7 @@ class FirebaseStorageReader implements ZenStorageReader {
       // Get content type from response headers
       final contentType = response.headers['content-type'];
 
-      return StorageObject(
-        bytes: response.bodyBytes,
-        contentType: contentType,
-      );
+      return StorageObject(bytes: response.bodyBytes, contentType: contentType);
     } catch (e) {
       if (e is StorageReadException) {
         rethrow;
@@ -100,9 +97,7 @@ class FirebaseStorageReader implements ZenStorageReader {
         error: e,
       );
 
-      throw StorageReadException(
-        'Unexpected error reading object: $e',
-      );
+      throw StorageReadException('Unexpected error reading object: $e');
     }
   }
 

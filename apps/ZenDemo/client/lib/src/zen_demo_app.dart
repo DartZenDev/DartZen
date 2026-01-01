@@ -75,40 +75,40 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
     return ListenableBuilder(
       listenable: _appState,
       builder: (context, _) => MaterialApp(
-          title: 'Zen Demo',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            useMaterial3: true,
-          ),
-          home: StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
+        title: 'Zen Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-              if (snapshot.hasData && snapshot.data != null) {
-                // Use addPostFrameCallback to avoid setState during build
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_appState.userId != snapshot.data!.uid) {
-                    _appState.setUserId(snapshot.data!.uid);
-                  }
-                });
-                return MainScreen(
-                  appState: _appState,
-                  apiBaseUrl: widget.apiBaseUrl,
-                );
-              }
-
-              return WelcomeScreen(
+            if (snapshot.hasData && snapshot.data != null) {
+              // Use addPostFrameCallback to avoid setState during build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_appState.userId != snapshot.data!.uid) {
+                  _appState.setUserId(snapshot.data!.uid);
+                }
+              });
+              return MainScreen(
                 appState: _appState,
                 apiBaseUrl: widget.apiBaseUrl,
               );
-            },
-          ),
+            }
+
+            return WelcomeScreen(
+              appState: _appState,
+              apiBaseUrl: widget.apiBaseUrl,
+            );
+          },
         ),
+      ),
     );
   }
 }

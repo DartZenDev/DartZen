@@ -56,116 +56,116 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-      listenable: widget.appState,
-      builder: (context, _) {
-        final messages = ClientMessages(
-          widget.appState.localization!,
-          widget.appState.language,
-        );
+        listenable: widget.appState,
+        builder: (context, _) {
+          final messages = ClientMessages(
+            widget.appState.localization!,
+            widget.appState.language,
+          );
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(messages.welcomeTitle()),
-            actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) => widget.appState.setLanguage(value),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'en', child: Text('English')),
-                  const PopupMenuItem(value: 'pl', child: Text('Polski')),
-                ],
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Text(messages.mainLanguage()),
-                      const Icon(Icons.arrow_drop_down),
-                    ],
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(messages.welcomeTitle()),
+              actions: [
+                PopupMenuButton<String>(
+                  onSelected: (value) => widget.appState.setLanguage(value),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'en', child: Text('English')),
+                    const PopupMenuItem(value: 'pl', child: Text('Polski')),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Text(messages.mainLanguage()),
+                        const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout),
-                tooltip: 'Logout',
-                onPressed: _handleLogout,
-              ),
-            ],
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: ListView(
-              children: [
-                _buildPingSection(messages),
-                const Divider(height: 32),
-                _buildWebSocketSection(messages),
-                const Divider(height: 32),
-                _buildNavigationSection(messages),
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Logout',
+                  onPressed: _handleLogout,
+                ),
               ],
             ),
-          ),
-        );
-      },
-    );
-
-  Widget _buildPingSection(ClientMessages messages) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ElevatedButton(
-          onPressed: _handlePing,
-          child: Text(messages.mainPing()),
-        ),
-        if (_pingResult != null) ...[
-          const SizedBox(height: 8),
-          Text(_pingResult!),
-        ],
-      ],
-    );
-
-  Widget _buildWebSocketSection(ClientMessages messages) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: _wsClient.isConnected
-                  ? _handleWsDisconnect
-                  : _handleWsConnect,
-              child: Text(
-                _wsClient.isConnected
-                    ? messages.mainWebSocketDisconnect()
-                    : messages.mainWebSocketConnect(),
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                children: [
+                  _buildPingSection(messages),
+                  const Divider(height: 32),
+                  _buildWebSocketSection(messages),
+                  const Divider(height: 32),
+                  _buildNavigationSection(messages),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            if (_wsClient.isConnected)
-              ElevatedButton(
-                onPressed: _handleWsSend,
-                child: Text(messages.mainWebSocketSend()),
-              ),
+          );
+        },
+      );
+
+  Widget _buildPingSection(ClientMessages messages) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ElevatedButton(
+            onPressed: _handlePing,
+            child: Text(messages.mainPing()),
+          ),
+          if (_pingResult != null) ...[
+            const SizedBox(height: 8),
+            Text(_pingResult!),
           ],
-        ),
-        const SizedBox(height: 8),
-        Text(messages.mainWebSocketStatus(_wsStatus)),
-        if (_wsMessage != null) ...[
-          const SizedBox(height: 8),
-          Text(messages.mainWebSocketReceived(_wsMessage!)),
         ],
-      ],
-    );
+      );
+
+  Widget _buildWebSocketSection(ClientMessages messages) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: _wsClient.isConnected
+                    ? _handleWsDisconnect
+                    : _handleWsConnect,
+                child: Text(
+                  _wsClient.isConnected
+                      ? messages.mainWebSocketDisconnect()
+                      : messages.mainWebSocketConnect(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (_wsClient.isConnected)
+                ElevatedButton(
+                  onPressed: _handleWsSend,
+                  child: Text(messages.mainWebSocketSend()),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(messages.mainWebSocketStatus(_wsStatus)),
+          if (_wsMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(messages.mainWebSocketReceived(_wsMessage!)),
+          ],
+        ],
+      );
 
   Widget _buildNavigationSection(ClientMessages messages) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ElevatedButton(
-          onPressed: _navigateToProfile,
-          child: Text(messages.mainViewProfile()),
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: _navigateToTerms,
-          child: Text(messages.mainViewTerms()),
-        ),
-      ],
-    );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ElevatedButton(
+            onPressed: _navigateToProfile,
+            child: Text(messages.mainViewProfile()),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: _navigateToTerms,
+            child: Text(messages.mainViewTerms()),
+          ),
+        ],
+      );
 
   Future<void> _handlePing() async {
     final messages = ClientMessages(
