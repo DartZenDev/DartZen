@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_storage/dartzen_storage.dart';
-import 'package:path/path.dart' as path;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -76,28 +74,12 @@ class ZenDemoServer {
       projectId: 'demo-zen',
     );
 
-    // In a melos monorepo, resolve the absolute path to dartzen_firestore package
-    // The localization files are at packages/dartzen_firestore/lib/src/l10n/
-    final currentDir = Directory.current.path;
-    final firestoreL10nPath = path.normalize(
-      path.join(currentDir, '../../../packages/dartzen_firestore/lib/src/l10n'),
-    );
-
-    // Pre-load firestore localization messages with absolute path
-    await _localization.loadModuleMessages(
-      'firestore',
-      'en',
-      modulePath: firestoreL10nPath,
-    );
-
     await FirestoreConnection.initialize(
       firestoreConfig,
     );
 
     // Initialize identity repository
-    _identityRepository = FirestoreIdentityRepository(
-      localization: _localization,
-    );
+    _identityRepository = const FirestoreIdentityRepository();
 
     // Initialize token verifier
     _tokenVerifier = FirebaseTokenVerifier(authEmulatorHost: authEmulatorHost);

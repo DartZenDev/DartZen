@@ -100,12 +100,11 @@ The server requires these environment variables (set automatically by `run.sh`):
 
 | Variable | Example | Purpose |
 |----------|---------|---------|
-| `FIRESTORE_EMULATOR_HOST` | `localhost:8080` | Firestore emulator connection |
+| `FIRESTORE_EMULATOR_HOST` | `localhost:9088` | Firestore emulator connection |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `localhost:9099` | Auth emulator connection |
 | `FIREBASE_STORAGE_EMULATOR_HOST` | `localhost:9199` | Storage emulator connection |
 | `PORT` | `8888` | Server port |
 | `STORAGE_BUCKET` | `demo-bucket` | GCS emulator bucket name |
-| `STORAGE_HOST` | `localhost:9199` | GCS emulator host |
 
 **The server will refuse to start without valid emulator configuration.**
 
@@ -236,7 +235,7 @@ Zen Demo embodies the DartZen principles:
 
 ```bash
 lsof -i :8888  # Server port
-lsof -i :8080  # Firestore emulator
+lsof -i :9088  # Firestore emulator
 lsof -i :9099  # Auth emulator
 kill -9 <PID>
 ```
