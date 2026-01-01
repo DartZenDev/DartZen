@@ -103,26 +103,29 @@ result.fold(
 
 ### 4. Server-Side Token Verification
 
-For server-side applications, use the `server.dart` library to verify ID tokens issued by Firebase Auth / Identity Platform.
+For server-side applications, use the `server.dart` library to verify ID tokens issued by Firebase Auth.
 
 ```dart
 import 'package:dartzen_identity/server.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
 
 final verifier = IdentityTokenVerifier(
-  config: IdentityTokenVerifierConfig(
-    projectId: 'your-gcp-project-id',
-    emulatorHost: 'localhost:9099', // only used in dev mode
-  ),
+  config: IdentityTokenVerifierConfig(projectId: 'your-gcp-project-id'),
 );
 
 // Verify a token from an HTTP request
 final result = await verifier.verifyToken(idToken);
 
 result.fold(
-  (identity) {
-    // Token is valid
-    print('Authenticated user: ${identity.userId}');
-    print('Email: ${identity.email}');
+  (data) {
+    // Token is valid - use Firebase Auth data to lookup/create Identity
+    final identityId = IdentityId.reconstruct(data.userId);
+
+    // Lookup existing identity or create new one
+    // final identity = await repository.getIdentityById(identityId);
+
+    print('Authenticated user: ${data.userId}');
+    print('Email: ${data.email} (verified: ${data.emailVerified})');
   },
   (error) {
     // Token is invalid
@@ -138,20 +141,21 @@ result.fold(
 verifier.close();
 ```
 
-#### Production vs Emulator
+#### Production vs Firebase Emulator
 
-The verifier automatically switches between production and emulator endpoints:
+The verifier automatically switches between production and Firebase Emulator:
 
 - **Production (`dzIsPrd == true`)**: Uses Google Identity Toolkit cloud endpoint
-- **Development (`dzIsPrd == false`)**: Uses Identity Toolkit Emulator at configured host
+- **Development (`dzIsPrd == false`)**: Uses Firebase Emulator at host from `IDENTITY_TOOLKIT_EMULATOR_HOST`
 
-Set the environment when running:
+Set the environment variables when running:
 ```bash
-# Development mode with emulator
-dart run -DDZ_ENV=dev your_server.dart
+# Development mode with Firebase Emulator
+export IDENTITY_TOOLKIT_EMULATOR_HOST=localhost:9099
+dart run --define=DZ_ENV=dev your_server.dart
 
 # Production mode
-dart run -DDZ_ENV=prd your_server.dart
+dart run --define=DZ_ENV=prd your_server.dart
 ```
 
 ### Mapping for Storage

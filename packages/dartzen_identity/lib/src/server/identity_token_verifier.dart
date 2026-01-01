@@ -6,30 +6,56 @@ import 'package:http/http.dart' as http;
 /// Configuration for Identity Toolkit token verification.
 final class IdentityTokenVerifierConfig {
   /// The Google Cloud Project ID.
-  final String projectId;
-
-  /// The Identity Toolkit emulator host (e.g. 'localhost:9099').
-  /// Only used in development mode when [dzIsPrd] is false.
-  final String? emulatorHost;
+  ///
+  /// If not provided, attempts to read from [dzGcloudProjectEnvVar].
+  final String? projectId;
 
   /// HTTP client for testing purposes.
   final http.Client? httpClient;
 
   /// Creates an [IdentityTokenVerifierConfig].
-  const IdentityTokenVerifierConfig({
+  ///
+  /// If [projectId] is omitted, it will attempt to read `GCLOUD_PROJECT` from environment.
+  ///
+  /// If executing in a non-production environment (i.e. `dzIsPrd` is false),
+  /// this will automatically configure for the Firebase Emulator using
+  /// the host from [dzIdentityToolkitEmulatorHostEnvVar].
+  factory IdentityTokenVerifierConfig({
+    String? projectId,
+    http.Client? httpClient,
+  }) {
+    final effectiveProjectId = projectId ?? dzGcloudProject;
+    if (effectiveProjectId.isEmpty) {
+      throw StateError(
+        'Project ID must be provided via constructor or $dzGcloudProjectEnvVar environment variable.',
+      );
+    }
+
+    return IdentityTokenVerifierConfig._(
+      projectId: effectiveProjectId,
+      httpClient: httpClient,
+    );
+  }
+
+  const IdentityTokenVerifierConfig._({
     required this.projectId,
-    this.emulatorHost,
     this.httpClient,
   });
 }
 
-/// Verified identity information extracted from an ID token.
-final class VerifiedIdentity {
-  /// The unique user ID.
+/// External identity data extracted from an ID token (JWT).
+///
+/// This is NOT a domain Identity aggregate. It represents raw claims
+/// from Firebase Auth that can be used to create or lookup an Identity.
+final class ExternalIdentityData {
+  /// The unique user ID from Firebase Auth.
   final String userId;
 
   /// The user's email address (nullable).
   final String? email;
+
+  /// Whether the email has been verified.
+  final bool emailVerified;
 
   /// The user's display name (nullable).
   final String? displayName;
@@ -37,36 +63,41 @@ final class VerifiedIdentity {
   /// The user's photo URL (nullable).
   final String? photoUrl;
 
-  /// Creates a [VerifiedIdentity].
-  const VerifiedIdentity({
+  /// Creates an [ExternalIdentityData].
+  const ExternalIdentityData({
     required this.userId,
     this.email,
+    this.emailVerified = false,
     this.displayName,
     this.photoUrl,
   });
 
   @override
   String toString() =>
-      'VerifiedIdentity(userId: $userId, email: $email, displayName: $displayName)';
+      'ExternalIdentityData(userId: $userId, email: $email, emailVerified: $emailVerified)';
 }
 
 /// Server-side token verifier using GCP Identity Toolkit REST API.
 ///
-/// This class verifies ID tokens (JWT) issued by Firebase Auth / Identity Platform.
-/// It automatically switches between production and emulator endpoints based on [dzIsPrd].
+/// This class verifies ID tokens (JWT) issued by Firebase Auth.
+/// It automatically switches between production and Firebase Emulator based on [dzIsPrd].
+///
+/// Returns [ExternalIdentityData] which contains raw claims from Firebase Auth.
+/// Use this data to create or lookup a domain Identity aggregate from identity_models.
 ///
 /// Example:
 /// ```dart
 /// final verifier = IdentityTokenVerifier(
-///   config: IdentityTokenVerifierConfig(
-///     projectId: 'my-project',
-///     emulatorHost: 'localhost:9099', // only used in dev mode
-///   ),
+///   config: IdentityTokenVerifierConfig(projectId: 'my-project'),
 /// );
 ///
 /// final result = await verifier.verifyToken(idToken);
 /// result.fold(
-///   (identity) => print('Verified: ${identity.userId}'),
+///   (data) {
+///     // Use data.userId to lookup or create Identity aggregate
+///     final identityId = IdentityId.reconstruct(data.userId);
+///     // ...
+///   },
 ///   (error) => print('Invalid token: ${error.message}'),
 /// );
 /// ```
@@ -80,10 +111,10 @@ final class IdentityTokenVerifier {
     _client = config.httpClient ?? http.Client();
   }
 
-  /// Verifies an ID token and returns verified identity information.
+  /// Verifies an ID token and returns external identity data.
   ///
-  /// Returns [ZenResult<VerifiedIdentity>] on success or [ZenError] on failure.
-  Future<ZenResult<VerifiedIdentity>> verifyToken(String idToken) async {
+  /// Returns [ZenResult<ExternalIdentityData>] with Firebase Auth claims on success.
+  Future<ZenResult<ExternalIdentityData>> verifyToken(String idToken) async {
     if (idToken.trim().isEmpty) {
       return const ZenResult.err(
         ZenValidationError('ID token cannot be empty'),
@@ -129,15 +160,20 @@ final class IdentityTokenVerifier {
         'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${_config.projectId}',
       );
     } else {
-      // Development: Identity Toolkit Emulator
-      final host = _config.emulatorHost ?? 'localhost:9099';
+      // Development: Firebase Emulator
+      const host = dzIdentityToolkitEmulatorHost;
+      if (host.isEmpty) {
+        throw StateError(
+          'Firebase Emulator host must be set via $dzIdentityToolkitEmulatorHostEnvVar in development mode.',
+        );
+      }
       return Uri.parse(
         'http://$host/identitytoolkit.googleapis.com/v1/accounts:lookup?key=${_config.projectId}',
       );
     }
   }
 
-  ZenResult<VerifiedIdentity> _parseVerifiedIdentity(String responseBody) {
+  ZenResult<ExternalIdentityData> _parseVerifiedIdentity(String responseBody) {
     try {
       final json = jsonDecode(responseBody) as Map<String, dynamic>;
       final users = json['users'] as List<dynamic>?;
@@ -158,9 +194,10 @@ final class IdentityTokenVerifier {
       }
 
       return ZenResult.ok(
-        VerifiedIdentity(
+        ExternalIdentityData(
           userId: userId,
           email: user['email'] as String?,
+          emailVerified: (user['emailVerified'] as bool?) ?? false,
           displayName: user['displayName'] as String?,
           photoUrl: user['photoUrl'] as String?,
         ),

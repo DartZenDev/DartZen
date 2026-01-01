@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('IdentityTokenVerifier', () {
-    test('verifyToken returns verified identity on success', () async {
+    test('verifyToken returns external identity data on success', () async {
       final mockClient = MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.body, jsonEncode({'idToken': 'valid_token'}));
@@ -19,6 +19,7 @@ void main() {
               {
                 'localId': 'user_123',
                 'email': 'test@example.com',
+                'emailVerified': true,
                 'displayName': 'Test User',
                 'photoUrl': 'https://example.com/photo.jpg',
               },
@@ -31,7 +32,6 @@ void main() {
       final verifier = IdentityTokenVerifier(
         config: IdentityTokenVerifierConfig(
           projectId: 'test-project',
-          emulatorHost: 'localhost:9099',
           httpClient: mockClient,
         ),
       );
@@ -39,11 +39,12 @@ void main() {
       final result = await verifier.verifyToken('valid_token');
 
       expect(result.isSuccess, isTrue);
-      final identity = result.dataOrNull!;
-      expect(identity.userId, 'user_123');
-      expect(identity.email, 'test@example.com');
-      expect(identity.displayName, 'Test User');
-      expect(identity.photoUrl, 'https://example.com/photo.jpg');
+      final data = result.dataOrNull!;
+      expect(data.userId, 'user_123');
+      expect(data.email, 'test@example.com');
+      expect(data.emailVerified, isTrue);
+      expect(data.displayName, 'Test User');
+      expect(data.photoUrl, 'https://example.com/photo.jpg');
 
       verifier.close();
     });
@@ -70,18 +71,19 @@ void main() {
       final result = await verifier.verifyToken('token');
 
       expect(result.isSuccess, isTrue);
-      final identity = result.dataOrNull!;
-      expect(identity.userId, 'user_456');
-      expect(identity.email, isNull);
-      expect(identity.displayName, isNull);
-      expect(identity.photoUrl, isNull);
+      final data = result.dataOrNull!;
+      expect(data.userId, 'user_456');
+      expect(data.email, isNull);
+      expect(data.emailVerified, isFalse);
+      expect(data.displayName, isNull);
+      expect(data.photoUrl, isNull);
 
       verifier.close();
     });
 
     test('verifyToken returns error for empty token', () async {
       final verifier = IdentityTokenVerifier(
-        config: const IdentityTokenVerifierConfig(projectId: 'test-project'),
+        config: IdentityTokenVerifierConfig(projectId: 'test-project'),
       );
 
       final result = await verifier.verifyToken('');
@@ -221,25 +223,28 @@ void main() {
     });
   });
 
-  group('VerifiedIdentity', () {
-    test('toString includes userId and email', () {
-      const identity = VerifiedIdentity(
+  group('ExternalIdentityData', () {
+    test('toString includes userId, email and emailVerified', () {
+      const data = ExternalIdentityData(
         userId: 'user_123',
         email: 'test@example.com',
+        emailVerified: true,
         displayName: 'Test User',
       );
 
-      expect(identity.toString(), contains('user_123'));
-      expect(identity.toString(), contains('test@example.com'));
+      expect(data.toString(), contains('user_123'));
+      expect(data.toString(), contains('test@example.com'));
+      expect(data.toString(), contains('true'));
     });
 
     test('can be created with only userId', () {
-      const identity = VerifiedIdentity(userId: 'user_123');
+      const data = ExternalIdentityData(userId: 'user_123');
 
-      expect(identity.userId, 'user_123');
-      expect(identity.email, isNull);
-      expect(identity.displayName, isNull);
-      expect(identity.photoUrl, isNull);
+      expect(data.userId, 'user_123');
+      expect(data.email, isNull);
+      expect(data.emailVerified, isFalse);
+      expect(data.displayName, isNull);
+      expect(data.photoUrl, isNull);
     });
   });
 }
