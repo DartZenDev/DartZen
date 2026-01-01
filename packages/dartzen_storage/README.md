@@ -71,22 +71,29 @@ dart pub get
 
 ## Usage
 
-### Basic Example
+### Unified Configuration Approach
+
+`dartzen_storage` uses a **unified configuration approach** - the same code works for both production and development (emulator) environments. The package automatically detects the environment using `dzIsPrd` from `dartzen_core`.
 
 ```dart
 import 'package:dartzen_storage/dartzen_storage.dart';
-import 'package:gcloud/storage.dart';
 
 void main() async {
-  // Configure GCS client
-  final storage = Storage(authClient, project);
+  // Single configuration for both production and development
+  // In production (dzIsPrd = true): uses GCS with ADC
+  // In development (dzIsPrd = false): uses Storage Emulator
+  final config = GcsStorageConfig(
+    projectId: 'your-gcp-project',  // or from GCLOUD_PROJECT env var
+    bucket: 'my-content-bucket',
+    prefix: 'data/',  // Optional
+  );
 
   // Create storage reader
-  final reader = GcsStorageReader(
-    storage: storage,
-    bucket: 'my-content-bucket',
-    prefix: 'data/',
-  );
+  // The reader automatically:
+  // - Connects to GCS in production
+  // - Connects to emulator in development (localhost:9199 by default)
+  // - Verifies emulator availability in development
+  final reader = GcsStorageReader(config: config);
 
   // Read an object
   final object = await reader.read('document.json');
@@ -101,6 +108,21 @@ void main() async {
 }
 ```
 
+### Environment Detection
+
+The package uses `dzIsPrd` constant from `dartzen_core` to determine the environment:
+
+- **Production** (`dzIsPrd = true`): Connects to Google Cloud Storage using Application Default Credentials
+- **Development** (`dzIsPrd = false`): Connects to Storage Emulator (reads `STORAGE_EMULATOR_HOST` env var or defaults to `localhost:9199`)
+
+### Emulator Configuration
+
+The Storage Emulator is **not optional** - it's a required part of DartZen development workflow. The package performs runtime checks to ensure the emulator is running in development mode.
+
+Emulator host can be configured via:
+1. Environment variable: `STORAGE_EMULATOR_HOST=localhost:9199`
+2. Default value: `localhost:9199` (standard Firebase Storage Emulator port)
+
 ### Usage in Server Context
 
 `dartzen_storage` is designed to be **consumed** by server packages, not to depend on them:
@@ -108,14 +130,14 @@ void main() async {
 ```dart
 // In your server setup
 import 'package:dartzen_storage/dartzen_storage.dart';
-import 'package:gcloud/storage.dart';
 
-final storage = Storage(authClient, project);
-final storageReader = GcsStorageReader(
-  storage: storage,
+final config = GcsStorageConfig.production(
+  projectId: 'my-project',
   bucket: 'my-app-content',
   prefix: 'public/',
 );
+
+final storageReader = GcsStorageReader(config: config);
 
 // Pass the reader to your server or caching layer
 final server = MyServer(storageReader: storageReader);
@@ -143,11 +165,20 @@ GCS-backed implementation of `ZenStorageReader`.
 
 ```dart
 final reader = GcsStorageReader(
-  storage: storage,    // gcloud Storage client
-  bucket: 'my-bucket', // GCS bucket name
-  prefix: 'data/',     // Optional object prefix
+  config: GcsStorageConfig(
+    projectId: 'my-project',
+    bucket: 'my-bucket',
+    prefix: 'data/',
+  ),
 );
 ```
+
+### `GcsStorageConfig`
+
+Configuration object for connecting to GCS.
+
+- `production` factory: Uses Application Default Credentials (ADC).
+- `emulator` factory: Uses anonymous authentication and redirects to emulator host.
 
 ### `StorageObject`
 

@@ -62,7 +62,7 @@ void main() {
         FirestoreConnection.reset();
         await FirestoreConnection.initialize(
           const FirestoreConfig.emulator(projectId: 'test'),
-          localization: localization,
+
           httpClient: mockClient,
         );
 
@@ -94,7 +94,7 @@ void main() {
       FirestoreConnection.reset();
       await FirestoreConnection.initialize(
         const FirestoreConfig.emulator(projectId: 'test'),
-        localization: localization,
+
         httpClient: mockClient,
       );
 
@@ -128,7 +128,6 @@ void main() {
       FirestoreConnection.reset();
       await FirestoreConnection.initialize(
         const FirestoreConfig.emulator(projectId: 'test'),
-        localization: localization,
         httpClient: mockClient,
       );
 

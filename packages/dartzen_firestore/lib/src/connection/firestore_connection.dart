@@ -1,8 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:http/http.dart' as http;
 
-import '../l10n/firestore_messages.dart';
 import 'firestore_config.dart';
 import 'firestore_rest_client.dart';
 
@@ -36,29 +34,17 @@ abstract final class FirestoreConnection {
   /// In emulator mode, performs a runtime check to verify the emulator is running.
   /// Fails fast with a clear error if the emulator is configured but unavailable.
   ///
-  /// [localization] is used for localized log messages.
-  /// [language] is the language code for localization (defaults to 'en').
   /// [httpClient] is an optional HTTP client (useful for testing).
   ///
   /// Throws [StateError] if already initialized.
   static Future<void> initialize(
     FirestoreConfig config, {
-    required ZenLocalizationService localization,
-    String language = 'en',
     http.Client? httpClient,
   }) async {
     if (_initialized) {
       throw StateError('FirestoreConnection is already initialized.');
     }
 
-    // Load localization messages for firestore module
-    await localization.loadModuleMessages(
-      'firestore',
-      language,
-      modulePath: 'lib/src/l10n',
-    );
-
-    final messages = FirestoreMessages(localization, language);
     _client = FirestoreRestClient(config: config, httpClient: httpClient);
 
     if (!config.isProduction) {
@@ -66,7 +52,9 @@ abstract final class FirestoreConnection {
       final host = config.emulatorHost!;
       final port = config.emulatorPort!;
 
-      ZenLogger.instance.warn(messages.emulatorConnection(host, port));
+      ZenLogger.instance.info(
+        'Connecting to Firestore Emulator at $host:$port',
+      );
 
       // Runtime check: verify emulator is running
       try {
@@ -74,7 +62,8 @@ abstract final class FirestoreConnection {
             .getDocument('_health_check')
             .timeout(const Duration(seconds: 2));
       } catch (e) {
-        final errorMessage = messages.emulatorUnavailable(host, port);
+        final errorMessage =
+            'Firestore Emulator at $host:$port is not accessible';
         ZenLogger.instance.error(errorMessage, error: e);
 
         throw StateError(
@@ -84,7 +73,7 @@ abstract final class FirestoreConnection {
       }
     } else {
       // Production mode
-      ZenLogger.instance.info(messages.productionConnection());
+      ZenLogger.instance.info('Connected to Firestore (production mode)');
     }
 
     _initialized = true;

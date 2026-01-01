@@ -21,7 +21,13 @@ void main() {
     setUp(() {
       mockStorage = MockStorage();
       mockBucket = MockBucket();
-      reader = GcsStorageReader(storage: mockStorage, bucket: 'test-bucket');
+      reader = GcsStorageReader(
+        config: GcsStorageConfig(
+          projectId: 'test-project',
+          bucket: 'test-bucket',
+        ),
+        storage: mockStorage,
+      );
     });
 
     test('returns object when it exists', () async {
@@ -59,9 +65,12 @@ void main() {
 
     test('applies prefix when configured', () async {
       final readerWithPrefix = GcsStorageReader(
+        config: GcsStorageConfig(
+          projectId: 'test-project',
+          bucket: 'test-bucket',
+          prefix: 'data/',
+        ),
         storage: mockStorage,
-        bucket: 'test-bucket',
-        prefix: 'data/',
       );
 
       final mockInfo = MockObjectInfo();

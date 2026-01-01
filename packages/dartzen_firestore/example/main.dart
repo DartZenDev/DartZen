@@ -2,47 +2,51 @@
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 
-/// Example demonstrating dartzen_firestore usage with REST API.
+/// Example demonstrating unified configuration approach for dartzen_firestore.
+///
+/// This example shows how the same initialization code works for both
+/// production and development (emulator) environments.
 Future<void> main() async {
-  // 1. Initialize localization
-  final localization = ZenLocalizationService(
-    config: const ZenLocalizationConfig(isProduction: false),
+  print('\n=== dartzen_firestore Example ===\n');
+
+  // 1. Single configuration for both environments
+  //    No need to check dzIsPrd manually - the package handles it!
+  //
+  //    In production (dzIsPrd = true): connects to Firestore
+  //    In development (dzIsPrd = false): connects to Firestore Emulator
+  final config = FirestoreConfig(projectId: 'dev-project');
+
+  print('📋 Configuration:');
+  print('   Project: ${config.projectId}');
+  print(
+    '   Mode: ${config.isProduction ? "PRODUCTION" : "EMULATOR (${config.emulatorHost}:${config.emulatorPort})"}',
   );
+  print('');
 
-  // 2. Initialize Firestore connection
-  const config = FirestoreConfig.emulator();
-
+  // 2. Initialize connection
+  //    The package automatically:
+  //    - Connects to appropriate service (production or emulator)
+  //    - Verifies emulator availability in development mode
   try {
-    await FirestoreConnection.initialize(config, localization: localization);
+    await FirestoreConnection.initialize(config);
+    print('✅ Connection initialized successfully\n');
   } catch (e) {
-    print('Failed to initialize Firestore: $e');
-    print('Make sure the Firestore emulator is running:');
-    print('  firebase emulators:start --only firestore');
+    print('❌ Failed to initialize Firestore: $e');
+    print('');
+    print('💡 Make sure the Firestore emulator is running:');
+    print('   firebase emulators:start --only firestore');
     return;
   }
 
-  print('\n=== dartzen_firestore Example (REST) ===\n');
-
-  // 3. Type Converters Example
+  // 3. Demonstrate basic functionality
+  print('--- Type Converters ---');
   await _demonstrateConverters();
-
-  // 4. Batch Operations Example
-  await _demonstrateBatch(localization);
-
-  // 5. Transaction Example
-  await _demonstrateTransaction(localization);
-
-  // 6. Error Handling Example
-  await _demonstrateErrorHandling(localization);
 
   print('\n=== Example Complete ===\n');
 }
 
 Future<void> _demonstrateConverters() async {
-  print('--- Type Converters ---');
-
   // Timestamp conversion
   final zenTimestamp = ZenTimestamp.now();
   final rfc3339 = FirestoreConverters.zenTimestampToRfc3339(zenTimestamp);
@@ -69,92 +73,4 @@ Future<void> _demonstrateConverters() async {
   print('\nNormalized claims (ZenTimestamps → RFC 3339 strings):');
   print('  created_at: ${normalized['created_at']}');
   print('  metadata.updated: ${(normalized['metadata'] as Map)['updated']}');
-  print('');
-}
-
-Future<void> _demonstrateBatch(ZenLocalizationService localization) async {
-  print('--- Batch Operations ---');
-
-  final batch = FirestoreBatch(localization: localization);
-
-  // Add multiple operations to the batch
-  batch.set('users/user1', {
-    'name': 'Alice',
-    'age': 30,
-    'created_at': ZenTimestamp.now(),
-  });
-
-  batch.set('users/user2', {
-    'name': 'Bob',
-    'age': 25,
-    'created_at': ZenTimestamp.now(),
-  });
-
-  batch.update('users/user1', {'age': 31});
-
-  // Commit the batch
-  final result = await batch.commit();
-
-  result.fold(
-    (_) => print('✓ Batch committed successfully (3 operations)'),
-    (error) => print('✗ Batch failed: $error'),
-  );
-
-  print('');
-}
-
-Future<void> _demonstrateTransaction(
-  ZenLocalizationService localization,
-) async {
-  print('--- Transaction Example ---');
-
-  // Initialize a counter
-  await FirestoreConnection.client.patchDocument('counters/global', {
-    'value': 0,
-  });
-
-  // Run a transaction to increment the counter
-  final result = await FirestoreTransaction.run<int>((transaction) async {
-    final doc = await transaction.get('counters/global');
-
-    if (!doc.exists) {
-      return const ZenResult<int>.err(ZenNotFoundError('Counter not found'));
-    }
-
-    final currentValue = doc.data?['value'] as int? ?? 0;
-    final newValue = currentValue + 1;
-
-    transaction.update('counters/global', {'value': newValue});
-    return ZenResult<int>.ok(newValue);
-  }, localization: localization);
-
-  result.fold(
-    (newValue) => print('✓ Transaction succeeded. Counter value: $newValue'),
-    (error) => print('✗ Transaction failed: $error'),
-  );
-
-  print('');
-}
-
-Future<void> _demonstrateErrorHandling(
-  ZenLocalizationService localization,
-) async {
-  print('--- Error Handling ---');
-
-  try {
-    final doc = await FirestoreConnection.client.getDocument('nonexistent/doc');
-    if (!doc.exists) {
-      print('✓ Document not found (expected)');
-    }
-  } catch (e, stack) {
-    final messages = FirestoreMessages(localization, 'en');
-    final error = FirestoreErrorMapper.mapException(e, stack, messages);
-    if (error is ZenNotFoundError) {
-      print('✓ Document not found (expected ZenNotFoundError)');
-    } else {
-      print('✗ Unexpected error: $error');
-    }
-  }
-
-  print('');
 }

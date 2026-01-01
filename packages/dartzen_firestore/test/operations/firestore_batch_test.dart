@@ -65,7 +65,6 @@ void main() {
       FirestoreConnection.reset();
       await FirestoreConnection.initialize(
         const FirestoreConfig.emulator(projectId: 'test-project'),
-        localization: localization,
         httpClient: mockClient,
       );
 
@@ -103,7 +102,6 @@ void main() {
       FirestoreConnection.reset();
       await FirestoreConnection.initialize(
         const FirestoreConfig.emulator(projectId: 'test-project'),
-        localization: localization,
         httpClient: MockClient((request) async {
           if (request.url.path.endsWith('_health_check')) {
             return http.Response(
