@@ -16,13 +16,13 @@ echo "  Creating Auth users..."
 create_auth_user() {
   local email=$1
   local password=$2
-  
+
   curl -s -X POST \
     "http://$AUTH_HOST/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key" \
     -H "Content-Type: application/json" \
     -d "{\"email\":\"$email\",\"password\":\"$password\",\"returnSecureToken\":true}" \
     > /tmp/auth_response.json
-  
+
   if [ $? -eq 0 ]; then
     echo "    Created $email"
   else
@@ -72,43 +72,43 @@ TERMS_CONTENT='<!DOCTYPE html>
 <body>
     <h1>Terms of Service</h1>
     <p class="date">Last Updated: January 1, 2026</p>
-    
+
     <h2>1. Acceptance of Terms</h2>
     <p>
         Welcome to ZenDemo. This is a demonstration application showcasing the DartZen architecture.
         By accessing this application, you agree to be bound by these Terms of Service.
     </p>
-    
+
     <h2>2. Use of Service</h2>
     <p>
         ZenDemo is provided for demonstration and educational purposes only. This is not a production
         application and should not be used to store real or sensitive data.
     </p>
-    
+
     <h2>3. User Accounts</h2>
     <p>
         Test accounts are provided for demonstration purposes. These accounts use Firebase Authentication
         Emulator and all data is stored locally in emulated services.
     </p>
-    
+
     <h2>4. Data Storage</h2>
     <p>
         All data in this application is stored in Firebase emulators running locally on your machine.
         No data is sent to production Firebase services or any external servers.
     </p>
-    
+
     <h2>5. Limitations of Liability</h2>
     <p>
         This software is provided "as is" without warranty of any kind. The developers assume no
         liability for any issues arising from the use of this demonstration application.
     </p>
-    
+
     <h2>6. Changes to Terms</h2>
     <p>
         These terms may be updated at any time. Continued use of the application constitutes
         acceptance of any changes.
     </p>
-    
+
     <h2>7. Contact</h2>
     <p>
         This is a demonstration application. For questions about DartZen architecture, please
@@ -134,22 +134,22 @@ echo "  Seeding Firestore Identities..."
 create_identity_doc() {
   local email=$1
   local role=$2
-  
+
   # Lookup UID
   local lookup_response=$(curl -s -X POST \
     "http://$AUTH_HOST/identitytoolkit.googleapis.com/v1/accounts:lookup?key=fake-api-key" \
     -H "Content-Type: application/json" \
     -d "{\"email\":[\"$email\"]}")
-  
+
   local uid=$(echo "$lookup_response" | grep -o '"localId":"[^"]*' | cut -d'"' -f4)
-  
+
   if [ -z "$uid" ]; then
     echo "    Failed to get UID for $email"
     return
   fi
-  
+
   local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  
+
   local identity_doc="{
     \"fields\": {
       \"id\": {\"stringValue\": \"$uid\"},
@@ -179,14 +179,14 @@ create_identity_doc() {
       \"createdAt\": {\"timestampValue\": \"$now\"}
     }
   }"
-  
+
   local response=$(curl -s -w "\n%{http_code}" -X POST \
     "http://$FIRESTORE_HOST/v1/projects/$PROJECT_ID/databases/(default)/documents/identities?documentId=$uid" \
     -H "Content-Type: application/json" \
     -d "$identity_doc")
-  
+
   local http_code=$(echo "$response" | tail -n1)
-  
+
   if [ "$http_code" = "200" ]; then
     echo "    Created identity doc for $uid"
   elif [ "$http_code" = "409" ]; then

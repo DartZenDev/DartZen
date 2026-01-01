@@ -21,7 +21,8 @@ class FirebaseTokenVerifier {
   Future<ZenResult<Map<String, dynamic>>> verifyToken(String idToken) async {
     try {
       // For Firebase Auth Emulator, we can verify tokens using the emulator's endpoint
-      final url = Uri.parse('http://$_authEmulatorHost/identitytoolkit.googleapis.com/v1/accounts:lookup?key=fake-api-key');
+      final url = Uri.parse(
+          'http://$_authEmulatorHost/identitytoolkit.googleapis.com/v1/accounts:lookup?key=fake-api-key');
 
       final response = await http.post(
         url,
@@ -61,7 +62,8 @@ class FirebaseTokenVerifier {
         'photoUrl': user['photoUrl'],
       });
     } catch (e, stackTrace) {
-      _logger.error('Token verification error', error: e, stackTrace: stackTrace);
+      _logger.error('Token verification error',
+          error: e, stackTrace: stackTrace);
       return ZenResult.err(
         ZenUnknownError(
           'Failed to verify token',

@@ -77,12 +77,14 @@ abstract final class FirestoreConnection {
         final response = await client
             .get(healthUrl)
             .timeout(const Duration(seconds: 2));
-        
+
         // Accept any response (200, 400, etc.) - just verify emulator is listening
         if (response.statusCode >= 500) {
-          throw http.ClientException('Emulator returned error: ${response.statusCode}');
+          throw http.ClientException(
+            'Emulator returned error: ${response.statusCode}',
+          );
         }
-        
+
         if (httpClient == null) {
           client.close();
         }

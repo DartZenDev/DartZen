@@ -9,12 +9,14 @@ Future<void> main() async {
   final authHost = Platform.environment['FIREBASE_AUTH_EMULATOR_HOST'];
   if (authHost == null || authHost.isEmpty) {
     stderr.writeln('ERROR: FIREBASE_AUTH_EMULATOR_HOST is required');
-    stderr.writeln('Example: export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099');
+    stderr
+        .writeln('Example: export FIREBASE_AUTH_EMULATOR_HOST=localhost:9099');
     exit(1);
   }
 
   // Parse Firestore emulator configuration
-  final firestoreHost = Platform.environment['FIRESTORE_EMULATOR_HOST'] ?? 'localhost:8080';
+  final firestoreHost =
+      Platform.environment['FIRESTORE_EMULATOR_HOST'] ?? 'localhost:8080';
   final hostParts = firestoreHost.split(':');
   final firestoreHostname = hostParts[0];
   final firestorePort = hostParts.length > 1 ? int.parse(hostParts[1]) : 8080;
