@@ -1,0 +1,11 @@
+{
+  "zen_demo.ping.success": "Serwer jest żywy",
+  "zen_demo.websocket.connected": "Połączono z serwerem",
+  "zen_demo.websocket.disconnected": "Rozłączono",
+  "zen_demo.websocket.error": "Błąd połączenia: {error}",
+  "zen_demo.terms.loading": "Ładowanie warunków...",
+  "zen_demo.terms.error": "Błąd ładowania warunków: {error}",
+  "zen_demo.profile.loading": "Ładowanie profilu...",
+  "zen_demo.profile.error": "Nie udało się załadować profilu: {error}",
+  "zen_demo.profile.bio": "To jest profil użytkownika ZenDemo"
+}

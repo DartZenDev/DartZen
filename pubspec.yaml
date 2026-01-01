@@ -18,6 +18,9 @@ workspace:
   - packages/dartzen_storage
   - packages/dartzen_ui_identity
   - packages/dartzen_ui_identity/example
+  - apps/ZenDemo/contracts
+  - apps/ZenDemo/server
+  - apps/ZenDemo/client
 
 dependency_overrides:
   cli_util: ^0.4.2

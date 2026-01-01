@@ -1,0 +1,18 @@
+# Firebase emulator data
+firebase-data/
+
+# Build artifacts
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Server storage (content files are committed, but runtime changes ignored)
+server/storage/**/*
+!server/storage/legal/
+!server/storage/legal/terms.html

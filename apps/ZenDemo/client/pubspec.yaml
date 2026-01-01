@@ -1,0 +1,41 @@
+name: zen_demo_client
+description: ZenDemo Flutter client application
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dartzen_core:
+    path: ../../../packages/dartzen_core
+  dartzen_identity:
+    path: ../../../packages/dartzen_identity
+  dartzen_localization:
+    path: ../../../packages/dartzen_localization
+  dartzen_navigation:
+    path: ../../../packages/dartzen_navigation
+  dartzen_transport:
+    path: ../../../packages/dartzen_transport
+  dartzen_ui_identity:
+    path: ../../../packages/dartzen_ui_identity
+  zen_demo_contracts:
+    path: ../contracts
+  firebase_auth: ^5.3.3
+  firebase_core: ^3.8.1
+  http: ^1.2.2
+  web_socket_channel: ^3.0.1
+
+resolution: workspace
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
