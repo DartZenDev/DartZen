@@ -1,5 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_identity/dartzen_identity.dart' hide IdentityMessages;
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_ui_identity/dartzen_ui_identity.dart';
 import 'package:flutter/material.dart';
