@@ -71,7 +71,7 @@ class GcsStorageConfig {
     if (_emulatorHostOverride != null) return _emulatorHostOverride;
 
     // 2. Environment variable (required in development)
-    final envHost = dzStorageEmulatorHost;
+    const envHost = dzStorageEmulatorHost;
     if (envHost.isEmpty) {
       throw StateError(
         'Storage Emulator host must be configured via $dzStorageEmulatorHostEnvVar environment variable in development mode.',

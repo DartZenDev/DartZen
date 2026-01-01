@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 /// Environment constants
 ///
 /// These constants are used to determine the current environment (DEV or PRD).
@@ -33,24 +31,23 @@ const String dzStorageEmulatorHostEnvVar = 'STORAGE_EMULATOR_HOST';
 /// This is a compile-time constant that reads from the GCLOUD_PROJECT
 /// environment variable. For tree-shaking to work properly, this must be
 /// a compile-time constant, not a runtime value.
-///
-/// Note: This returns the value at compile time. For runtime access,
-/// packages should use [Platform.environment] only within dartzen_core.
-String get dzGcloudProject => Platform.environment[dzGcloudProjectEnvVar] ?? '';
+const String dzGcloudProject = String.fromEnvironment(dzGcloudProjectEnvVar);
 
 /// Firestore Emulator host from environment.
 ///
-/// This reads from FIRESTORE_EMULATOR_HOST at runtime.
+/// This reads from FIRESTORE_EMULATOR_HOST at compile time.
 /// Returns empty string if not set.
-String get dzFirestoreEmulatorHost =>
-    Platform.environment[dzFirestoreEmulatorHostEnvVar] ?? '';
+const String dzFirestoreEmulatorHost = String.fromEnvironment(
+  dzFirestoreEmulatorHostEnvVar,
+);
 
 /// Storage Emulator host from environment.
 ///
-/// This reads from STORAGE_EMULATOR_HOST at runtime.
+/// This reads from STORAGE_EMULATOR_HOST at compile time.
 /// Returns empty string if not set.
-String get dzStorageEmulatorHost =>
-    Platform.environment[dzStorageEmulatorHostEnvVar] ?? '';
+const String dzStorageEmulatorHost = String.fromEnvironment(
+  dzStorageEmulatorHostEnvVar,
+);
 
 /// Platform constants
 ///
