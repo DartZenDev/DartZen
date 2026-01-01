@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
@@ -45,6 +46,10 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLogout() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -74,6 +79,11 @@ class _MainScreenState extends State<MainScreen> {
                     ],
                   ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Logout',
+                onPressed: _handleLogout,
               ),
             ],
           ),

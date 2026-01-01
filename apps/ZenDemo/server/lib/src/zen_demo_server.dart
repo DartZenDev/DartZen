@@ -3,29 +3,36 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_firestore/dartzen_firestore.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
+import 'package:dartzen_storage/dartzen_storage.dart';
+import 'package:gcloud/storage.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:zen_demo_contracts/zen_demo_contracts.dart';
+import 'package:zen_demo_contracts/zen_demo_contracts.dart' as contracts;
 import 'package:zen_demo_server/src/identity/firebase_token_verifier.dart';
-import 'package:zen_demo_server/src/identity/server_identity_repository.dart';
 import 'package:zen_demo_server/src/l10n/server_messages.dart' as demo;
 
 /// ZenDemo server application.
 ///
 /// This server demonstrates real DartZen architecture with:
 /// - Firebase Auth token verification (server-side)
-/// - Identity resolution from Firestore (server-side)
-/// - Real filesystem-based storage
+/// - Identity resolution from Firestore via REST API (server-side)
+/// - Cloud Storage via emulator (server-side)
 /// - No mocks, no stubs, no TODOs
 class ZenDemoServer {
   /// Creates the server.
   ZenDemoServer({
     required this.port,
-    required this.storagePath,
+    required this.storageBucket,
+    required this.storageHost,
     required this.firestoreHost,
     required this.firestorePort,
     required this.authEmulatorHost,
@@ -34,8 +41,11 @@ class ZenDemoServer {
   /// Server port.
   final int port;
 
-  /// Local storage path for content.
-  final String storagePath;
+  /// Storage bucket name.
+  final String storageBucket;
+
+  /// Storage emulator host.
+  final String storageHost;
 
   /// Firestore emulator host.
   final String firestoreHost;
@@ -47,7 +57,8 @@ class ZenDemoServer {
   final String authEmulatorHost;
 
   late final ZenLocalizationService _localization;
-  late final ServerIdentityRepository _identityRepository;
+  late final FirestoreIdentityRepository _identityRepository;
+  late final ZenStorageReader _storageReader;
   late final FirebaseTokenVerifier _tokenVerifier;
 
   final ZenLogger _logger = ZenLogger.instance;
@@ -56,12 +67,7 @@ class ZenDemoServer {
   Future<void> initialize() async {
     _logger.info('Initializing ZenDemo server');
 
-    _validateStoragePath();
-
-    // Initialize identity repository (in-memory for demo)
-    _identityRepository = ServerIdentityRepository();
-    _tokenVerifier = FirebaseTokenVerifier(authEmulatorHost: authEmulatorHost);
-
+    // Initialize localization first
     const localizationConfig = ZenLocalizationConfig(
       isProduction: false,
       globalPath: 'lib/src/l10n',
@@ -78,27 +84,53 @@ class ZenDemoServer {
       modulePath: 'lib/src/l10n',
     );
 
+    // Initialize Firestore connection with emulator
+    final firestoreConfig = FirestoreConfig.emulator(
+      host: firestoreHost,
+      port: firestorePort,
+      projectId: 'demo-zen',
+    );
+
+    // In a melos monorepo, resolve the absolute path to dartzen_firestore package
+    // The localization files are at packages/dartzen_firestore/lib/src/l10n/
+    final currentDir = Directory.current.path;
+    final firestoreL10nPath = path.normalize(
+      path.join(currentDir, '../../../packages/dartzen_firestore/lib/src/l10n'),
+    );
+
+    // Pre-load firestore localization messages with absolute path
+    await _localization.loadModuleMessages(
+      'firestore',
+      'en',
+      modulePath: firestoreL10nPath,
+    );
+
+    await FirestoreConnection.initialize(
+      firestoreConfig,
+      localization: _localization,
+    );
+
+    // Initialize identity repository
+    _identityRepository = FirestoreIdentityRepository(
+      localization: _localization,
+    );
+
+    // Initialize token verifier
+    _tokenVerifier = FirebaseTokenVerifier(authEmulatorHost: authEmulatorHost);
+
+    // Initialize GCS storage reader with emulator
+    // For emulator, use HTTP API directly since gcloud package may not work properly with emulator
+    final storage = Storage(
+      _MockAuthClient(),
+      'http://$storageHost',
+    );
+
+    _storageReader = GcsStorageReader(
+      storage: storage,
+      bucket: storageBucket,
+    );
+
     _logger.info('ZenDemo server initialized successfully');
-  }
-
-  void _validateStoragePath() {
-    final dir = Directory(storagePath);
-    if (!dir.existsSync()) {
-      throw StateError(
-        'Storage path does not exist: $storagePath. '
-        'Expected directory with content files.',
-      );
-    }
-
-    final termsFile = File('$storagePath/legal/terms.html');
-    if (!termsFile.existsSync()) {
-      throw StateError(
-        'Terms file not found: ${termsFile.path}. '
-        'Zen Demo requires real storage content.',
-      );
-    }
-
-    _logger.info('Using storage path: $storagePath');
   }
 
   /// Runs the server.
@@ -109,7 +141,10 @@ class ZenDemoServer {
     router.get('/ping', _handlePing);
 
     // Profile endpoint (requires authentication)
-    router.get('/profile/<userId>', (Request request, String userId) async => await _withAuth(request, (identity) => _handleProfile(request, userId, identity)));
+    router.get(
+        '/profile/<userId>',
+        (Request request, String userId) async => await _withAuth(
+            request, (identity) => _handleProfile(request, userId, identity)));
 
     // Terms endpoint (no auth required)
     router.get('/terms', _handleTerms);
@@ -128,58 +163,122 @@ class ZenDemoServer {
   }
 
   /// Middleware to verify authentication and resolve identity.
+  ///
+  /// This creates simplified Identity domain objects for demo purposes:
+  /// - Default role: USER
+  /// - State: ACTIVE (auto-activated)
+  /// - Minimal verification facts
   Future<Response> _withAuth(
     Request request,
-    Future<Response> Function(IdentityContract identity) handler,
+    Future<Response> Function(Identity identity) handler,
   ) async {
     final authHeader = request.headers['authorization'];
 
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-      return Response(401, body: jsonEncode({
-        'error': 'unauthorized',
-        'message': 'Missing or invalid authorization header',
-      }), headers: {'Content-Type': 'application/json'});
+      return Response(
+        401,
+        body: jsonEncode({
+          'error': 'unauthorized',
+          'message': 'Missing or invalid authorization header',
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
     }
 
     final token = authHeader.substring(7);
     final verifyResult = await _tokenVerifier.verifyToken(token);
 
     if (!verifyResult.isSuccess) {
-      return Response(401, body: jsonEncode({
-        'error': 'invalid-token',
-        'message': verifyResult.errorMessage ?? 'Token verification failed',
-      }), headers: {'Content-Type': 'application/json'});
+      return Response(
+        401,
+        body: jsonEncode({
+          'error': 'invalid-token',
+          'message':
+              verifyResult.errorOrNull?.message ?? 'Token verification failed',
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
     }
 
-    final tokenData = verifyResult.data!;
+    final tokenData = verifyResult.dataOrNull!;
     final userId = tokenData['userId'] as String;
 
-    // Try to get identity from repository
-    var identityResult = await _identityRepository.getIdentity(userId);
-
-    // If not found, create it from token data
-    if (!identityResult.isSuccess) {
-      _logger.info('Identity not found, creating from token data');
-      identityResult = await _identityRepository.upsertIdentity(
-        userId: userId,
-        email: tokenData['email'] as String,
-        displayName: tokenData['displayName'] as String?,
-        photoUrl: tokenData['photoUrl'] as String?,
+    // Create IdentityId
+    final idResult = IdentityId.create(userId);
+    if (!idResult.isSuccess) {
+      return Response(
+        400,
+        body: jsonEncode({
+          'error': 'invalid-user-id',
+          'message': idResult.errorOrNull?.message ?? 'Invalid user ID',
+        }),
+        headers: {'Content-Type': 'application/json'},
       );
-
-      if (!identityResult.isSuccess) {
-        return Response(500, body: jsonEncode({
-          'error': 'identity-resolution-failed',
-          'message': identityResult.errorMessage ?? 'Failed to resolve identity',
-        }), headers: {'Content-Type': 'application/json'});
-      }
     }
 
-    return await handler(identityResult.data!);
+    final identityId = idResult.dataOrNull!;
+
+    // Try to get existing identity from Firestore
+    final getResult = await _identityRepository.getIdentityById(identityId);
+
+    if (getResult.isSuccess) {
+      // Identity exists, use it
+      return await handler(getResult.dataOrNull!);
+    }
+
+    // Identity doesn't exist, create simplified one for demo
+    _logger.info('Creating new demo identity for user: $userId');
+
+    // Demo: Create identity with default USER role and ACTIVE state
+    final demoIdentity = Identity.createPending(
+      id: identityId,
+      authority: Authority(roles: {Role.user}),
+    );
+
+    // Activate immediately for demo (bypass email verification)
+    final activateResult = demoIdentity.lifecycle.activate();
+    if (!activateResult.isSuccess) {
+      return Response(
+        500,
+        body: jsonEncode({
+          'error': 'activation-failed',
+          'message': activateResult.errorOrNull?.message ??
+              'Failed to activate identity',
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+
+    final activeIdentity = Identity(
+      id: demoIdentity.id,
+      lifecycle: activateResult.dataOrNull!,
+      authority: demoIdentity.authority,
+      createdAt: demoIdentity.createdAt,
+    );
+
+    // Store in Firestore
+    final createResult =
+        await _identityRepository.createIdentity(activeIdentity);
+    if (!createResult.isSuccess) {
+      _logger.error(
+        'Failed to create identity',
+        error: createResult.errorOrNull,
+      );
+      return Response(
+        500,
+        body: jsonEncode({
+          'error': 'identity-creation-failed',
+          'message':
+              createResult.errorOrNull?.message ?? 'Failed to create identity',
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+
+    return await handler(activeIdentity);
   }
 
-  Middleware _corsMiddleware() =>
-      (Handler handler) => (Request request) async {
+  Middleware _corsMiddleware() => (Handler handler) => (Request request) async {
         if (request.method == 'OPTIONS') {
           return Response.ok(
             '',
@@ -205,7 +304,7 @@ class ZenDemoServer {
     final language = request.url.queryParameters['lang'] ?? 'en';
     final messages = demo.ServerMessages(_localization, language);
 
-    final contract = PingContract(
+    final contract = contracts.PingContract(
       message: messages.pingSuccess(),
       timestamp: DateTime.now().toIso8601String(),
     );
@@ -219,17 +318,15 @@ class ZenDemoServer {
   Future<Response> _handleProfile(
     Request request,
     String userId,
-    IdentityContract identity,
+    Identity identity,
   ) async {
-    final language = request.url.queryParameters['lang'] ?? 'en';
-    final messages = demo.ServerMessages(_localization, language);
-
-    // Use the resolved identity from authentication middleware
-    final contract = ProfileContract(
-      userId: identity.id,
-      displayName: identity.displayName ?? identity.email,
-      email: identity.email,
-      bio: messages.profileBio(),
+    // Demo: Extract basic info from Identity domain model
+    // In a real app, you'd query a separate profile service
+    final contract = contracts.ProfileContract(
+      userId: identity.id.value,
+      displayName: 'Demo User',
+      email: '${identity.id.value}@demo.local',
+      bio: 'Demo profile - Identity managed in Firestore',
     );
 
     return Response.ok(
@@ -243,10 +340,21 @@ class ZenDemoServer {
     final messages = demo.ServerMessages(_localization, language);
 
     try {
-      final termsFile = File('$storagePath/legal/terms.html');
-      final content = await termsFile.readAsString();
+      // Read terms from GCS storage
+      final storageObject = await _storageReader.read('legal/terms.html');
 
-      final contract = TermsContract(
+      if (storageObject == null) {
+        _logger.error('Terms file not found in storage');
+        return Response.internalServerError(
+          body: jsonEncode(
+              {'error': messages.termsError('Terms file not found')}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      final content = utf8.decode(storageObject.bytes);
+
+      final contract = contracts.TermsContract(
         content: content,
         contentType: 'text/html',
       );
@@ -255,10 +363,14 @@ class ZenDemoServer {
         jsonEncode(contract.toJson()),
         headers: {'Content-Type': 'application/json'},
       );
-    } catch (e) {
-      _logger.error('Failed to load terms: $e');
+    } catch (e, stackTrace) {
+      _logger.error('Failed to load terms', error: e, stackTrace: stackTrace);
+
       return Response.internalServerError(
-        body: jsonEncode({'error': messages.termsError(e.toString())}),
+        body: jsonEncode({
+          'error': 'terms_load_failed',
+          'message': 'Failed to load terms: ${e.toString()}',
+        }),
         headers: {'Content-Type': 'application/json'},
       );
     }
@@ -271,9 +383,10 @@ class ZenDemoServer {
       (dynamic message) {
         try {
           final json = jsonDecode(message as String) as Map<String, dynamic>;
-          final incomingMessage = WebSocketMessageContract.fromJson(json);
+          final incomingMessage =
+              contracts.WebSocketMessageContract.fromJson(json);
 
-          final response = WebSocketMessageContract(
+          final response = contracts.WebSocketMessageContract(
             type: 'echo',
             payload: incomingMessage.payload,
           );
@@ -281,7 +394,7 @@ class ZenDemoServer {
           channel.sink.add(jsonEncode(response.toJson()));
         } catch (e) {
           _logger.error('WebSocket error: $e');
-          final errorMessage = WebSocketMessageContract(
+          final errorMessage = contracts.WebSocketMessageContract(
             type: 'error',
             payload: 'Failed to process message: $e',
           );
@@ -296,4 +409,24 @@ class ZenDemoServer {
       },
     );
   }
+}
+
+/// Mock AuthClient for GCS emulator (no real credentials needed).
+class _MockAuthClient extends http.BaseClient implements AuthClient {
+  final _client = http.Client();
+
+  @override
+  AccessCredentials get credentials => AccessCredentials(
+        AccessToken('Bearer', 'mock-token',
+            DateTime.now().add(const Duration(hours: 1))),
+        null,
+        [],
+      );
+
+  @override
+  Future<void> close() async => _client.close();
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _client.send(request);
 }

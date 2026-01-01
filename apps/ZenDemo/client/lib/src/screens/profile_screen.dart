@@ -91,14 +91,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         _buildField(messages.profileUserId(), _profile!.userId),
         const SizedBox(height: 16),
-        _buildField(messages.profileStatus(), _profile!.status),
+        _buildField(messages.profileDisplayName(), _profile!.displayName),
         const SizedBox(height: 16),
-        Text(
-          messages.profileRoles(),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        ..._profile!.roles.map((role) => Text('• $role')),
+        _buildField(messages.profileEmail(), _profile!.email),
+        const SizedBox(height: 16),
+        if (_profile!.bio != null) ...[
+          _buildField(messages.profileBio(), _profile!.bio!),
+          const SizedBox(height: 16),
+        ],
       ],
     );
   }

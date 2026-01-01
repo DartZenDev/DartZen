@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
@@ -26,8 +27,14 @@ class ZenDemoApiClient {
     required String userId,
     required String language,
   }) async {
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (token == null) {
+      throw Exception('No authentication token available');
+    }
+
     final response = await http.get(
       Uri.parse('$baseUrl/profile/$userId?lang=$language'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode != 200) {

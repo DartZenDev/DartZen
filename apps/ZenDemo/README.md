@@ -72,6 +72,7 @@ apps/ZenDemo/
 ├── client/          # Flutter web app
 ├── server/          # Dart Shelf server
 ├── contracts/       # Shared data contracts
+├── firebase-data/   # Emulator seed data (auth, firestore, storage)
 ├── docker-compose.yml   # Firebase emulators
 ├── run.sh          # Single-command launcher
 └── README.md       # This file
@@ -80,9 +81,10 @@ apps/ZenDemo/
 ### Server Architecture
 
 - **No fallback to production**: Server fails immediately if emulator environment variables are missing
-- **Real storage**: Terms loaded from `server/storage/legal/terms.html`
+- **Real storage**: Terms loaded from GCS emulator at `firebase-data/storage_export/legal/terms.html`
 - **Real identity**: Uses `FirestoreIdentityRepository` with emulated Firestore
 - **Real localization**: Both client and server use `ZenLocalizationService`
+- **Seed data**: Pre-configured test users and storage files in `firebase-data/`
 
 ### Client Architecture
 
@@ -102,7 +104,8 @@ The server requires these environment variables (set automatically by `run.sh`):
 | `FIREBASE_AUTH_EMULATOR_HOST` | `localhost:9099` | Auth emulator connection |
 | `FIREBASE_STORAGE_EMULATOR_HOST` | `localhost:9199` | Storage emulator connection |
 | `PORT` | `8888` | Server port |
-| `STORAGE_PATH` | `$(pwd)/storage` | Filesystem storage directory |
+| `STORAGE_BUCKET` | `demo-bucket` | GCS emulator bucket name |
+| `STORAGE_HOST` | `localhost:9199` | GCS emulator host |
 
 **The server will refuse to start without valid emulator configuration.**
 
@@ -124,12 +127,17 @@ Here you can:
 
 ## Test Credentials
 
-For quick testing, use these credentials:
+The Firebase Auth emulator is pre-seeded with test accounts:
 
-- **Email**: `test@example.com`
+### Demo User
+- **Email**: `demo@example.com`
 - **Password**: `password123`
 
-Create this account on first run using the "Create Account" button.
+### Admin User
+- **Email**: `admin@example.com`
+- **Password**: `password123`
+
+These accounts are automatically available when the emulators start. See `firebase-data/README.md` for details.
 
 ---
 
@@ -154,14 +162,18 @@ apps/ZenDemo/
 │   │   └── server.dart           # Entry point
 │   ├── lib/
 │   │   └── src/
-│   │       ├── zen_demo_server.dart
-│   │       └── l10n/              # Server messages
-│   ├── storage/
-│   │   └── legal/
-│   │       └── terms.html        # Real storage content
 │   └── pubspec.yaml
-└── contracts/
-    ├── lib/
+├── contracts/
+│   ├── lib/
+│   │   └── src/                  # Shared DTOs
+│   └── pubspec.yaml
+└── firebase-data/
+    ├── auth_export/              # Pre-seeded test users
+    ├── firestore_export/         # Database snapshots (auto-populated)
+    ├── storage_export/
+    │   └── legal/
+    │       └── terms.html        # Terms of service content
+    └── README.md                 # Seed data documentation
     │   └── src/                  # Shared DTOs
     └── pubspec.yaml
 ```
@@ -237,14 +249,16 @@ kill -9 <PID>
 
 ```bash
 docker ps  # Should list containers
-docker compose up  # Test emulator startup
+docker compoObject not found in GCS` or `404`
+
+**Solution**: Ensure seed data exists:
+
+```bash
+ls firebase-data/storage_export/legal/terms.html
+# Should exist with HTML content
 ```
 
-### Terms won't load
-
-**Error**: `Storage path does not exist`
-
-**Solution**: Ensure you're running from the correct directory:
+If missing, the file should be recreated automatically on next emulator start.**Solution**: Ensure you're running from the correct directory:
 
 ```bash
 cd apps/ZenDemo

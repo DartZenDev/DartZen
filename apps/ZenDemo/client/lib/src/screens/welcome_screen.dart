@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../l10n/client_messages.dart';
-import 'main_screen.dart';
 
 /// Welcome screen for ZenDemo.
 class WelcomeScreen extends StatefulWidget {
@@ -85,7 +84,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       _errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -99,14 +99,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         )
                       : const Text('Login'),
                 ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _isLoading ? null : _handleSignUp,
-                  child: const Text('Create Account'),
-                ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Test credentials:\nemail: test@example.com\npassword: password123',
+                  'Test credentials:\ndemo@example.com / admin@example.com\npassword: password123',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
@@ -125,58 +120,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     });
 
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      if (mounted && credential.user != null) {
-        widget.appState.setUserId(credential.user!.uid);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (context) => MainScreen(
-              appState: widget.appState,
-              apiBaseUrl: widget.apiBaseUrl,
-            ),
-          ),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        _errorMessage = _getErrorMessage(e.code);
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleSignUp() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (mounted && credential.user != null) {
-        widget.appState.setUserId(credential.user!.uid);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (context) => MainScreen(
-              appState: widget.appState,
-              apiBaseUrl: widget.apiBaseUrl,
-            ),
-          ),
-        );
-      }
+      // Navigation handled by StreamBuilder in ZenDemoApp
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e.code);

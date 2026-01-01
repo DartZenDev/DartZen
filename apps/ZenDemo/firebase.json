@@ -6,11 +6,12 @@
     },
     "firestore": {
       "host": "0.0.0.0",
-      "port": 8080
+      "port": 9088
     },
     "storage": {
       "host": "0.0.0.0",
-      "port": 9199
+      "port": 9199,
+      "rules": "storage.rules"
     },
     "ui": {
       "enabled": true,

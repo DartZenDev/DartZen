@@ -9,6 +9,10 @@ environment:
 dependencies:
   dartzen_core:
     path: ../../../packages/dartzen_core
+  dartzen_firestore:
+    path: ../../../packages/dartzen_firestore
+  dartzen_identity:
+    path: ../../../packages/dartzen_identity
   dartzen_localization:
     path: ../../../packages/dartzen_localization
   dartzen_server:
@@ -18,7 +22,9 @@ dependencies:
   dartzen_transport:
     path: ../../../packages/dartzen_transport
   gcloud: ^0.8.19
+  googleapis_auth: ^1.6.0
   http: ^1.2.2
+  path: ^1.9.0
   shelf: ^1.4.2
   shelf_router: ^1.1.4
   shelf_web_socket: ^2.0.0

@@ -48,7 +48,8 @@ MAX_ATTEMPTS=30
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-  if curl -s http://localhost:4000 > /dev/null 2>&1; then
+  if curl -s http://localhost:4000 > /dev/null 2>&1 && \
+     curl -s http://localhost:9088 > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Emulators are ready${NC}"
     break
   fi
@@ -62,17 +63,22 @@ if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
   cleanup
 fi
 
-# Give emulators extra time to fully initialize
-sleep 3
+# Give emulators extra time to fully initialize all services
+sleep 5
+
+# Step 2.5: Seed Data
+echo -e "${YELLOW}[2.5/5] Seeding data...${NC}"
+./seed_data.sh || echo -e "${RED}Warning: Data seeding failed${NC}"
 
 # Step 3: Start Dart Server
 echo -e "${YELLOW}[3/5] Starting Dart server...${NC}"
 cd server
-export FIRESTORE_EMULATOR_HOST="localhost:8080"
+export FIRESTORE_EMULATOR_HOST="localhost:9088"
 export FIREBASE_AUTH_EMULATOR_HOST="localhost:9099"
 export FIREBASE_STORAGE_EMULATOR_HOST="localhost:9199"
 export PORT="8888"
-export STORAGE_PATH="$(pwd)/storage"
+export STORAGE_BUCKET="demo-bucket"
+export STORAGE_HOST="localhost:9199"
 
 dart run bin/server.dart &
 SERVER_PID=$!

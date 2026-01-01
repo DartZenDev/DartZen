@@ -102,6 +102,24 @@ class ClientMessages {
         module: 'zen_demo',
       );
 
+  String profileDisplayName() => _localization.translate(
+        'zen_demo.profile.display_name',
+        language: _language,
+        module: 'zen_demo',
+      );
+
+  String profileEmail() => _localization.translate(
+        'zen_demo.profile.email',
+        language: _language,
+        module: 'zen_demo',
+      );
+
+  String profileBio() => _localization.translate(
+        'zen_demo.profile.bio',
+        language: _language,
+        module: 'zen_demo',
+      );
+
   String profileStatus() => _localization.translate(
         'zen_demo.profile.status',
         language: _language,

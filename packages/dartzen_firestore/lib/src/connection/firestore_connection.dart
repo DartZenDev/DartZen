@@ -68,11 +68,24 @@ abstract final class FirestoreConnection {
 
       ZenLogger.instance.warn(messages.emulatorConnection(host, port));
 
-      // Runtime check: verify emulator is running
+      // Runtime check: verify emulator is running by checking the base URL
       try {
-        await _client!
-            .getDocument('_health_check')
+        final client = httpClient ?? http.Client();
+        final healthUrl = Uri.parse(
+          'http://$host:$port/v1/projects/${config.projectId}/databases/(default)/documents',
+        );
+        final response = await client
+            .get(healthUrl)
             .timeout(const Duration(seconds: 2));
+        
+        // Accept any response (200, 400, etc.) - just verify emulator is listening
+        if (response.statusCode >= 500) {
+          throw http.ClientException('Emulator returned error: ${response.statusCode}');
+        }
+        
+        if (httpClient == null) {
+          client.close();
+        }
       } catch (e) {
         final errorMessage = messages.emulatorUnavailable(host, port);
         ZenLogger.instance.error(errorMessage, error: e);

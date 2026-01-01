@@ -89,7 +89,12 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
               }
 
               if (snapshot.hasData && snapshot.data != null) {
-                _appState.setUserId(snapshot.data!.uid);
+                // Use addPostFrameCallback to avoid setState during build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_appState.userId != snapshot.data!.uid) {
+                    _appState.setUserId(snapshot.data!.uid);
+                  }
+                });
                 return MainScreen(
                   appState: _appState,
                   apiBaseUrl: widget.apiBaseUrl,

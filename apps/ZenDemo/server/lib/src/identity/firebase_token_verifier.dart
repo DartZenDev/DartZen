@@ -30,10 +30,12 @@ class FirebaseTokenVerifier {
       );
 
       if (response.statusCode != 200) {
-        _logger.warning('Token verification failed: ${response.statusCode}');
-        return ZenResult.failure(
-          errorCode: 'invalid-token',
-          errorMessage: 'Failed to verify token',
+        _logger.info('Token verification failed: ${response.statusCode}');
+        return const ZenResult.err(
+          ZenUnauthorizedError(
+            'Failed to verify token',
+            internalData: {'status': 'non-200'},
+          ),
         );
       }
 
@@ -41,9 +43,8 @@ class FirebaseTokenVerifier {
       final users = data['users'] as List<dynamic>?;
 
       if (users == null || users.isEmpty) {
-        return ZenResult.failure(
-          errorCode: 'invalid-token',
-          errorMessage: 'Token verification returned no user',
+        return const ZenResult.err(
+          ZenUnauthorizedError('Token verification returned no user'),
         );
       }
 
@@ -53,7 +54,7 @@ class FirebaseTokenVerifier {
 
       _logger.info('Token verified for user: $userId');
 
-      return ZenResult.success(data: {
+      return ZenResult.ok({
         'userId': userId,
         'email': email,
         'displayName': user['displayName'],
@@ -61,9 +62,12 @@ class FirebaseTokenVerifier {
       });
     } catch (e, stackTrace) {
       _logger.error('Token verification error', error: e, stackTrace: stackTrace);
-      return ZenResult.failure(
-        errorCode: 'token-verification-failed',
-        errorMessage: 'Failed to verify token: $e',
+      return ZenResult.err(
+        ZenUnknownError(
+          'Failed to verify token',
+          internalData: {'error': e.toString()},
+          stackTrace: stackTrace,
+        ),
       );
     }
   }

@@ -32,29 +32,33 @@ void main() {
     test('serializes to JSON correctly', () {
       const contract = ProfileContract(
         userId: 'user-123',
-        status: 'active',
-        roles: ['admin', 'user'],
+        displayName: 'Test User',
+        email: 'demo@example.com',
+        bio: 'Test bio',
       );
 
       final json = contract.toJson();
 
       expect(json['user_id'], 'user-123');
-      expect(json['status'], 'active');
-      expect(json['roles'], ['admin', 'user']);
+      expect(json['display_name'], 'Test User');
+      expect(json['email'], 'demo@example.com');
+      expect(json['bio'], 'Test bio');
     });
 
     test('deserializes from JSON correctly', () {
       final json = {
         'user_id': 'user-123',
-        'status': 'active',
-        'roles': ['admin', 'user'],
+        'display_name': 'Test User',
+        'email': 'demo@example.com',
+        'bio': 'Test bio',
       };
 
       final contract = ProfileContract.fromJson(json);
 
       expect(contract.userId, 'user-123');
-      expect(contract.status, 'active');
-      expect(contract.roles, ['admin', 'user']);
+      expect(contract.displayName, 'Test User');
+      expect(contract.email, 'demo@example.com');
+      expect(contract.bio, 'Test bio');
     });
   });
 
