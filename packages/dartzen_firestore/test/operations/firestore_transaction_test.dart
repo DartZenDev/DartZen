@@ -7,8 +7,7 @@ import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
-  setUp(() async {
-  });
+  setUp(() async {});
 
   group('FirestoreTransaction', () {
     test('successful transaction returns success result', () async {

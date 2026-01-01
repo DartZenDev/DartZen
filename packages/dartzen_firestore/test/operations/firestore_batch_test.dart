@@ -6,8 +6,7 @@ import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
-  setUp(() async {
-  });
+  setUp(() async {});
 
   group('FirestoreBatch', () {
     test('set and commit operations send correct REST request', () async {
