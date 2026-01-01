@@ -18,7 +18,7 @@ void main() {
       expect(config.isProduction, isFalse);
       expect(config.emulatorHost, equals('localhost'));
       expect(config.emulatorPort, equals(8080));
-      expect(config.projectId, isNull);
+      expect(config.projectId, equals('dev-project'));
     });
 
     test('emulator() accepts custom host and port', () {
