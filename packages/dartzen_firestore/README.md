@@ -58,22 +58,43 @@ dependencies:
 
 ## 🚀 Usage
 
-### Connection Management
+### Unified Configuration Approach
+
+`dartzen_firestore` uses a **unified configuration approach** - the same initialization code works for both production and development (emulator) environments.
 
 ```dart
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 
-// Automatic environment detection
-final config = FirestoreConfig.fromEnvironment();
-await FirestoreConnection.initialize(config, localization: localization);
+// Single configuration for both production and development
+// In production (dzIsPrd = true): connects to Firestore
+// In development (dzIsPrd = false): connects to Firestore Emulator
+final config = FirestoreConfig(projectId: 'my-project');
 
-// Or explicit configuration
-final config = FirestoreConfig.emulator(host: 'localhost', port: 8080);
-await FirestoreConnection.initialize(config, localization: localization);
+// Initialize connection
+// The package automatically:
+// - Connects to Firestore in production
+// - Connects to emulator in development (reads FIRESTORE_EMULATOR_HOST)
+// - Verifies emulator availability in development
+await FirestoreConnection.initialize(config);
 
 // Access Firestore instance
-final firestore = FirestoreConnection.instance;
+final firestore = FirestoreConnection.client;
 ```
+
+### Environment Detection
+
+The package uses `dzIsPrd` constant from `dartzen_core` to determine the environment:
+
+- **Production** (`dzIsPrd = true`): Connects to Google Cloud Firestore
+- **Development** (`dzIsPrd = false`): Connects to Firestore Emulator (reads `FIRESTORE_EMULATOR_HOST` env var or defaults to `localhost:8080`)
+
+### Emulator Configuration
+
+The Firestore Emulator is **not optional** - it's a required part of DartZen development workflow. The package performs runtime checks to ensure the emulator is running in development mode.
+
+Emulator host can be configured via:
+1. Environment variable: `FIRESTORE_EMULATOR_HOST=localhost:8080`
+2. Default value: `localhost:8080` (standard Firebase Firestore Emulator port)
 
 ### Batch Operations
 

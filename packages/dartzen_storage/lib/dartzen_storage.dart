@@ -50,6 +50,7 @@
 /// - Safe UX in production
 library;
 
+export 'src/gcs_storage_config.dart';
 export 'src/gcs_storage_reader.dart';
 export 'src/storage_object.dart';
 export 'src/zen_storage_reader.dart';
