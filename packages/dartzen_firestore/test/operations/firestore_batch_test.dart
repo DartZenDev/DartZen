@@ -73,9 +73,9 @@ void main() {
       batch.set('users/1', {'name': 'Alice'});
       batch.update('users/2', {'age': 31});
       batch.delete('users/3');
-      
+
       final result = await batch.commit();
-      
+
       expect(result.isSuccess, isTrue);
       expect(writes, hasLength(3));
 

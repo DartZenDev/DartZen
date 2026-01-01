@@ -72,9 +72,7 @@ Future<void> _demonstrateConverters() async {
   print('');
 }
 
-Future<void> _demonstrateBatch(
-  ZenLocalizationService localization,
-) async {
+Future<void> _demonstrateBatch(ZenLocalizationService localization) async {
   print('--- Batch Operations ---');
 
   final batch = FirestoreBatch(localization: localization);

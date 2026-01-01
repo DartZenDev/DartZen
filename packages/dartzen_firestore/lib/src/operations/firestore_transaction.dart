@@ -81,14 +81,14 @@ abstract final class FirestoreTransaction {
           transactionId: transactionId,
         );
       }
-      
+
       stopwatch.stop();
       telemetry.onTransactionComplete(
         stopwatch.elapsed,
         result.isSuccess,
         metadata: metadata,
       );
-      
+
       return result;
     } catch (e, stack) {
       stopwatch.stop();

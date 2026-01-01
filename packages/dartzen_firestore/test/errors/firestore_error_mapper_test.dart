@@ -85,18 +85,19 @@ void main() {
           'Error 503: Service Unavailable',
         );
 
-      final error = FirestoreErrorMapper.mapException(
-        exception,
-        StackTrace.current,
-        messages,
-      );
+        final error = FirestoreErrorMapper.mapException(
+          exception,
+          StackTrace.current,
+          messages,
+        );
 
-      expect(error, isA<ZenUnknownError>());
-      expect(
-        error.internalData?['errorCode'],
-        equals(FirestoreErrorCodes.unavailable),
-      );
-    });
+        expect(error, isA<ZenUnknownError>());
+        expect(
+          error.internalData?['errorCode'],
+          equals(FirestoreErrorCodes.unavailable),
+        );
+      },
+    );
 
     test('maps generic ClientException to operation-failed', () {
       final exception = http.ClientException('Network Error');

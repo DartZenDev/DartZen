@@ -45,7 +45,7 @@ void main() {
   group('FirestoreTransaction', () {
     test('successful transaction returns success result', () async {
       final writes = <Map<String, dynamic>>[];
-      
+
       final mockClient = MockClient((request) async {
         if (request.url.path.contains('_health_check')) {
           return http.Response(jsonEncode({'name': '.../_health_check'}), 200);

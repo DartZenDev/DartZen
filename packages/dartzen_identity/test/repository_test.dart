@@ -134,7 +134,7 @@ void main() {
 
       const id = IdentityId.reconstruct('user_1');
       final result = await repo.suspendIdentity(id, 'Rule violation');
-      
+
       expect(result.isSuccess, isTrue);
       expect(patched, isTrue);
     });
