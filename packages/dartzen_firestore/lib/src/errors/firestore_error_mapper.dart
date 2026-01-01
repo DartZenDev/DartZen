@@ -1,32 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:http/http.dart' as http;
 
 import '../l10n/firestore_messages.dart';
 import 'firestore_error_codes.dart';
 
-/// Maps Firestore exceptions to semantic [ZenError] types.
+/// Maps HTTP and REST exceptions to semantic [ZenError] types.
 ///
-/// This mapper normalizes Firestore SDK exceptions into DartZen's
+/// This mapper normalizes REST API responses into DartZen's
 /// error hierarchy, providing consistent error handling across the ecosystem.
 abstract final class FirestoreErrorMapper {
-  /// Maps a Firestore exception to a [ZenError].
-  ///
-  /// [error] is the caught exception.
-  /// [stack] is the optional stack trace.
-  /// [messages] provides localized error messages.
-  ///
-  /// Returns appropriate [ZenError] subtype based on exception code.
+  /// Maps a Firestore REST exception or response to a [ZenError].
   static ZenError mapException(
     Object error,
     StackTrace? stack,
     FirestoreMessages messages,
   ) {
-    if (error is FirebaseException) {
-      return _mapFirebaseException(error, stack, messages);
+    if (error is http.ClientException) {
+      return _mapHttpError(error, stack, messages);
     }
 
-    // Unknown exception type
+    // Default to unknown error for other exception types
     return ZenUnknownError(
       messages.unknown(),
       internalData: {'originalError': error.toString()},
@@ -34,61 +27,57 @@ abstract final class FirestoreErrorMapper {
     );
   }
 
-  /// Maps a [FirebaseException] to a [ZenError].
-  static ZenError _mapFirebaseException(
-    FirebaseException error,
+  /// Maps a [http.ClientException] or similar to a [ZenError].
+  static ZenError _mapHttpError(
+    http.ClientException error,
     StackTrace? stack,
     FirestoreMessages messages,
   ) {
-    switch (error.code) {
-      case 'permission-denied':
-        return ZenUnauthorizedError(
-          messages.permissionDenied(),
-          internalData: {
-            'errorCode': FirestoreErrorCodes.permissionDenied,
-            'originalError': error,
-          },
-          stackTrace: stack,
-        );
+    // Try to extract status code if encoded in message (as done in FirestoreRestClient)
+    final message = error.message;
 
-      case 'not-found':
-        return ZenNotFoundError(
-          messages.notFound(),
-          internalData: {'originalError': error},
-          stackTrace: stack,
-        );
-
-      case 'already-exists':
-        return ZenConflictError(
-          messages.operationFailed(),
-          internalData: {'originalError': error},
-          stackTrace: stack,
-        );
-
-      case 'unavailable':
-        return _createInfrastructureError(
-          messages.unavailable(),
-          FirestoreErrorCodes.unavailable,
-          error,
-          stack,
-        );
-
-      case 'deadline-exceeded':
-        return _createInfrastructureError(
-          messages.timeout(),
-          FirestoreErrorCodes.timeout,
-          error,
-          stack,
-        );
-
-      default:
-        return _createInfrastructureError(
-          messages.operationFailed(),
-          FirestoreErrorCodes.operationFailed,
-          error,
-          stack,
-        );
+    if (message.contains('403')) {
+      return ZenUnauthorizedError(
+        messages.permissionDenied(),
+        internalData: {
+          'errorCode': FirestoreErrorCodes.permissionDenied,
+          'originalError': message,
+        },
+        stackTrace: stack,
+      );
     }
+
+    if (message.contains('404')) {
+      return ZenNotFoundError(
+        messages.notFound(),
+        internalData: {'originalError': message},
+        stackTrace: stack,
+      );
+    }
+
+    if (message.contains('409')) {
+      return ZenConflictError(
+        messages.operationFailed(),
+        internalData: {'originalError': message},
+        stackTrace: stack,
+      );
+    }
+
+    if (message.contains('503') || message.contains('504')) {
+      return _createInfrastructureError(
+        messages.unavailable(),
+        FirestoreErrorCodes.unavailable,
+        message,
+        stack,
+      );
+    }
+
+    return _createInfrastructureError(
+      messages.operationFailed(),
+      FirestoreErrorCodes.operationFailed,
+      message,
+      stack,
+    );
   }
 
   /// Helper to create a [ZenUnknownError] with standardized infrastructure metadata.

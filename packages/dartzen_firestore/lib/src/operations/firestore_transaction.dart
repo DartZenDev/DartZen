@@ -1,42 +1,65 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
 
+import '../connection/firestore_connection.dart';
+import '../converters/firestore_converters.dart';
 import '../errors/firestore_error_mapper.dart';
+import '../firestore_types.dart';
 import '../l10n/firestore_messages.dart';
 import '../telemetry/firestore_telemetry.dart';
 
+/// Transaction helper for REST API.
+final class Transaction {
+  /// The transaction ID.
+  final String id;
+  final List<Map<String, dynamic>> _writes = [];
+
+  /// Creates a [Transaction] with the given [id].
+  Transaction(this.id);
+
+  /// Retrieves a document by its path within the transaction.
+  Future<ZenFirestoreDocument> get(String path) async =>
+      await FirestoreConnection.client.getDocument(path, transactionId: id);
+
+  /// Sets data for a document.
+  void set(String path, Map<String, dynamic> data, {bool merge = false}) {
+    final fields = FirestoreConverters.dataToFields(data);
+    _writes.add({
+      'update': {
+        'name':
+            'projects/${FirestoreConnection.client.projectId}/databases/(default)/documents/$path',
+        'fields': fields,
+      },
+      if (!merge) 'currentDocument': {'exists': false},
+    });
+  }
+
+  /// Updates a document.
+  void update(String path, Map<String, dynamic> data) {
+    final fields = FirestoreConverters.dataToFields(data);
+    _writes.add({
+      'update': {
+        'name':
+            'projects/${FirestoreConnection.client.projectId}/databases/(default)/documents/$path',
+        'fields': fields,
+      },
+      'currentDocument': {'exists': true},
+    });
+  }
+
+  /// Deletes a document.
+  void delete(String path) {
+    _writes.add({
+      'delete':
+          'projects/${FirestoreConnection.client.projectId}/databases/(default)/documents/$path',
+    });
+  }
+}
+
 /// Helper for running Firestore transactions with [ZenResult] support.
-///
-/// Provides error normalization and optional telemetry for transactions.
-///
-/// Example:
-/// ```dart
-/// final result = await FirestoreTransaction.run<int>(
-///   firestore,
-///   (Transaction transaction) async {
-///     final docRef = firestore.collection('counters').doc('global');
-///     final snapshot = await transaction.get(docRef);
-///     final newValue = (snapshot.data()?['value'] as int? ?? 0) + 1;
-///     transaction.update(docRef, {'value': newValue});
-///     return ZenResult.ok(newValue);
-///   },
-///   localization: localization,
-/// );
-/// ```
 abstract final class FirestoreTransaction {
   /// Runs a Firestore transaction.
-  ///
-  /// [firestore] is the Firestore instance.
-  /// [operation] is the transaction function that returns [ZenResult].
-  /// [telemetry] is optional telemetry hooks (defaults to no-op).
-  /// [localization] is used for error messages.
-  /// [language] is the language code for localization (defaults to 'en').
-  /// [metadata] is optional metadata for telemetry.
-  ///
-  /// Returns [ZenResult] with the operation result or normalized error.
   static Future<ZenResult<T>> run<T>(
-    FirebaseFirestore firestore,
     Future<ZenResult<T>> Function(Transaction transaction) operation, {
     FirestoreTelemetry telemetry = const NoOpFirestoreTelemetry(),
     required ZenLocalizationService localization,
@@ -47,41 +70,28 @@ abstract final class FirestoreTransaction {
     final stopwatch = Stopwatch()..start();
 
     try {
-      final result = await firestore.runTransaction<ZenResult<T>>((
-        Transaction transaction,
-      ) async {
-        try {
-          return await operation(transaction);
-        } catch (e, stack) {
-          // Catch errors inside the transaction function
-          final error = FirestoreErrorMapper.mapException(e, stack, messages);
-          return ZenResult<T>.err(error);
-        }
-      });
+      final transactionId = await FirestoreConnection.client.beginTransaction();
+      final transaction = Transaction(transactionId);
 
-      stopwatch.stop();
-      final success = result.isSuccess;
+      final result = await operation(transaction);
 
-      telemetry.onTransactionComplete(
-        stopwatch.elapsed,
-        success,
-        metadata: metadata,
-      );
-
-      if (!success) {
-        ZenLogger.instance.warn(
-          'Firestore transaction completed with failure',
-          internalData: {
-            'error': result.errorOrNull,
-            if (metadata != null) ...metadata,
-          },
+      if (result.isSuccess) {
+        await FirestoreConnection.client.commit(
+          transaction._writes,
+          transactionId: transactionId,
         );
       }
+
+      stopwatch.stop();
+      telemetry.onTransactionComplete(
+        stopwatch.elapsed,
+        result.isSuccess,
+        metadata: metadata,
+      );
 
       return result;
     } catch (e, stack) {
       stopwatch.stop();
-
       final error = FirestoreErrorMapper.mapException(e, stack, messages);
       telemetry.onTransactionComplete(
         stopwatch.elapsed,

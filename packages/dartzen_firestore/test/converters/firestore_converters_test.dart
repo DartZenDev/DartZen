@@ -1,37 +1,86 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 void main() {
   group('FirestoreConverters', () {
     group('Timestamp conversion', () {
-      test('timestampToZenTimestamp converts correctly', () {
-        final timestamp = Timestamp.fromDate(DateTime(2024));
-        final zenTimestamp = FirestoreConverters.timestampToZenTimestamp(
-          timestamp,
-        );
+      test('zenTimestampToRfc3339 converts correctly', () {
+        final zenTimestamp = ZenTimestamp.from(DateTime.utc(2024));
+        final rfc3339 = FirestoreConverters.zenTimestampToRfc3339(zenTimestamp);
 
-        expect(zenTimestamp.value, equals(DateTime(2024)));
+        expect(rfc3339, equals('2024-01-01T00:00:00Z'));
       });
 
-      test('zenTimestampToTimestamp converts correctly', () {
-        final zenTimestamp = ZenTimestamp.from(DateTime(2024));
-        final timestamp = FirestoreConverters.zenTimestampToTimestamp(
-          zenTimestamp,
-        );
+      test('rfc3339ToZenTimestamp converts correctly', () {
+        const rfc3339 = '2024-01-01T00:00:00Z';
+        final zenTimestamp = FirestoreConverters.rfc3339ToZenTimestamp(rfc3339);
 
-        expect(timestamp.toDate(), equals(DateTime(2024)));
+        expect(zenTimestamp.value, equals(DateTime.utc(2024)));
       });
     });
 
-    group('Claims normalization', () {
-      test('normalizes Timestamp to ISO 8601 string', () {
-        final raw = {'created_at': Timestamp.fromDate(DateTime.utc(2024))};
+    group('REST JSON conversion', () {
+      test('dataToFields converts correctly', () {
+        final data = {
+          'name': 'Alice',
+          'age': 30,
+          'active': true,
+          'created_at': ZenTimestamp.from(DateTime.utc(2024)),
+          'tags': ['a', 'b'],
+          'meta': {'key': 'value'},
+        };
 
-        final normalized = FirestoreConverters.normalizeClaims(raw);
+        final fields = FirestoreConverters.dataToFields(data);
 
-        expect(normalized['created_at'], equals('2024-01-01T00:00:00.000Z'));
+        expect(fields['name'], equals({'stringValue': 'Alice'}));
+        expect(fields['age'], equals({'integerValue': '30'}));
+        expect(fields['active'], equals({'booleanValue': true}));
+        expect(
+          fields['created_at'],
+          equals({'timestampValue': '2024-01-01T00:00:00Z'}),
+        );
+        expect(
+          fields['tags'],
+          equals({
+            'arrayValue': {
+              'values': [
+                {'stringValue': 'a'},
+                {'stringValue': 'b'},
+              ],
+            },
+          }),
+        );
+        expect(
+          fields['meta'],
+          equals({
+            'mapValue': {
+              'fields': {
+                'key': {'stringValue': 'value'},
+              },
+            },
+          }),
+        );
+      });
+
+      test('fieldsToData converts correctly', () {
+        final fields = {
+          'name': {'stringValue': 'Alice'},
+          'age': {'integerValue': '30'},
+          'active': {'booleanValue': true},
+          'created_at': {'timestampValue': '2024-01-01T00:00:00Z'},
+        };
+
+        final data = FirestoreConverters.fieldsToData(fields);
+
+        expect(data['name'], equals('Alice'));
+        expect(data['age'], equals(30));
+        expect(data['active'], equals(true));
+        expect(data['created_at'], isA<ZenTimestamp>());
+        expect(
+          (data['created_at'] as ZenTimestamp).value,
+          equals(DateTime.utc(2024)),
+        );
       });
     });
 

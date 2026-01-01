@@ -1,6 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 class MockTelemetry implements FirestoreTelemetry {
   Map<String, dynamic>? lastMetadata;

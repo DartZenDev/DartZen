@@ -41,21 +41,20 @@ final class FirestoreConfig {
   final String? projectId;
 
   /// Creates a production Firestore configuration.
-  const FirestoreConfig.production()
+  const FirestoreConfig.production({this.projectId})
     : isProduction = true,
       emulatorHost = null,
-      emulatorPort = null,
-      projectId = null;
+      emulatorPort = null;
 
   /// Creates an emulator Firestore configuration.
   ///
   /// [host] defaults to 'localhost'.
   /// [port] defaults to 8080.
-  /// [projectId] is optional but recommended.
+  /// [projectId] defaults to 'dev-project'.
   const FirestoreConfig.emulator({
     String host = 'localhost',
     int port = 8080,
-    this.projectId,
+    this.projectId = 'dev-project',
   }) : isProduction = false,
        emulatorHost = host,
        emulatorPort = port;
@@ -65,15 +64,20 @@ final class FirestoreConfig {
   /// Reads `FIRESTORE_EMULATOR_HOST` to determine emulator mode.
   /// Format: `host:port` (e.g., `localhost:8080`).
   ///
-  /// Reads `GCP_PROJECT` for project ID.
+  /// Reads `GCP_PROJECT` or `FIREBASE_PROJECT` for project ID.
   ///
   /// If `FIRESTORE_EMULATOR_HOST` is not set, defaults to production mode.
   factory FirestoreConfig.fromEnvironment() {
     const emulatorHost = String.fromEnvironment('FIRESTORE_EMULATOR_HOST');
-    const projectId = String.fromEnvironment('GCP_PROJECT');
+    var projectId = const String.fromEnvironment('GCP_PROJECT');
+    if (projectId.isEmpty) {
+      projectId = const String.fromEnvironment('FIREBASE_PROJECT');
+    }
 
     if (emulatorHost.isEmpty) {
-      return const FirestoreConfig.production();
+      return FirestoreConfig.production(
+        projectId: projectId.isEmpty ? null : projectId,
+      );
     }
 
     // Parse host:port
@@ -96,14 +100,19 @@ final class FirestoreConfig {
     return FirestoreConfig.emulator(
       host: host,
       port: port,
-      projectId: projectId.isEmpty ? null : projectId,
+      projectId: projectId.isEmpty ? 'dev-project' : projectId,
     );
   }
 
   @override
-  String toString() => isProduction
-      ? 'FirestoreConfig.production()'
-      : 'FirestoreConfig.emulator(host: $emulatorHost, port: $emulatorPort, projectId: $projectId)';
+  String toString() {
+    if (isProduction) {
+      return projectId != null
+          ? 'FirestoreConfig.production(projectId: $projectId)'
+          : 'FirestoreConfig.production()';
+    }
+    return 'FirestoreConfig.emulator(host: $emulatorHost, port: $emulatorPort, projectId: $projectId)';
+  }
 
   @override
   bool operator ==(Object other) =>
