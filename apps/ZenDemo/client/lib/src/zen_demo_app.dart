@@ -8,11 +8,13 @@ import 'screens/welcome_screen.dart';
 
 /// Main application widget.
 class ZenDemoApp extends StatefulWidget {
+  /// Creates a [ZenDemoApp] widget.
   const ZenDemoApp({
     required this.apiBaseUrl,
     super.key,
   });
 
+  /// Base URL for the API.
   final String apiBaseUrl;
 
   @override
@@ -31,7 +33,7 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
 
   Future<void> _initialize() async {
     // Initialize localization
-    final config = ZenLocalizationConfig(
+    const config = ZenLocalizationConfig(
       isProduction: false,
       globalPath: 'lib/src/l10n',
     );
@@ -72,8 +74,7 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
 
     return ListenableBuilder(
       listenable: _appState,
-      builder: (context, _) {
-        return MaterialApp(
+      builder: (context, _) => MaterialApp(
           title: 'Zen Demo',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -107,8 +108,7 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
               );
             },
           ),
-        );
-      },
+        ),
     );
   }
 }

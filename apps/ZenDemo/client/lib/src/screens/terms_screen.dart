@@ -7,13 +7,17 @@ import '../l10n/client_messages.dart';
 
 /// Terms and conditions screen.
 class TermsScreen extends StatefulWidget {
+  /// Creates a [TermsScreen] widget.
   const TermsScreen({
     required this.appState,
     required this.apiClient,
     super.key,
   });
 
+  /// Application state.
   final AppState appState;
+
+  /// API client for server communication.
   final ZenDemoApiClient apiClient;
 
   @override
@@ -54,8 +58,7 @@ class _TermsScreenState extends State<TermsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
+  Widget build(BuildContext context) => ListenableBuilder(
       listenable: widget.appState,
       builder: (context, _) {
         final messages = ClientMessages(
@@ -74,7 +77,6 @@ class _TermsScreenState extends State<TermsScreen> {
         );
       },
     );
-  }
 
   Widget _buildContent(ClientMessages messages) {
     if (_isLoading) {

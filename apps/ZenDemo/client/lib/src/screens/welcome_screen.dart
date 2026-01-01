@@ -6,13 +6,17 @@ import '../l10n/client_messages.dart';
 
 /// Welcome screen for ZenDemo.
 class WelcomeScreen extends StatefulWidget {
+  /// Creates a [WelcomeScreen] widget.
   const WelcomeScreen({
     required this.appState,
     required this.apiBaseUrl,
     super.key,
   });
 
+  /// Application state.
   final AppState appState;
+
+  /// Base URL for the API.
   final String apiBaseUrl;
 
   @override

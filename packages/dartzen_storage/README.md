@@ -3,17 +3,21 @@
 [![pub package](https://img.shields.io/pub/v/dartzen_storage.svg)](https://pub.dev/packages/dartzen_storage)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Google Cloud Storage reader for the DartZen ecosystem.
+Storage reader for Google Cloud Storage and Firebase Storage Emulator.
 
 ---
 
 ## What is dartzen_storage?
 
-`dartzen_storage` is a **platform-level capability package** that provides a clean, minimal API for reading objects from Google Cloud Storage (GCS). It is reusable across all DartZen products: servers, background jobs, AI pipelines, and any other Dart application that needs to fetch data from GCS.
+`dartzen_storage` is a **platform-level capability package** that provides a clean, minimal API for reading objects from cloud storage. It is reusable across all DartZen products: servers, background jobs, AI pipelines, and any other Dart application that needs to fetch data from storage.
 
 This package answers **one question only**:
 
 > **"Where do the bytes come from?"**
+
+It provides two implementations:
+- **`GcsStorageReader`**: For production Google Cloud Storage
+- **`FirebaseStorageReader`**: For Firebase Storage Emulator (development/testing)
 
 ## What is dartzen_storage NOT?
 

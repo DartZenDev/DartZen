@@ -11,13 +11,17 @@ import 'terms_screen.dart';
 
 /// Main screen with all demo features.
 class MainScreen extends StatefulWidget {
+  /// Creates a [MainScreen] widget.
   const MainScreen({
     required this.appState,
     required this.apiBaseUrl,
     super.key,
   });
 
+  /// Application state.
   final AppState appState;
+
+  /// Base URL for the API.
   final String apiBaseUrl;
 
   @override
@@ -51,8 +55,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
+  Widget build(BuildContext context) => ListenableBuilder(
       listenable: widget.appState,
       builder: (context, _) {
         final messages = ClientMessages(
@@ -102,10 +105,8 @@ class _MainScreenState extends State<MainScreen> {
         );
       },
     );
-  }
 
-  Widget _buildPingSection(ClientMessages messages) {
-    return Column(
+  Widget _buildPingSection(ClientMessages messages) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ElevatedButton(
@@ -118,10 +119,8 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ],
     );
-  }
 
-  Widget _buildWebSocketSection(ClientMessages messages) {
-    return Column(
+  Widget _buildWebSocketSection(ClientMessages messages) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -152,10 +151,8 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ],
     );
-  }
 
-  Widget _buildNavigationSection(ClientMessages messages) {
-    return Column(
+  Widget _buildNavigationSection(ClientMessages messages) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ElevatedButton(
@@ -169,7 +166,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ],
     );
-  }
 
   Future<void> _handlePing() async {
     final messages = ClientMessages(

@@ -7,9 +7,6 @@ import 'package:dartzen_firestore/dartzen_firestore.dart';
 import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_storage/dartzen_storage.dart';
-import 'package:gcloud/storage.dart';
-import 'package:googleapis_auth/auth_io.dart';
-import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -17,8 +14,9 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart' as contracts;
-import 'package:zen_demo_server/src/identity/firebase_token_verifier.dart';
-import 'package:zen_demo_server/src/l10n/server_messages.dart' as demo;
+
+import 'identity/firebase_token_verifier.dart';
+import 'l10n/server_messages.dart' as demo;
 
 /// ZenDemo server application.
 ///
@@ -32,9 +30,6 @@ class ZenDemoServer {
   ZenDemoServer({
     required this.port,
     required this.storageBucket,
-    required this.storageHost,
-    required this.firestoreHost,
-    required this.firestorePort,
     required this.authEmulatorHost,
   });
 
@@ -43,15 +38,6 @@ class ZenDemoServer {
 
   /// Storage bucket name.
   final String storageBucket;
-
-  /// Storage emulator host.
-  final String storageHost;
-
-  /// Firestore emulator host.
-  final String firestoreHost;
-
-  /// Firestore emulator port.
-  final int firestorePort;
 
   /// Auth emulator host.
   final String authEmulatorHost;
@@ -84,10 +70,9 @@ class ZenDemoServer {
       modulePath: 'lib/src/l10n',
     );
 
-    // Initialize Firestore connection with emulator
-    final firestoreConfig = FirestoreConfig.emulator(
-      host: firestoreHost,
-      port: firestorePort,
+    // Initialize Firestore connection
+    // Automatically uses emulator if FIRESTORE_EMULATOR_HOST is set
+    final firestoreConfig = FirestoreConfig(
       projectId: 'demo-zen',
     );
 
@@ -107,7 +92,6 @@ class ZenDemoServer {
 
     await FirestoreConnection.initialize(
       firestoreConfig,
-      localization: _localization,
     );
 
     // Initialize identity repository
@@ -118,16 +102,11 @@ class ZenDemoServer {
     // Initialize token verifier
     _tokenVerifier = FirebaseTokenVerifier(authEmulatorHost: authEmulatorHost);
 
-    // Initialize GCS storage reader with emulator
-    // For emulator, use HTTP API directly since gcloud package may not work properly with emulator
-    final storage = Storage(
-      _MockAuthClient(),
-      'http://$storageHost',
-    );
-
-    _storageReader = GcsStorageReader(
-      storage: storage,
-      bucket: storageBucket,
+    // Initialize Firebase Storage reader for emulator
+    _storageReader = FirebaseStorageReader(
+      config: FirebaseStorageConfig(
+        bucket: storageBucket,
+      ),
     );
 
     _logger.info('ZenDemo server initialized successfully');
@@ -409,24 +388,4 @@ class ZenDemoServer {
       },
     );
   }
-}
-
-/// Mock AuthClient for GCS emulator (no real credentials needed).
-class _MockAuthClient extends http.BaseClient implements AuthClient {
-  final _client = http.Client();
-
-  @override
-  AccessCredentials get credentials => AccessCredentials(
-        AccessToken('Bearer', 'mock-token',
-            DateTime.now().add(const Duration(hours: 1))),
-        null,
-        [],
-      );
-
-  @override
-  Future<void> close() async => _client.close();
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) =>
-      _client.send(request);
 }

@@ -7,13 +7,17 @@ import '../l10n/client_messages.dart';
 
 /// Profile screen displaying user information.
 class ProfileScreen extends StatefulWidget {
+  /// Creates a [ProfileScreen] widget.
   const ProfileScreen({
     required this.appState,
     required this.apiClient,
     super.key,
   });
 
+  /// Application state.
   final AppState appState;
+
+  /// API client for server communication.
   final ZenDemoApiClient apiClient;
 
   @override
@@ -55,8 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
+  Widget build(BuildContext context) => ListenableBuilder(
       listenable: widget.appState,
       builder: (context, _) {
         final messages = ClientMessages(
@@ -75,7 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
-  }
 
   Widget _buildContent(ClientMessages messages) {
     if (_isLoading) {
@@ -103,8 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildField(String label, String value) {
-    return Column(
+  Widget _buildField(String label, String value) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -115,5 +116,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(value),
       ],
     );
-  }
 }

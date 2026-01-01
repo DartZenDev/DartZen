@@ -76,9 +76,9 @@ cd server
 export FIRESTORE_EMULATOR_HOST="localhost:9088"
 export FIREBASE_AUTH_EMULATOR_HOST="localhost:9099"
 export FIREBASE_STORAGE_EMULATOR_HOST="localhost:9199"
+export GCLOUD_PROJECT="demo-zen"
 export PORT="8888"
 export STORAGE_BUCKET="demo-bucket"
-export STORAGE_HOST="localhost:9199"
 
 dart run bin/server.dart &
 SERVER_PID=$!

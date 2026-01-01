@@ -172,8 +172,7 @@ class _EmulatorHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    // Determine the scheme (usually http for emulator)
-    // We force http for localhost emulator
+    // Redirect all requests to the emulator host
     final newUrl = request.url.replace(
       scheme: 'http',
       host: _host,
