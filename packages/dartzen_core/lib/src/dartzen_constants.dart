@@ -17,6 +17,38 @@ const bool dzIsDev = dzEnv == 'dev';
 /// Whether the current environment is production.
 const bool dzIsPrd = dzEnv == 'prd';
 
+/// The name of the environment variable for the Google Cloud Project ID.
+const String dzGcloudProjectEnvVar = 'GCLOUD_PROJECT';
+
+/// The name of the environment variable for the Firestore Emulator host.
+const String dzFirestoreEmulatorHostEnvVar = 'FIRESTORE_EMULATOR_HOST';
+
+/// The name of the environment variable for the Storage Emulator host.
+const String dzStorageEmulatorHostEnvVar = 'STORAGE_EMULATOR_HOST';
+
+/// Google Cloud Project ID from environment.
+///
+/// This is a compile-time constant that reads from the GCLOUD_PROJECT
+/// environment variable. For tree-shaking to work properly, this must be
+/// a compile-time constant, not a runtime value.
+const String dzGcloudProject = String.fromEnvironment(dzGcloudProjectEnvVar);
+
+/// Firestore Emulator host from environment.
+///
+/// This reads from FIRESTORE_EMULATOR_HOST at compile time.
+/// Returns empty string if not set.
+const String dzFirestoreEmulatorHost = String.fromEnvironment(
+  dzFirestoreEmulatorHostEnvVar,
+);
+
+/// Storage Emulator host from environment.
+///
+/// This reads from STORAGE_EMULATOR_HOST at compile time.
+/// Returns empty string if not set.
+const String dzStorageEmulatorHost = String.fromEnvironment(
+  dzStorageEmulatorHostEnvVar,
+);
+
 /// Platform constants
 ///
 /// These constants are used to determine the current platform.

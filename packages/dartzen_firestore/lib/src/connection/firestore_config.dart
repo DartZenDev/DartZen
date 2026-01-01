@@ -1,31 +1,16 @@
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:meta/meta.dart';
 
 /// Immutable configuration for Firestore connection.
 ///
-/// This configuration follows the **Environment Is Explicit** principle. It requires
-/// an explicit decision between production and emulator modes, preventing accidental
-/// production data leakage during development.
+/// This configuration automatically determines whether to use the
+/// production Firestore service or a local emulator based on [dzIsPrd].
 ///
 /// ### Environment Configuration
 ///
-/// - **Development (Emulator)**: Use [FirestoreConfig.emulator]. Typically used
-///   with the Firebase Local Emulator Suite.
-/// - **Production**: Use [FirestoreConfig.production]. Connects to the real
-///   Google Cloud Firestore instance.
-/// - **Automatic**: Use [FirestoreConfig.fromEnvironment] to detect the
-///   mode based on `FIRESTORE_EMULATOR_HOST` and `GCP_PROJECT` environment variables.
-///
-/// Example:
-/// ```dart
-/// // Manual production config
-/// const config = FirestoreConfig.production();
-///
-/// // Manual emulator config
-/// const config = FirestoreConfig.emulator(host: 'localhost', port: 8080);
-///
-/// // Environment-driven config
-/// final config = FirestoreConfig.fromEnvironment();
-/// ```
+/// - **Production**: When `dzIsPrd` is true, configures for real Google Cloud usage.
+/// - **Development**: When `dzIsPrd` is false, automatically configures for
+///   the Firestore Emulator (host must be set via [dzFirestoreEmulatorHostEnvVar]).
 @immutable
 final class FirestoreConfig {
   /// Whether this configuration is for production.
@@ -37,20 +22,88 @@ final class FirestoreConfig {
   /// Emulator port (e.g., 8080). Only used if [isProduction] is false.
   final int? emulatorPort;
 
-  /// GCP project ID. Required for emulator mode.
+  /// GCP project ID.
+  ///
+  /// If not provided, attempts to read from [dzGcloudProjectEnvVar].
   final String? projectId;
 
-  /// Creates a production Firestore configuration.
+  /// Creates a Firestore configuration.
+  ///
+  /// If [projectId] is omitted, it will attempt to read `GCLOUD_PROJECT` from environment.
+  ///
+  /// If executing in a non-production environment (i.e. `dzIsPrd` is false),
+  /// this will automatically configure for the Firestore Emulator.
+  factory FirestoreConfig({
+    String? projectId,
+    @visibleForTesting String? emulatorHost,
+  }) {
+    // 1. Determine Project ID
+    final effectiveProjectId = projectId ?? dzGcloudProject;
+    if (effectiveProjectId.isEmpty) {
+      throw StateError(
+        'Project ID must be provided via constructor or $dzGcloudProjectEnvVar environment variable.',
+      );
+    }
+
+    // 2. Production Mode
+    if (dzIsPrd) {
+      return FirestoreConfig._(
+        isProduction: true,
+        projectId: effectiveProjectId,
+        emulatorHost: null,
+        emulatorPort: null,
+      );
+    }
+
+    // 3. Emulator Mode - get from environment variable (required)
+    final effectiveHostPort = emulatorHost ?? dzFirestoreEmulatorHost;
+
+    if (effectiveHostPort.isEmpty) {
+      throw StateError(
+        'Firestore Emulator host must be configured via $dzFirestoreEmulatorHostEnvVar environment variable in development mode.',
+      );
+    }
+
+    final parts = effectiveHostPort.split(':');
+    if (parts.length != 2) {
+      throw ArgumentError(
+        'Invalid emulator host format. Expected "host:port", got "$effectiveHostPort". '
+        'Please set $dzFirestoreEmulatorHostEnvVar environment variable correctly.',
+      );
+    }
+
+    final host = parts[0];
+    final port = int.tryParse(parts[1]);
+    if (port == null) {
+      throw ArgumentError(
+        'Invalid port in emulator host "$effectiveHostPort". Port must be a number.',
+      );
+    }
+
+    return FirestoreConfig._(
+      isProduction: false,
+      projectId: effectiveProjectId,
+      emulatorHost: host,
+      emulatorPort: port,
+    );
+  }
+
+  const FirestoreConfig._({
+    required this.isProduction,
+    required this.projectId,
+    required this.emulatorHost,
+    required this.emulatorPort,
+  });
+
+  /// Legacy helper for testing production specifically (discouraged).
+  @visibleForTesting
   const FirestoreConfig.production({this.projectId})
     : isProduction = true,
       emulatorHost = null,
       emulatorPort = null;
 
-  /// Creates an emulator Firestore configuration.
-  ///
-  /// [host] defaults to 'localhost'.
-  /// [port] defaults to 8080.
-  /// [projectId] defaults to 'dev-project'.
+  /// Legacy helper for testing emulator specifically (discouraged).
+  @visibleForTesting
   const FirestoreConfig.emulator({
     String host = 'localhost',
     int port = 8080,
@@ -59,59 +112,14 @@ final class FirestoreConfig {
        emulatorHost = host,
        emulatorPort = port;
 
-  /// Creates a Firestore configuration from environment variables.
-  ///
-  /// Reads `FIRESTORE_EMULATOR_HOST` to determine emulator mode.
-  /// Format: `host:port` (e.g., `localhost:8080`).
-  ///
-  /// Reads `GCP_PROJECT` or `FIREBASE_PROJECT` for project ID.
-  ///
-  /// If `FIRESTORE_EMULATOR_HOST` is not set, defaults to production mode.
-  factory FirestoreConfig.fromEnvironment() {
-    const emulatorHost = String.fromEnvironment('FIRESTORE_EMULATOR_HOST');
-    var projectId = const String.fromEnvironment('GCP_PROJECT');
-    if (projectId.isEmpty) {
-      projectId = const String.fromEnvironment('FIREBASE_PROJECT');
-    }
-
-    if (emulatorHost.isEmpty) {
-      return FirestoreConfig.production(
-        projectId: projectId.isEmpty ? null : projectId,
-      );
-    }
-
-    // Parse host:port
-    final parts = emulatorHost.split(':');
-    if (parts.length != 2) {
-      throw ArgumentError(
-        'Invalid FIRESTORE_EMULATOR_HOST format. Expected "host:port", got "$emulatorHost"',
-      );
-    }
-
-    final host = parts[0];
-    final port = int.tryParse(parts[1]);
-
-    if (port == null) {
-      throw ArgumentError(
-        'Invalid port in FIRESTORE_EMULATOR_HOST: "${parts[1]}"',
-      );
-    }
-
-    return FirestoreConfig.emulator(
-      host: host,
-      port: port,
-      projectId: projectId.isEmpty ? 'dev-project' : projectId,
-    );
-  }
-
   @override
   String toString() {
     if (isProduction) {
       return projectId != null
-          ? 'FirestoreConfig.production(projectId: $projectId)'
-          : 'FirestoreConfig.production()';
+          ? 'FirestoreConfig(PRD, projectId: $projectId)'
+          : 'FirestoreConfig(PRD)';
     }
-    return 'FirestoreConfig.emulator(host: $emulatorHost, port: $emulatorPort, projectId: $projectId)';
+    return 'FirestoreConfig(EMULATOR, $emulatorHost:$emulatorPort, projectId: $projectId)';
   }
 
   @override
