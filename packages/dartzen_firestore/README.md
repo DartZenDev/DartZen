@@ -101,20 +101,20 @@ Emulator host can be configured via:
 ```dart
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 
-// Initialize batch with localization
-final batch = FirestoreBatch(firestore, localization: localization);
+// Initialize batch
+final batch = FirestoreBatch();
 
 batch.set(
-  firestore.collection('users').doc('123'),
+  'users/123',
   {'name': 'Alice', 'age': 30},
 );
 
 batch.update(
-  firestore.collection('users').doc('456'),
+  'users/456',
   {'age': 31},
 );
 
-batch.delete(firestore.collection('users').doc('789'));
+batch.delete('users/789');
 
 // Commit with optional telemetry metadata
 final result = await batch.commit(metadata: {'targetModule': 'catalog'});
@@ -131,22 +131,19 @@ result.fold(
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 
 final result = await FirestoreTransaction.run<int>(
-  firestore,
-  (Transaction transaction) async {
-    final docRef = firestore.collection('counters').doc('global');
-    final snapshot = await transaction.get(docRef);
+  (transaction) async {
+    final doc = await transaction.get('counters/global');
 
-    if (!snapshot.exists) {
+    if (!doc.exists) {
       return const ZenResult.err(ZenNotFoundError('Counter not found'));
     }
 
-    final currentValue = snapshot.data()?['value'] as int? ?? 0;
+    final currentValue = doc.data?['value'] as int? ?? 0;
     final newValue = currentValue + 1;
 
-    transaction.update(docRef, {'value': newValue});
+    transaction.update('counters/global', {'value': newValue});
     return ZenResult.ok(newValue);
   },
-  localization: localization,
   metadata: {'operation': 'increment_counter'},
 );
 ```

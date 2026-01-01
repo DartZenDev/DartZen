@@ -1,10 +1,7 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_localization/dartzen_localization.dart';
 
 import '../connection/firestore_connection.dart';
 import '../converters/firestore_converters.dart';
-import '../errors/firestore_error_mapper.dart';
-import '../l10n/firestore_messages.dart';
 import '../telemetry/firestore_telemetry.dart';
 
 /// Wrapper around Firestore REST commit endpoint with [ZenResult] support.
@@ -14,15 +11,11 @@ import '../telemetry/firestore_telemetry.dart';
 final class FirestoreBatch {
   final List<Map<String, dynamic>> _writes = [];
   final FirestoreTelemetry _telemetry;
-  final FirestoreMessages _messages;
 
   /// Creates a [FirestoreBatch].
   FirestoreBatch({
     FirestoreTelemetry telemetry = const NoOpFirestoreTelemetry(),
-    required ZenLocalizationService localization,
-    String language = 'en',
-  }) : _telemetry = telemetry,
-       _messages = FirestoreMessages(localization, language);
+  }) : _telemetry = telemetry;
 
   /// Sets data for a document.
   void set(String path, Map<String, dynamic> data, {bool merge = false}) {
@@ -93,7 +86,10 @@ final class FirestoreBatch {
     } catch (e, stack) {
       stopwatch.stop();
 
-      final error = FirestoreErrorMapper.mapException(e, stack, _messages);
+      final error = ZenUnknownError(
+        'Firestore batch commit failed: ${e.toString()}',
+        stackTrace: stack,
+      );
       _telemetry.onError('batch_commit', error, metadata: combinedMetadata);
 
       ZenLogger.instance.error(
