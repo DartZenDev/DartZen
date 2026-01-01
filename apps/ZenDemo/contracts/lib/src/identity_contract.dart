@@ -21,22 +21,19 @@ class IdentityContract {
   final String? photoUrl;
 
   /// Creates an instance from JSON.
-  factory IdentityContract.fromJson(Map<String, dynamic> json) {
-    return IdentityContract(
+  factory IdentityContract.fromJson(Map<String, dynamic> json) =>
+      IdentityContract(
       id: json['id'] as String,
       email: json['email'] as String,
       displayName: json['display_name'] as String?,
       photoUrl: json['photo_url'] as String?,
-    );
-  }
+      );
 
   /// Converts to JSON.
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson() => {
       'id': id,
       'email': email,
       'display_name': displayName,
       'photo_url': photoUrl,
-    };
-  }
+      };
 }

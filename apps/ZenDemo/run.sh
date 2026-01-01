@@ -11,23 +11,23 @@ NC='\033[0m' # No Color
 # Cleanup function
 cleanup() {
   echo -e "\n${YELLOW}Shutting down Zen Demo...${NC}"
-  
+
   # Kill Flutter client
   if [ ! -z "$FLUTTER_PID" ]; then
     echo "Stopping Flutter client..."
     kill $FLUTTER_PID 2>/dev/null || true
   fi
-  
+
   # Kill Dart server
   if [ ! -z "$SERVER_PID" ]; then
     echo "Stopping Dart server..."
     kill $SERVER_PID 2>/dev/null || true
   fi
-  
+
   # Stop Docker Compose
   echo "Stopping Firebase emulators..."
   docker compose down
-  
+
   echo -e "${GREEN}Zen Demo stopped cleanly.${NC}"
   exit 0
 }

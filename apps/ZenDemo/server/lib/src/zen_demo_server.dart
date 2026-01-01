@@ -4,17 +4,15 @@ import 'dart:io';
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
-import 'package:gcloud/datastore.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
-import 'package:zen_demo_server/src/l10n/server_messages.dart' as demo;
-
 import 'package:zen_demo_server/src/identity/firebase_token_verifier.dart';
 import 'package:zen_demo_server/src/identity/server_identity_repository.dart';
+import 'package:zen_demo_server/src/l10n/server_messages.dart' as demo;
 
 /// ZenDemo server application.
 ///
@@ -135,7 +133,7 @@ class ZenDemoServer {
     Future<Response> Function(IdentityContract identity) handler,
   ) async {
     final authHeader = request.headers['authorization'];
-    
+
     if (authHeader == null || !authHeader.startsWith('Bearer ')) {
       return Response(401, body: jsonEncode({
         'error': 'unauthorized',
@@ -145,7 +143,7 @@ class ZenDemoServer {
 
     final token = authHeader.substring(7);
     final verifyResult = await _tokenVerifier.verifyToken(token);
-    
+
     if (!verifyResult.isSuccess) {
       return Response(401, body: jsonEncode({
         'error': 'invalid-token',
@@ -155,10 +153,10 @@ class ZenDemoServer {
 
     final tokenData = verifyResult.data!;
     final userId = tokenData['userId'] as String;
-    
+
     // Try to get identity from repository
     var identityResult = await _identityRepository.getIdentity(userId);
-    
+
     // If not found, create it from token data
     if (!identityResult.isSuccess) {
       _logger.info('Identity not found, creating from token data');
@@ -168,7 +166,7 @@ class ZenDemoServer {
         displayName: tokenData['displayName'] as String?,
         photoUrl: tokenData['photoUrl'] as String?,
       );
-      
+
       if (!identityResult.isSuccess) {
         return Response(500, body: jsonEncode({
           'error': 'identity-resolution-failed',

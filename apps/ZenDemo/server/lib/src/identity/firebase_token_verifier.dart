@@ -22,7 +22,7 @@ class FirebaseTokenVerifier {
     try {
       // For Firebase Auth Emulator, we can verify tokens using the emulator's endpoint
       final url = Uri.parse('http://$_authEmulatorHost/identitytoolkit.googleapis.com/v1/accounts:lookup?key=fake-api-key');
-      
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -39,7 +39,7 @@ class FirebaseTokenVerifier {
 
       final data = json.decode(response.body) as Map<String, dynamic>;
       final users = data['users'] as List<dynamic>?;
-      
+
       if (users == null || users.isEmpty) {
         return ZenResult.failure(
           errorCode: 'invalid-token',
@@ -50,9 +50,9 @@ class FirebaseTokenVerifier {
       final user = users.first as Map<String, dynamic>;
       final userId = user['localId'] as String;
       final email = user['email'] as String?;
-      
+
       _logger.info('Token verified for user: $userId');
-      
+
       return ZenResult.success(data: {
         'userId': userId,
         'email': email,

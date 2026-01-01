@@ -7,7 +7,7 @@ Zen Demo is not a showcase. It is not a prototype. It is the **breathing minimum
 ## What Zen Demo Demonstrates
 
 - ✅ **Real Firebase Authentication** via emulator
-- ✅ **Real Firestore** database via emulator  
+- ✅ **Real Firestore** database via emulator
 - ✅ **Real file-based storage** (filesystem adapter)
 - ✅ **Real localization** shared between client and server
 - ✅ **Real identity management** with DartZen patterns
