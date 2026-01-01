@@ -2,7 +2,7 @@ name: dartzen_identity
 description: >
   Cohesive identity feature package for DartZen. Replaces legacy identity packages
   with a flat structure and Firestore-first approach.
-version: 0.0.1
+version: 0.1.0
 resolution: workspace
 publish_to: none
 
@@ -10,20 +10,15 @@ environment:
   sdk: '>=3.10.4 <4.0.0'
 
 dependencies:
-  cloud_firestore: ^5.0.0
   dartzen_core:
     path: ../dartzen_core
   dartzen_firestore:
     path: ../dartzen_firestore
   dartzen_localization:
     path: ../dartzen_localization
-  flutter:
-    sdk: flutter
   meta: ^1.11.0
 
 dev_dependencies:
-  fake_cloud_firestore: ^3.0.0
-  flutter_test:
-    sdk: flutter
+  http: ^1.1.0
   lints: ^6.0.0
   test: ^1.25.0

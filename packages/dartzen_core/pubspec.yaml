@@ -18,8 +18,6 @@ topics:
   - result
 
 dependencies:
-  flutter:
-    sdk: flutter
   meta: ^1.11.0
 
 
