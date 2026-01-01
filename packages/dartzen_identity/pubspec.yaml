@@ -14,11 +14,9 @@ dependencies:
     path: ../dartzen_core
   dartzen_firestore:
     path: ../dartzen_firestore
-  dartzen_localization:
-    path: ../dartzen_localization
+  http: ^1.1.0
   meta: ^1.11.0
 
 dev_dependencies:
-  http: ^1.1.0
   lints: ^6.0.0
   test: ^1.25.0

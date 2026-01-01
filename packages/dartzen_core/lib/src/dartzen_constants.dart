@@ -26,6 +26,10 @@ const String dzFirestoreEmulatorHostEnvVar = 'FIRESTORE_EMULATOR_HOST';
 /// The name of the environment variable for the Storage Emulator host.
 const String dzStorageEmulatorHostEnvVar = 'STORAGE_EMULATOR_HOST';
 
+/// The name of the environment variable for the Identity Toolkit Emulator host.
+const String dzIdentityToolkitEmulatorHostEnvVar =
+    'IDENTITY_TOOLKIT_EMULATOR_HOST';
+
 /// Google Cloud Project ID from environment.
 ///
 /// This is a compile-time constant that reads from the GCLOUD_PROJECT
@@ -47,6 +51,14 @@ const String dzFirestoreEmulatorHost = String.fromEnvironment(
 /// Returns empty string if not set.
 const String dzStorageEmulatorHost = String.fromEnvironment(
   dzStorageEmulatorHostEnvVar,
+);
+
+/// Identity Toolkit Emulator host from environment.
+///
+/// This reads from IDENTITY_TOOLKIT_EMULATOR_HOST at compile time.
+/// Returns empty string if not set.
+const String dzIdentityToolkitEmulatorHost = String.fromEnvironment(
+  dzIdentityToolkitEmulatorHostEnvVar,
 );
 
 /// Platform constants

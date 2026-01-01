@@ -101,6 +101,63 @@ result.fold(
 );
 ```
 
+### 4. Server-Side Token Verification
+
+For server-side applications, use the `server.dart` library to verify ID tokens issued by Firebase Auth.
+
+```dart
+import 'package:dartzen_identity/server.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
+
+final verifier = IdentityTokenVerifier(
+  config: IdentityTokenVerifierConfig(projectId: 'your-gcp-project-id'),
+);
+
+// Verify a token from an HTTP request
+final result = await verifier.verifyToken(idToken);
+
+result.fold(
+  (data) {
+    // Token is valid - use Firebase Auth data to lookup/create Identity
+    final identityId = IdentityId.reconstruct(data.userId);
+
+    // Lookup existing identity or create new one
+    // final identity = await repository.getIdentityById(identityId);
+
+    print('Authenticated user: ${data.userId}');
+    print('Email: ${data.email} (verified: ${data.emailVerified})');
+  },
+  (error) {
+    // Token is invalid
+    if (error is ZenUnauthorizedError) {
+      print('Invalid or expired token');
+    } else {
+      print('Verification error: ${error.message}');
+    }
+  },
+);
+
+// Don't forget to close when done
+verifier.close();
+```
+
+#### Production vs Firebase Emulator
+
+The verifier automatically switches between production and Firebase Emulator:
+
+- **Production (`dzIsPrd == true`)**: Uses Google Identity Toolkit cloud endpoint
+- **Development (`dzIsPrd == false`)**: Uses Firebase Emulator at host from `IDENTITY_TOOLKIT_EMULATOR_HOST`
+
+Set the environment variables when running:
+```bash
+# Development mode with Firebase Emulator
+export IDENTITY_TOOLKIT_EMULATOR_HOST=localhost:9099
+dart run --define=DZ_ENV=dev your_server.dart
+
+# Production mode
+dart run --define=DZ_ENV=prd your_server.dart
+```
+
 ### Mapping for Storage
 Use `IdentityMapper` to convert between Firestore data and domain models without leaking SDK details.
 
@@ -113,9 +170,26 @@ await firestore.collection('users').doc(id.value).set(data);
 final result = IdentityMapper.fromFirestore(doc.id, doc.data()!);
 ```
 
+## 📦 Package Structure
+
+```
+lib/
+  dartzen_identity.dart      # Main library (domain + repository)
+  server.dart                # Server-only library (token verification)
+  src/
+    identity_models.dart     # Domain models
+    identity_contracts.dart  # Serializable transport contracts
+    identity_mapper.dart     # Firestore mapping
+    identity_repository.dart # Firestore repository
+    server/
+      identity_token_verifier.dart  # Server-side token verification
+```
+
+**Important**: The `server.dart` library should only be imported by server-side code. Client applications should use the main `dartzen_identity.dart` library.
+
 ## 🛡️ Stability Guarantees
 
-This package is in early development (0.0.1). Expect breaking changes as the DartZen ecosystem evolves.
+This package is in early development (0.1.0). Expect breaking changes as the DartZen ecosystem evolves.
 
 ## 📄 License
 
