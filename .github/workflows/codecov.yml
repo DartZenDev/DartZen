@@ -42,12 +42,12 @@ jobs:
 
       - name: Convert JSON to LCOV & Fix Paths
         run: |
+          set -eux
           for dir in packages/*; do
             if [ -d "$dir/test" ]; then
               echo "Processing $dir..."
 
-              # 1. Convert JSON to LCOV for Dart packages
-              # We use --package=. and run it FROM the package directory
+              # 1. Convert JSON to LCOV for Dart packages (if present)
               if [ -d "$dir/coverage/test" ] && [ ! -f "$dir/coverage/lcov.info" ]; then
                 echo "Converting JSON for $dir"
                 (cd "$dir" && dart pub global run coverage:format_coverage \
@@ -58,14 +58,35 @@ jobs:
                   --out="coverage/lcov.info")
               fi
 
-              # 2. Fix paths for Codecov
+              # 2. Fix paths for Codecov (if lcov exists)
               if [ -f "$dir/coverage/lcov.info" ]; then
                 package=$(basename "$dir")
                 echo "Fixing paths for $package"
                 sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov.info"
+              else
+                echo "No lcov.info for $dir"
               fi
             fi
           done
+
+      - name: Debug coverage artifacts
+        run: |
+          echo "Listing generated coverage files:";
+          find packages -type f -name lcov.info -print || true;
+          echo "Listing coverage/test directories (if any):";
+          find packages -type d -path '*/coverage/test' -print || true;
+          echo "Show sizes:";
+          du -sh packages/*/coverage || true
+
+      - name: Coverage upload sanity check
+        run: |
+          count=$(find packages -type f -name lcov.info | wc -l || true)
+          echo "Found $count lcov.info files";
+          if [ "${count}" -eq 0 ]; then
+            echo "ERROR: No coverage files found to upload. Listing coverage directories:";
+            ls -la packages/*/coverage || true;
+            exit 1;
+          fi
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
