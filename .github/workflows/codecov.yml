@@ -22,15 +22,30 @@ jobs:
       - name: Bootstrap
         run: melos bootstrap
 
-      - name: Run Tests
-        run: melos run test:coverage
+      - name: Run Tests (Android)
+        run: PLATFORM=android melos run test:coverage
+
+      - name: Run Tests (iOS)
+        run: PLATFORM=ios melos run test:coverage
+
+      - name: Run Tests (macOS)
+        run: PLATFORM=macos melos run test:coverage
+
+      - name: Run Tests (Linux)
+        run: PLATFORM=linux melos run test:coverage
+
+      - name: Run Tests (Windows)
+        run: PLATFORM=windows melos run test:coverage
+
+      - name: Run Tests (Web)
+        run: PLATFORM=web melos run test:coverage
 
       - name: Convert JSON to LCOV & Fix Paths
         run: |
           for dir in packages/*; do
             if [ -d "$dir/test" ]; then
               echo "Processing $dir..."
-              
+
               # 1. Convert JSON to LCOV for Dart packages
               # We use --package=. and run it FROM the package directory
               if [ -d "$dir/coverage/test" ] && [ ! -f "$dir/coverage/lcov.info" ]; then
@@ -56,5 +71,5 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./packages/ 
+          directory: ./packages/
           fail_ci_if_error: true

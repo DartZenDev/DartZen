@@ -56,7 +56,10 @@ melos:
       description: Run all Dart & Flutter tests
     test:coverage:
       run: |
-        melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
+        PLATFORM=${PLATFORM:-macos}; \
+        EXTRA_ARGS=""; CONCURRENCY=""; \
+        if [ "$PLATFORM" = "web" ]; then EXTRA_ARGS="--platform=chrome"; SCOPE="dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client"; CONCURRENCY="--concurrency=1"; COVERAGE_FLAG=""; else SCOPE="dartzen_core,dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client"; COVERAGE_FLAG="--coverage"; fi; \
+        melos exec $CONCURRENCY --scope="$SCOPE" -- "flutter test --dart-define=DZ_PLATFORM=$PLATFORM $COVERAGE_FLAG $EXTRA_ARGS" && \
         melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts" -- "dart test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage
     publish:
