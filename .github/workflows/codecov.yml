@@ -23,22 +23,22 @@ jobs:
         run: melos bootstrap
 
       - name: Run Tests (Android)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=android
+        run: PLATFORM=android melos run test:coverage
 
       - name: Run Tests (iOS)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=ios
+        run: PLATFORM=ios melos run test:coverage
 
       - name: Run Tests (macOS)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=macos
+        run: PLATFORM=macos melos run test:coverage
 
       - name: Run Tests (Linux)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=linux
+        run: PLATFORM=linux melos run test:coverage
 
       - name: Run Tests (Windows)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=windows
+        run: PLATFORM=windows melos run test:coverage
 
       - name: Run Tests (Web)
-        run: melos run test:coverage -- --dart-define=DZ_PLATFORM=web
+        run: PLATFORM=web melos run test:coverage
 
       - name: Convert JSON to LCOV & Fix Paths
         run: |
