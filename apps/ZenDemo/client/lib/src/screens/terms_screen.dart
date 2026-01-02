@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
 import '../api_client.dart';
@@ -41,20 +42,23 @@ class _TermsScreenState extends State<TermsScreen> {
       widget.appState.language,
     );
 
-    try {
-      final terms = await widget.apiClient.getTerms(
-        language: widget.appState.language,
+    final result = await widget.apiClient.getTerms(
+      language: widget.appState.language,
+    );
+
+    setState(() {
+      result.fold(
+        (terms) {
+          _terms = terms;
+          _isLoading = false;
+        },
+        (error) {
+          // Translate error code to localized message
+          _error = messages.translateError(error.message);
+          _isLoading = false;
+        },
       );
-      setState(() {
-        _terms = terms;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = messages.termsError(e.toString());
-        _isLoading = false;
-      });
-    }
+    });
   }
 
   @override
@@ -87,8 +91,9 @@ class _TermsScreenState extends State<TermsScreen> {
       return Center(child: Text(_error!));
     }
 
-    return SingleChildScrollView(
-      child: Text(_terms!.content),
+    return Markdown(
+      data: _terms!.content,
+      selectable: true,
     );
   }
 }

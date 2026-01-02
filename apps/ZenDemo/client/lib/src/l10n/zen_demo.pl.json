@@ -23,5 +23,18 @@
   "zen_demo.profile.error": "Błąd ładowania profilu: {error}",
   "zen_demo.terms.title": "Warunki i Postanowienia",
   "zen_demo.terms.loading": "Ładowanie warunków...",
-  "zen_demo.terms.error": "Błąd ładowania warunków: {error}"
+  "zen_demo.terms.error": "Błąd ładowania warunków: {error}",
+  "zen_demo.error.missing_auth_header": "Wymagana autoryzacja",
+  "zen_demo.error.invalid_token": "Nieprawidłowa lub wygasła sesja",
+  "zen_demo.error.invalid_user_id": "Nieprawidłowy ID użytkownika",
+  "zen_demo.error.activation_failed": "Nie udało się aktywować konta",
+  "zen_demo.error.identity_creation_failed": "Nie udało się utworzyć tożsamości",
+  "zen_demo.error.missing_credentials": "Wymagany e-mail i hasło",
+  "zen_demo.error.authentication_failed": "Nieprawidłowy e-mail lub hasło",
+  "zen_demo.error.login_failed": "Logowanie nie powiodło się. Spróbuj ponownie",
+  "zen_demo.error.terms_not_found": "Nie znaleziono warunków",
+  "zen_demo.error.terms_load_failed": "Nie udało się załadować warunków",
+  "zen_demo.error.ws_message_error": "Błąd wiadomości WebSocket",
+  "zen_demo.error.network_error": "Błąd sieci. Sprawdź połączenie",
+  "zen_demo.error.unknown": "Wystąpił nieznany błąd"
 }

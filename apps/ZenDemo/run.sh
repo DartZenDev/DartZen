@@ -68,19 +68,188 @@ sleep 5
 
 # Step 2.5: Seed Data
 echo -e "${YELLOW}[2.5/5] Seeding data...${NC}"
-./seed_data.sh || echo -e "${RED}Warning: Data seeding failed${NC}"
+
+PROJECT_ID="demo-zen"
+# Firebase Auth Emulator accepts any API key, use project ID for consistency
+API_KEY="$PROJECT_ID"
+IDENTITY_TOOLKIT_HOST="localhost:9099"
+FIRESTORE_HOST="localhost:9088"
+STORAGE_HOST="localhost:9199"
+BUCKET_NAME="demo-bucket"
+
+echo "🌱 Seeding data for $PROJECT_ID..."
+
+# Create Auth users
+echo "  Creating Auth users..."
+
+create_auth_user() {
+  local email=$1
+  local password=$2
+
+  curl -s -X POST \
+    "http://$IDENTITY_TOOLKIT_HOST/identitytoolkit.googleapis.com/v1/accounts:signUp?key=$API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$email\",\"password\":\"$password\",\"returnSecureToken\":true}" \
+    > /tmp/auth_response.json
+
+  if [ $? -eq 0 ]; then
+    echo "    Created $email"
+  else
+    echo "    Failed to create $email"
+  fi
+}
+
+create_auth_user "demo@example.com" "password123"
+create_auth_user "admin@example.com" "password123"
+
+# Seed Storage
+echo "  Seeding Storage..."
+
+TERMS_CONTENT='# Terms of Service
+
+_Last Updated: January 1, 2026_
+
+This is a demonstration application showcasing the DartZen architecture. All data is stored locally in Firebase emulators. This software is provided "as is" for educational purposes only.
+
+## 1. Acceptance of Terms
+
+By accessing and using this demo application, you accept and agree to be bound by the terms and provision of this agreement.
+
+## 2. Limitations
+
+In no event shall DartZen or its contributors be liable for any damages arising out of the use or inability to use this demo application.'
+
+curl -s -X POST \
+  "http://$STORAGE_HOST/v0/b/$BUCKET_NAME/o?name=legal%2Fterms.en.md" \
+  -H "Content-Type: text/markdown" \
+  -d "$TERMS_CONTENT" > /dev/null
+
+if [ $? -eq 0 ]; then
+  echo "    Uploaded legal/terms.en.md"
+else
+  echo "    Failed to upload terms.en.md"
+fi
+
+# Polish version
+TERMS_CONTENT_PL='# Regulamin
+
+_Ostatnia aktualizacja: 1 stycznia 2026_
+
+To jest aplikacja demonstracyjna prezentująca architekturę DartZen. Wszystkie dane są przechowywane lokalnie w emulatorach Firebase. To oprogramowanie jest dostarczane "tak jak jest" wyłącznie do celów edukacyjnych.
+
+## 1. Akceptacja Warunków
+
+Uzyskując dostęp i korzystając z tej aplikacji demonstracyjnej, akceptujesz i zgadzasz się być związany warunkami niniejszej umowy.
+
+## 2. Ograniczenia
+
+W żadnym wypadku DartZen ani jego współtwórcy nie ponoszą odpowiedzialności za jakiekolwiek szkody wynikające z użycia lub niemożności użycia tej aplikacji demonstracyjnej.'
+
+curl -s -X POST \
+  "http://$STORAGE_HOST/v0/b/$BUCKET_NAME/o?name=legal%2Fterms.pl.md" \
+  -H "Content-Type: text/markdown" \
+  -d "$TERMS_CONTENT_PL" > /dev/null
+
+if [ $? -eq 0 ]; then
+  echo "    Uploaded legal/terms.pl.md"
+else
+  echo "    Failed to upload terms.pl.md"
+fi
+
+# Seed Firestore Identities
+echo "  Seeding Firestore Identities..."
+
+create_identity_doc() {
+  local email=$1
+  local role=$2
+
+  # Lookup UID
+  local lookup_response=$(curl -s -X POST \
+    "http://$IDENTITY_TOOLKIT_HOST/identitytoolkit.googleapis.com/v1/accounts:lookup?key=$API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":[\"$email\"]}")
+
+  local uid=$(echo "$lookup_response" | grep -o '"localId":"[^"]*' | cut -d'"' -f4)
+
+  if [ -z "$uid" ]; then
+    echo "    Failed to get UID for $email"
+    return
+  fi
+
+  local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  local identity_doc="{
+    \"fields\": {
+      \"id\": {\"stringValue\": \"$uid\"},
+      \"lifecycle\": {
+        \"mapValue\": {
+          \"fields\": {
+            \"state\": {\"stringValue\": \"active\"}
+          }
+        }
+      },
+      \"authority\": {
+        \"mapValue\": {
+          \"fields\": {
+            \"roles\": {
+              \"arrayValue\": {
+                \"values\": [
+                  {\"stringValue\": \"$role\"}
+                ]
+              }
+            },
+            \"capabilities\": {
+              \"arrayValue\": {\"values\": []}
+            }
+          }
+        }
+      },
+      \"createdAt\": {\"timestampValue\": \"$now\"}
+    }
+  }"
+
+  local response=$(curl -s -w "\n%{http_code}" -X POST \
+    "http://$FIRESTORE_HOST/v1/projects/$PROJECT_ID/databases/(default)/documents/identities?documentId=$uid" \
+    -H "Content-Type: application/json" \
+    -d "$identity_doc")
+
+  local http_code=$(echo "$response" | tail -n1)
+
+  if [ "$http_code" = "200" ]; then
+    echo "    Created identity doc for $uid"
+  elif [ "$http_code" = "409" ]; then
+    echo "    Identity doc for $uid already exists"
+  else
+    echo "    Failed to create identity doc for $email (HTTP $http_code)"
+  fi
+}
+
+create_identity_doc "demo@example.com" "USER"
+create_identity_doc "admin@example.com" "ADMIN"
+
+echo "✅ Seeding complete!"
 
 # Step 3: Start Dart Server
 echo -e "${YELLOW}[3/5] Starting Dart server...${NC}"
 cd server
-export FIRESTORE_EMULATOR_HOST="localhost:9088"
-export FIREBASE_AUTH_EMULATOR_HOST="localhost:9099"
-export FIREBASE_STORAGE_EMULATOR_HOST="localhost:9199"
-export GCLOUD_PROJECT="demo-zen"
-export PORT="8888"
-export STORAGE_BUCKET="demo-bucket"
 
-dart run bin/server.dart &
+# Environment variables for server runtime (not compile-time)
+export FIRESTORE_EMULATOR_HOST="$FIRESTORE_HOST"
+export FIREBASE_AUTH_EMULATOR_HOST="$IDENTITY_TOOLKIT_HOST"
+export FIREBASE_STORAGE_EMULATOR_HOST="$STORAGE_HOST"
+export PORT="8888"
+export STORAGE_BUCKET="$BUCKET_NAME"
+
+# Compile-time environment variables (String.fromEnvironment)
+# These must be passed via -D flags
+# DZ_ENV=dev is critical - it switches from production to emulator mode
+dart run \
+  -DDZ_ENV=dev \
+  -DGCLOUD_PROJECT="$PROJECT_ID" \
+  -DFIRESTORE_EMULATOR_HOST="$FIRESTORE_HOST" \
+  -DFIREBASE_STORAGE_EMULATOR_HOST="$STORAGE_HOST" \
+  -DIDENTITY_TOOLKIT_EMULATOR_HOST="$IDENTITY_TOOLKIT_HOST" \
+  bin/server.dart &
 SERVER_PID=$!
 cd ..
 

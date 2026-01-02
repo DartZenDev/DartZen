@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:http/http.dart' as http;
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
@@ -12,63 +12,142 @@ class ZenDemoApiClient {
   /// The base URL of the ZenDemo API server.
   final String baseUrl;
 
+  String? _idToken;
+
+  /// Sets the ID token for authentication.
+  void setIdToken(String? token) {
+    _idToken = token;
+  }
+
+  /// Logs in with email and password.
+  ///
+  /// Returns a [ZenResult] with [LoginResponseContract] on success.
+  /// On error, returns error code that should be localized on the client side.
+  Future<ZenResult<LoginResponseContract>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        // Server returns error code, not message
+        final errorCode = json['error'] as String? ?? 'unknown';
+        return ZenResult.err(ZenUnauthorizedError(errorCode));
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final loginResponse = LoginResponseContract.fromJson(json);
+
+      // Store the token
+      _idToken = loginResponse.idToken;
+
+      return ZenResult.ok(loginResponse);
+    } catch (e, stack) {
+      return ZenResult.err(
+        ZenUnknownError('network_error', stackTrace: stack),
+      );
+    }
+  }
+
   /// Sends a ping request to the server.
   ///
-  /// Returns a [PingContract] with the server's response.
-  /// Throws an [Exception] if the request fails.
-  Future<PingContract> ping({required String language}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/ping?lang=$language'),
-    );
+  /// Returns a [ZenResult] with [PingContract] on success.
+  Future<ZenResult<PingContract>> ping({required String language}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/ping'),
+        headers: {'Accept-Language': language},
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Ping failed: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorCode = json['error'] as String? ?? 'unknown';
+        return ZenResult.err(ZenUnknownError(errorCode));
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return ZenResult.ok(PingContract.fromJson(json));
+    } catch (e, stack) {
+      return ZenResult.err(
+        ZenUnknownError('network_error', stackTrace: stack),
+      );
     }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return PingContract.fromJson(json);
   }
 
   /// Gets the user profile from the server.
   ///
-  /// Requires Firebase authentication. Returns a [ProfileContract] with the user's profile data.
-  /// Throws an [Exception] if authentication fails or the request fails.
-  Future<ProfileContract> getProfile({
+  /// Requires authentication. Returns a [ZenResult] with [ProfileContract] on success.
+  Future<ZenResult<ProfileContract>> getProfile({
     required String userId,
     required String language,
   }) async {
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (token == null) {
-      throw Exception('No authentication token available');
+    if (_idToken == null) {
+      return const ZenResult.err(
+        ZenUnauthorizedError('missing_auth_header'),
+      );
     }
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/profile/$userId?lang=$language'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/profile/$userId'),
+        headers: {
+          'Authorization': 'Bearer $_idToken',
+          'Accept-Language': language,
+        },
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load profile: ${response.statusCode}');
+      if (response.statusCode == 401) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorCode = json['error'] as String? ?? 'invalid_token';
+        return ZenResult.err(ZenUnauthorizedError(errorCode));
+      }
+
+      if (response.statusCode != 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorCode = json['error'] as String? ?? 'unknown';
+        return ZenResult.err(ZenUnknownError(errorCode));
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return ZenResult.ok(ProfileContract.fromJson(json));
+    } catch (e, stack) {
+      return ZenResult.err(
+        ZenUnknownError('network_error', stackTrace: stack),
+      );
     }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return ProfileContract.fromJson(json);
   }
 
   /// Gets the terms of service from the server.
   ///
-  /// Returns a [TermsContract] with the terms content.
-  /// Throws an [Exception] if the request fails.
-  Future<TermsContract> getTerms({required String language}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/terms?lang=$language'),
-    );
+  /// Returns a [ZenResult] with [TermsContract] on success.
+  Future<ZenResult<TermsContract>> getTerms({required String language}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/terms'),
+        headers: {'Accept-Language': language},
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load terms: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorCode = json['error'] as String? ?? 'unknown';
+        return ZenResult.err(ZenUnknownError(errorCode));
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return ZenResult.ok(TermsContract.fromJson(json));
+    } catch (e, stack) {
+      return ZenResult.err(
+        ZenUnknownError('network_error', stackTrace: stack),
+      );
     }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return TermsContract.fromJson(json);
   }
 }

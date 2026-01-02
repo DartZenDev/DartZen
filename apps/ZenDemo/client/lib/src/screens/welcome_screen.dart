@@ -1,6 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../api_client.dart';
 import '../app_state.dart';
 import '../l10n/client_messages.dart';
 
@@ -26,8 +26,15 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late final ZenDemoApiClient _apiClient;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiClient = ZenDemoApiClient(baseUrl: widget.apiBaseUrl);
+  }
 
   @override
   void dispose() {
@@ -123,42 +130,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _errorMessage = null;
     });
 
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+    final result = await _apiClient.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
 
-      // Navigation handled by StreamBuilder in ZenDemoApp
-    } on FirebaseAuthException catch (e) {
+    if (mounted) {
       setState(() {
-        _errorMessage = _getErrorMessage(e.code);
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
-  String _getErrorMessage(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-        return 'Incorrect password.';
-      case 'invalid-email':
-        return 'Invalid email address.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      case 'email-already-in-use':
-        return 'An account already exists with this email.';
-      case 'weak-password':
-        return 'Password is too weak. Use at least 6 characters.';
-      default:
-        return 'Authentication failed: $code';
+      result.fold(
+        (loginResponse) {
+          // Success - store user ID and token in app state
+          widget.appState.setIdToken(loginResponse.idToken);
+          widget.appState.setUserId(loginResponse.userId);
+        },
+        (error) {
+          // Error - translate error code to localized message
+          final messages = ClientMessages(
+            widget.appState.localization!,
+            widget.appState.language,
+          );
+          setState(() {
+            _errorMessage = messages.translateError(error.message);
+          });
+        },
+      );
     }
   }
 }

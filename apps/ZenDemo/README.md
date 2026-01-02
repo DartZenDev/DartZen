@@ -58,8 +58,8 @@ Zen Demo works **only if**, after running `./run.sh`:
 | **Profile** | Load user identity from Firestore Emulator |
 | **Ping** | Server responds with translated message |
 | **WebSocket** | Echo messages back and forth |
-| **Terms** | Load HTML content from real filesystem storage |
-| **Language** | Switch between English/Polish affects both client and server |
+| **Terms** | Load Markdown content from storage with language support |
+| **Language** | Switch between English/Polish affects UI, API messages, and Terms content |
 
 If any of these fail, Zen Demo is broken.
 
@@ -81,7 +81,7 @@ apps/ZenDemo/
 ### Server Architecture
 
 - **No fallback to production**: Server fails immediately if emulator environment variables are missing
-- **Real storage**: Terms loaded from GCS emulator at `firebase-data/storage_export/legal/terms.html`
+- **Real storage**: Terms loaded from GCS emulator using language-specific files (`legal/terms.{lang}.md`)
 - **Real identity**: Uses `FirestoreIdentityRepository` with emulated Firestore
 - **Real localization**: Both client and server use `ZenLocalizationService`
 - **Seed data**: Pre-configured test users and storage files in `firebase-data/`
@@ -91,6 +91,25 @@ apps/ZenDemo/
 - **Real authentication**: Firebase Auth with email/password
 - **Real API calls**: HTTP and WebSocket connections to server
 - **Real state management**: Listenable app state with Firebase auth integration
+- **Markdown rendering**: Terms are rendered using `flutter_markdown` package
+
+### Localization
+
+Zen Demo supports **English** and **Polish** languages across:
+
+1. **UI Messages**: Client-side translations for buttons, labels, and error messages
+2. **API Messages**: Server-side translations for API responses (ping, error codes)
+3. **Terms Content**: Language-specific Markdown files stored in Firebase Storage
+   - English: `legal/terms.en.md`
+   - Polish: `legal/terms.pl.md`
+
+**File Naming Convention**: All localized content uses the format `{basename}.{lang}.{ext}`
+
+Language selection is managed via `AppState` and automatically propagates to:
+- Client UI rendering
+- HTTP requests via `Accept-Language` header
+- Terms content retrieval
+- Error message translation
 
 ---
 
@@ -171,10 +190,9 @@ apps/ZenDemo/
     ├── firestore_export/         # Database snapshots (auto-populated)
     ├── storage_export/
     │   └── legal/
-    │       └── terms.html        # Terms of service content
+    │       ├── terms.en.md       # Terms of service (English)
+    │       └── terms.pl.md       # Terms of service (Polish)
     └── README.md                 # Seed data documentation
-    │   └── src/                  # Shared DTOs
-    └── pubspec.yaml
 ```
 
 ### Running Tests

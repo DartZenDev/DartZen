@@ -23,5 +23,18 @@
   "zen_demo.profile.error": "Failed to load profile: {error}",
   "zen_demo.terms.title": "Terms & Conditions",
   "zen_demo.terms.loading": "Loading terms...",
-  "zen_demo.terms.error": "Failed to load terms: {error}"
+  "zen_demo.terms.error": "Failed to load terms: {error}",
+  "zen_demo.error.missing_auth_header": "Authorization required",
+  "zen_demo.error.invalid_token": "Invalid or expired session",
+  "zen_demo.error.invalid_user_id": "Invalid user ID",
+  "zen_demo.error.activation_failed": "Failed to activate account",
+  "zen_demo.error.identity_creation_failed": "Failed to create identity",
+  "zen_demo.error.missing_credentials": "Email and password are required",
+  "zen_demo.error.authentication_failed": "Invalid email or password",
+  "zen_demo.error.login_failed": "Login failed. Please try again",
+  "zen_demo.error.terms_not_found": "Terms not found",
+  "zen_demo.error.terms_load_failed": "Failed to load terms",
+  "zen_demo.error.ws_message_error": "WebSocket message error",
+  "zen_demo.error.network_error": "Network error. Please check your connection",
+  "zen_demo.error.unknown": "An unknown error occurred"
 }

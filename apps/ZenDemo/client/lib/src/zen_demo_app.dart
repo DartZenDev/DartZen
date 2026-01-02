@@ -1,5 +1,4 @@
 import 'package:dartzen_localization/dartzen_localization.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
@@ -80,34 +79,15 @@ class _ZenDemoAppState extends State<ZenDemoApp> {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: StreamBuilder<User?>(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            if (snapshot.hasData && snapshot.data != null) {
-              // Use addPostFrameCallback to avoid setState during build
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_appState.userId != snapshot.data!.uid) {
-                  _appState.setUserId(snapshot.data!.uid);
-                }
-              });
-              return MainScreen(
+        home: _appState.userId == null
+            ? WelcomeScreen(
                 appState: _appState,
                 apiBaseUrl: widget.apiBaseUrl,
-              );
-            }
-
-            return WelcomeScreen(
-              appState: _appState,
-              apiBaseUrl: widget.apiBaseUrl,
-            );
-          },
-        ),
+              )
+            : MainScreen(
+                appState: _appState,
+                apiBaseUrl: widget.apiBaseUrl,
+              ),
       ),
     );
   }

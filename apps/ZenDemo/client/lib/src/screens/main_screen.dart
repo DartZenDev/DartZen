@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
@@ -39,6 +38,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _apiClient = ZenDemoApiClient(baseUrl: widget.apiBaseUrl);
+    // Set token from app state
+    _apiClient.setIdToken(widget.appState.idToken);
     _wsClient = ZenDemoWebSocketClient(
       wsUrl: '${widget.apiBaseUrl.replaceFirst('http', 'ws')}/ws',
     );
@@ -51,7 +52,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _handleLogout() async {
-    await FirebaseAuth.instance.signOut();
+    widget.appState.setUserId(null);
+    _apiClient.setIdToken(null);
   }
 
   @override
@@ -173,16 +175,19 @@ class _MainScreenState extends State<MainScreen> {
       widget.appState.language,
     );
 
-    try {
-      final result = await _apiClient.ping(language: widget.appState.language);
-      setState(() {
-        _pingResult = messages.mainPingSuccess(result.message);
-      });
-    } catch (e) {
-      setState(() {
-        _pingResult = messages.mainPingError(e.toString());
-      });
-    }
+    final result = await _apiClient.ping(language: widget.appState.language);
+
+    setState(() {
+      result.fold(
+        (pingContract) {
+          _pingResult = messages.mainPingSuccess(pingContract.message);
+        },
+        (error) {
+          // Translate error code to localized message
+          _pingResult = messages.translateError(error.message);
+        },
+      );
+    });
   }
 
   void _handleWsConnect() {

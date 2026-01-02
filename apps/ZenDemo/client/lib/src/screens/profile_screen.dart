@@ -41,21 +41,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       widget.appState.language,
     );
 
-    try {
-      final profile = await widget.apiClient.getProfile(
-        userId: widget.appState.userId!,
-        language: widget.appState.language,
+    final result = await widget.apiClient.getProfile(
+      userId: widget.appState.userId!,
+      language: widget.appState.language,
+    );
+
+    setState(() {
+      result.fold(
+        (profile) {
+          _profile = profile;
+          _isLoading = false;
+        },
+        (error) {
+          // Translate error code to localized message
+          _error = messages.translateError(error.message);
+          _isLoading = false;
+        },
       );
-      setState(() {
-        _profile = profile;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = messages.profileError(e.toString());
-        _isLoading = false;
-      });
-    }
+    });
   }
 
   @override

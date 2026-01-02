@@ -188,4 +188,27 @@ class ClientMessages {
         module: 'zen_demo',
         params: {'error': error},
       );
+
+  /// Translates an error code to a localized message.
+  ///
+  /// If the error code is not found, returns the error code itself.
+  String translateError(String errorCode) {
+    final key = 'zen_demo.error.$errorCode';
+    final translation = _localization.translate(
+      key,
+      language: _language,
+      module: 'zen_demo',
+    );
+
+    // If translation returns the key itself (not found), use unknown error
+    if (translation == key) {
+      return _localization.translate(
+        'zen_demo.error.unknown',
+        language: _language,
+        module: 'zen_demo',
+      );
+    }
+
+    return translation;
+  }
 }
