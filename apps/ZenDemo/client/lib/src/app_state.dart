@@ -1,49 +1,90 @@
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:flutter/material.dart';
 
-/// Application state notifier.
+/// Immutable snapshot of the application state.
+@immutable
+class AppStateData {
+  /// Creates a new state snapshot.
+  const AppStateData({
+    this.language = 'en',
+    this.userId,
+    this.idToken,
+    this.localization,
+  });
+
+  /// Current language code.
+  final String language;
+
+  /// Authenticated user ID (if any).
+  final String? userId;
+
+  /// Firebase ID token for API calls.
+  final String? idToken;
+
+  /// Localization service instance.
+  final ZenLocalizationService? localization;
+
+  /// Returns a copy with overridden fields.
+  AppStateData copyWith({
+    String? language,
+    String? userId,
+    String? idToken,
+    ZenLocalizationService? localization,
+  }) =>
+      AppStateData(
+        language: language ?? this.language,
+        userId: userId ?? this.userId,
+        idToken: idToken ?? this.idToken,
+        localization: localization ?? this.localization,
+      );
+}
+
+/// Notifies listeners about immutable [AppStateData] changes.
 class AppState extends ChangeNotifier {
-  String _language = 'en';
-  String? _userId;
-  String? _idToken;
-  ZenLocalizationService? _localization;
+  /// Creates an [AppState] with optional initial data.
+  AppState({AppStateData? initial}) : _data = initial ?? const AppStateData();
 
-  /// The current language code.
-  String get language => _language;
+  AppStateData _data;
 
-  /// The current user ID, if authenticated.
-  String? get userId => _userId;
+  /// Current state snapshot.
+  AppStateData get value => _data;
 
-  /// The current ID token for authentication.
-  String? get idToken => _idToken;
+  /// Current language code.
+  String get language => _data.language;
 
-  /// The localization service instance.
-  ZenLocalizationService? get localization => _localization;
+  /// Current authenticated user ID, if any.
+  String? get userId => _data.userId;
 
-  /// Sets the localization service instance.
+  /// Current ID token for API calls.
+  String? get idToken => _data.idToken;
+
+  /// Current localization service.
+  ZenLocalizationService? get localization => _data.localization;
+
+  /// Updates localization service reference.
   void setLocalization(ZenLocalizationService service) {
-    _localization = service;
+    _data = _data.copyWith(localization: service);
     notifyListeners();
   }
 
-  /// Sets the current language and notifies listeners.
+  /// Changes the current language.
   void setLanguage(String language) {
-    _language = language;
+    _data = _data.copyWith(language: language);
     notifyListeners();
   }
 
-  /// Sets the current user ID and notifies listeners.
+  /// Sets user id and clears token when logging out.
   void setUserId(String? userId) {
-    _userId = userId;
-    if (userId == null) {
-      _idToken = null; // Clear token on logout
-    }
+    _data = _data.copyWith(
+      userId: userId,
+      idToken: userId == null ? null : _data.idToken,
+    );
     notifyListeners();
   }
 
-  /// Sets the current ID token and notifies listeners.
+  /// Updates the ID token for authenticated requests.
   void setIdToken(String? token) {
-    _idToken = token;
+    _data = _data.copyWith(idToken: token);
     notifyListeners();
   }
 }

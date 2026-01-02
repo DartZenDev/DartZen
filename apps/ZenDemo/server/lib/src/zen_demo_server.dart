@@ -7,7 +7,6 @@ import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:dartzen_identity/server.dart' as identity_server;
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_storage/dartzen_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -16,6 +15,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:zen_demo_contracts/zen_demo_contracts.dart' as contracts;
 
 import 'l10n/server_messages.dart' as demo;
+import 'services/auth_service.dart';
+import 'services/identity_service.dart';
 
 /// ZenDemo server application.
 ///
@@ -41,8 +42,12 @@ class ZenDemoServer {
   late final FirestoreIdentityRepository _identityRepository;
   late final ZenStorageReader _storageReader;
   late final identity_server.IdentityTokenVerifier _tokenVerifier;
+  late final AuthService _authService;
+  late final IdentityService _identityService;
 
   final ZenLogger _logger = ZenLogger.instance;
+
+  static const _defaultLanguage = 'en';
 
   /// Initializes the server.
   Future<void> initialize() async {
@@ -82,6 +87,9 @@ class ZenDemoServer {
     _tokenVerifier = identity_server.IdentityTokenVerifier(
       config: identity_server.IdentityTokenVerifierConfig(),
     );
+
+    _authService = AuthService(authUrl: _buildAuthUrl());
+    _identityService = IdentityService(repository: _identityRepository);
 
     // Initialize Firebase Storage reader for emulator
     _storageReader = FirebaseStorageReader(
@@ -141,7 +149,7 @@ class ZenDemoServer {
       return Response(
         401,
         body: jsonEncode({
-          'error': 'missing_auth_header',
+          'error': AuthError.missingAuthHeader.code,
         }),
         headers: {'Content-Type': 'application/json'},
       );
@@ -158,7 +166,7 @@ class ZenDemoServer {
       return Response(
         401,
         body: jsonEncode({
-          'error': 'invalid_token',
+          'error': AuthError.invalidToken.code,
         }),
         headers: {'Content-Type': 'application/json'},
       );
@@ -183,63 +191,19 @@ class ZenDemoServer {
     final identityId = idResult.dataOrNull!;
 
     // Try to get existing identity from Firestore
-    final getResult = await _identityRepository.getIdentityById(identityId);
-
-    if (getResult.isSuccess) {
-      // Identity exists, use it
-      return await handler(getResult.dataOrNull!);
-    }
-
-    // Identity doesn't exist, create simplified one for demo
-    _logger.info('Creating new demo identity for user: $userId');
-
-    // Demo: Create identity with default USER role and ACTIVE state
-    final demoIdentity = Identity.createPending(
-      id: identityId,
-      authority: Authority(roles: {Role.user}),
-    );
-
-    // Activate immediately for demo (bypass email verification)
-    final activateResult = demoIdentity.lifecycle.activate();
-    if (!activateResult.isSuccess) {
-      _logger.error(
-        'Failed to activate identity',
-        error: activateResult.errorOrNull,
-      );
+    final identityResult =
+        await _identityService.getOrCreateDemoIdentity(identityId);
+    if (!identityResult.isSuccess) {
       return Response(
         500,
         body: jsonEncode({
-          'error': 'activation_failed',
+          'error': IdentityError.createFailed.code,
         }),
         headers: {'Content-Type': 'application/json'},
       );
     }
 
-    final activeIdentity = Identity(
-      id: demoIdentity.id,
-      lifecycle: activateResult.dataOrNull!,
-      authority: demoIdentity.authority,
-      createdAt: demoIdentity.createdAt,
-    );
-
-    // Store in Firestore
-    final createResult =
-        await _identityRepository.createIdentity(activeIdentity);
-    if (!createResult.isSuccess) {
-      _logger.error(
-        'Failed to create identity',
-        error: createResult.errorOrNull,
-      );
-      return Response(
-        500,
-        body: jsonEncode({
-          'error': 'identity_creation_failed',
-        }),
-        headers: {'Content-Type': 'application/json'},
-      );
-    }
-
-    return await handler(activeIdentity);
+    return await handler(identityResult.dataOrNull!);
   }
 
   Middleware _corsMiddleware() => (Handler handler) => (Request request) async {
@@ -265,7 +229,7 @@ class ZenDemoServer {
       };
 
   Future<Response> _handlePing(Request request) async {
-    final language = request.headers['accept-language'] ?? 'en';
+    final language = request.headers['accept-language'] ?? _defaultLanguage;
     final messages = demo.ServerMessages(_localization, language);
 
     final contract = contracts.PingContract(
@@ -290,50 +254,30 @@ class ZenDemoServer {
         return Response(
           400,
           body: jsonEncode({
-            'error': 'missing_credentials',
+            'error': AuthError.invalidCredentials.code,
           }),
           headers: {'Content-Type': 'application/json'},
         );
       }
 
-      // Call Firebase Auth REST API to authenticate
-      // For emulator, API key can be any non-empty string
-      // Use project ID for consistency
-      final apiKey = dzGcloudProject.isEmpty ? 'demo-api-key' : dzGcloudProject;
-
-      final authUrl = dzIsPrd
-          ? Uri.parse(
-              'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey')
-          : Uri.parse(
-              'http://$dzIdentityToolkitEmulatorHost/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey');
-
-      _logger.info('Authenticating user with Firebase Auth: $authUrl');
-
-      final authResponse = await http.post(
-        authUrl,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-          'returnSecureToken': true,
-        }),
+      final authResult = await _authService.authenticate(
+        email: email,
+        password: password,
       );
 
-      if (authResponse.statusCode != 200) {
-        final errorData = jsonDecode(authResponse.body) as Map<String, dynamic>;
-        final errorInfo = errorData['error'] as Map<String, dynamic>?;
-        final errorMessage = errorInfo?['message'] as String?;
-        _logger.error('Firebase Auth failed: $errorMessage');
+      if (!authResult.isSuccess) {
+        final error = authResult.errorOrNull!;
+        _logger.error('Authentication failed: ${error.message}');
         return Response(
           401,
           body: jsonEncode({
-            'error': 'authentication_failed',
+            'error': error.message,
           }),
           headers: {'Content-Type': 'application/json'},
         );
       }
 
-      final authData = jsonDecode(authResponse.body) as Map<String, dynamic>;
+      final authData = authResult.dataOrNull!;
       final idToken = authData['idToken'] as String;
       final userId = authData['localId'] as String;
 
@@ -376,10 +320,19 @@ class ZenDemoServer {
     );
   }
 
+  Uri _buildAuthUrl() {
+    final apiKey = dzGcloudProject.isEmpty ? 'demo-api-key' : dzGcloudProject;
+    return dzIsPrd
+        ? Uri.parse(
+            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey')
+        : Uri.parse(
+            'http://$dzIdentityToolkitEmulatorHost/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey');
+  }
+
   Future<Response> _handleTerms(Request request) async {
     try {
       // Get language from Accept-Language header, default to 'en'
-      final language = request.headers['accept-language'] ?? 'en';
+      final language = request.headers['accept-language'] ?? _defaultLanguage;
 
       // Construct file path using language code: terms.{lang}.md
       final filePath = 'legal/terms.$language.md';
@@ -392,7 +345,7 @@ class ZenDemoServer {
       if (storageObject == null) {
         _logger.error('Terms file not found in storage: $filePath');
         return Response.internalServerError(
-          body: jsonEncode({'error': 'terms_not_found'}),
+          body: jsonEncode({'error': TermsError.notFound.code}),
           headers: {'Content-Type': 'application/json'},
         );
       }
@@ -413,7 +366,7 @@ class ZenDemoServer {
 
       return Response.internalServerError(
         body: jsonEncode({
-          'error': 'terms_load_failed',
+          'error': TermsError.loadFailed.code,
         }),
         headers: {'Content-Type': 'application/json'},
       );
@@ -454,4 +407,19 @@ class ZenDemoServer {
       },
     );
   }
+}
+
+/// Error codes for terms retrieval.
+enum TermsError {
+  /// Terms file missing in storage.
+  notFound,
+
+  /// Failed to load or decode the terms content.
+  loadFailed,
+}
+
+/// String codes for [TermsError].
+extension TermsErrorCode on TermsError {
+  /// Returns the string representation expected by the client.
+  String get code => name;
 }

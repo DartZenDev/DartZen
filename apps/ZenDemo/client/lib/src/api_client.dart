@@ -4,13 +4,57 @@ import 'package:dartzen_core/dartzen_core.dart';
 import 'package:http/http.dart' as http;
 import 'package:zen_demo_contracts/zen_demo_contracts.dart';
 
+/// Authentication error codes shared with the server.
+enum AuthError {
+  /// Missing Authorization header.
+  missingAuthHeader,
+
+  /// Provided token is invalid or expired.
+  invalidToken,
+
+  /// Authentication failed at the identity provider.
+  authenticationFailed,
+
+  /// Credentials are missing or blank.
+  invalidCredentials,
+
+  /// Email format is invalid.
+  invalidEmailFormat,
+}
+
+/// String codes for [AuthError].
+extension AuthErrorCode on AuthError {
+  /// Returns the string representation expected by the server.
+  String get code => name;
+}
+
+/// Terms retrieval error codes shared with the server.
+enum TermsError {
+  /// Terms file missing in storage.
+  notFound,
+
+  /// Failed to load or decode terms content.
+  loadFailed,
+}
+
+/// String codes for [TermsError].
+extension TermsErrorCode on TermsError {
+  /// Returns the string representation expected by the server.
+  String get code => name;
+}
+
 /// HTTP client for ZenDemo API.
 class ZenDemoApiClient {
   /// Creates a [ZenDemoApiClient] with the given [baseUrl].
-  ZenDemoApiClient({required this.baseUrl});
+  ///
+  /// Optionally accepts an [httpClient] for testing.
+  ZenDemoApiClient({required this.baseUrl, http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
 
   /// The base URL of the ZenDemo API server.
   final String baseUrl;
+
+  final http.Client _httpClient;
 
   String? _idToken;
 
@@ -28,7 +72,7 @@ class ZenDemoApiClient {
     required String password,
   }) async {
     try {
-      final response = await http.post(
+      final response = await _httpClient.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -39,9 +83,9 @@ class ZenDemoApiClient {
 
       if (response.statusCode != 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        // Server returns error code, not message
-        final errorCode = json['error'] as String? ?? 'unknown';
-        return ZenResult.err(ZenUnauthorizedError(errorCode));
+        final errorCode = json['error'] as String?;
+        final error = _parseAuthError(errorCode);
+        return ZenResult.err(ZenUnauthorizedError(error.code));
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -63,15 +107,16 @@ class ZenDemoApiClient {
   /// Returns a [ZenResult] with [PingContract] on success.
   Future<ZenResult<PingContract>> ping({required String language}) async {
     try {
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$baseUrl/ping'),
         headers: {'Accept-Language': language},
       );
 
       if (response.statusCode != 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorCode = json['error'] as String? ?? 'unknown';
-        return ZenResult.err(ZenUnknownError(errorCode));
+        final errorCode = json['error'] as String?;
+        final error = _parseAuthError(errorCode);
+        return ZenResult.err(ZenUnknownError(error.code));
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -97,7 +142,7 @@ class ZenDemoApiClient {
     }
 
     try {
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$baseUrl/profile/$userId'),
         headers: {
           'Authorization': 'Bearer $_idToken',
@@ -107,14 +152,16 @@ class ZenDemoApiClient {
 
       if (response.statusCode == 401) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorCode = json['error'] as String? ?? 'invalid_token';
-        return ZenResult.err(ZenUnauthorizedError(errorCode));
+        final errorCode = json['error'] as String?;
+        final error = _parseAuthError(errorCode);
+        return ZenResult.err(ZenUnauthorizedError(error.code));
       }
 
       if (response.statusCode != 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorCode = json['error'] as String? ?? 'unknown';
-        return ZenResult.err(ZenUnknownError(errorCode));
+        final errorCode = json['error'] as String?;
+        final error = _parseAuthError(errorCode);
+        return ZenResult.err(ZenUnknownError(error.code));
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -131,15 +178,16 @@ class ZenDemoApiClient {
   /// Returns a [ZenResult] with [TermsContract] on success.
   Future<ZenResult<TermsContract>> getTerms({required String language}) async {
     try {
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$baseUrl/terms'),
         headers: {'Accept-Language': language},
       );
 
       if (response.statusCode != 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorCode = json['error'] as String? ?? 'unknown';
-        return ZenResult.err(ZenUnknownError(errorCode));
+        final errorCode = json['error'] as String?;
+        final error = _parseTermsError(errorCode);
+        return ZenResult.err(ZenUnknownError(error.code));
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -150,4 +198,17 @@ class ZenDemoApiClient {
       );
     }
   }
+
+  /// Disposes the underlying HTTP client when it is owned by this instance.
+  void close() => _httpClient.close();
 }
+
+AuthError _parseAuthError(String? code) => AuthError.values.firstWhere(
+      (e) => e.code == (code ?? ''),
+      orElse: () => AuthError.authenticationFailed,
+    );
+
+TermsError _parseTermsError(String? code) => TermsError.values.firstWhere(
+      (e) => e.code == (code ?? ''),
+      orElse: () => TermsError.loadFailed,
+    );

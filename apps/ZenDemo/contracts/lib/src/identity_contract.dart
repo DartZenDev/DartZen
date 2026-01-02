@@ -1,7 +1,10 @@
-/// Identity contract for user profile.
-class IdentityContract {
-  /// Creates an identity contract.
-  const IdentityContract({
+/// Summary contract representing a lightweight identity snapshot for UI.
+///
+/// This is intentionally distinct from `dartzen_identity` domain contracts and
+/// should be used only for presentation summaries.
+class ProfileSummaryContract {
+  /// Creates a profile summary contract.
+  const ProfileSummaryContract({
     required this.id,
     required this.email,
     this.displayName,
@@ -21,8 +24,8 @@ class IdentityContract {
   final String? photoUrl;
 
   /// Creates an instance from JSON.
-  factory IdentityContract.fromJson(Map<String, dynamic> json) =>
-      IdentityContract(
+  factory ProfileSummaryContract.fromJson(Map<String, dynamic> json) =>
+      ProfileSummaryContract(
         id: json['id'] as String,
         email: json['email'] as String,
         displayName: json['display_name'] as String?,
