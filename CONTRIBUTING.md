@@ -258,7 +258,7 @@ DartZen uses **automated versioning** based on conventional commits:
 
 Each package versions independently:
 - `dartzen_core` can be at v2.3.1
-- `dartzen_navigation` can be at v1.0.5
+- `dartzen_ui_navigation` can be at v1.0.5
 - Only packages with changes get version bumps
 
 ### Example Workflow
@@ -266,7 +266,7 @@ Each package versions independently:
 ```bash
 # Make changes and commit
 git commit -m "feat(dartzen_core): add middleware support"
-git commit -m "fix(dartzen_navigation): correct validation logic"
+git commit -m "fix(dartzen_ui_navigation): correct validation logic"
 
 # Preview version changes
 melos version --dry-run

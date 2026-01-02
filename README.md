@@ -32,7 +32,7 @@ dartzen/
 ├── packages/
 │   ├── dartzen_core/       # Core primitives, contracts, and domain value objects
 │   ├── ...
-│   └── dartzen_navigation/ # Navigation widget for Flutter applications
+│   └── dartzen_ui_navigation/ # Navigation widget for Flutter applications
 ├── apps/                   # Example applications
 │   └── ZenDemo/           # Full-stack demo app (Flutter web + Dart Shelf server)
 ├── melos.yaml              # Monorepo configuration
@@ -44,7 +44,7 @@ dartzen/
 - **`dartzen_core`**: Core primitives, shared contracts, result types, and domain value objects — the foundation for all other packages. Does **not** include infrastructure concerns.
 - **`dartzen_localization`**: Foundational localization package for the DartZen ecosystem.
 - **`dartzen_firestore`**: Firestore operations and converters for the DartZen ecosystem.
-- **`dartzen_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
+- **`dartzen_ui_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
 - **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, WebSocket communication, HTTP client, and Shelf middleware.
 - **`dartzen_cache`**: Simple, explicit, and predictable caching for the DartZen ecosystem with in-memory and GCP Memorystore backends.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.

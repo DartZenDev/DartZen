@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dartzen_localization/dartzen_localization.dart';
-import 'package:dartzen_navigation/dartzen_navigation.dart';
+import 'package:dartzen_ui_navigation/dartzen_ui_navigation.dart';
 import 'package:dartzen_ui_identity/dartzen_ui_identity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

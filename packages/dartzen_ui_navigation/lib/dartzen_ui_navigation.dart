@@ -7,7 +7,7 @@
 /// ## Usage
 ///
 /// ```dart
-/// import 'package:dartzen_navigation/dartzen_navigation.dart';
+/// import 'package:dartzen_ui_navigation/dartzen_ui_navigation.dart';
 ///
 /// // Create a state provider for the navigation index
 /// final navStateProvider = StateProvider<int>((ref) => 0);

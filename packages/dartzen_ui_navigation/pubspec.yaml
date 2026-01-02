@@ -1,4 +1,4 @@
-name: dartzen_navigation
+name: dartzen_ui_navigation
 description: Adaptive navigation layer for DartZen.
 publish_to: 'none'
 version: 0.0.1
@@ -24,7 +24,7 @@ dev_dependencies:
 
 repository: https://github.com/DartZenDev/DartZen
 issue_tracker: https://github.com/DartZenDev/DartZen/issues
-homepage: https://github.com/DartZenDev/DartZen/tree/main/packages/dartzen_navigation
+homepage: https://github.com/DartZenDev/DartZen/tree/main/packages/dartzen_ui_navigation
 
 topics:
   - navigation

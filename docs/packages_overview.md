@@ -103,7 +103,7 @@ This document provides a high-level overview of all approved DartZen packages an
 
 ## **Client Packages**
 
-### **`dartzen_navigation`**
+### **`dartzen_ui_navigation`**
 
 * **Purpose:** Unified navigation layer for Flutter apps.  
 * **Scope:** Adaptive routing, platform-specific optimizations, accessibility, analytics integration

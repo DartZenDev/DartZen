@@ -22,81 +22,81 @@
             "type": "dart"
         },
         {
-            "name": "dartzen_navigation",
-            "cwd": "packages/dartzen_navigation",
+            "name": "dartzen_ui_navigation",
+            "cwd": "packages/dartzen_ui_navigation",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "dartzen_navigation (profile mode)",
-            "cwd": "packages/dartzen_navigation",
+            "name": "dartzen_ui_navigation (profile mode)",
+            "cwd": "packages/dartzen_ui_navigation",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "dartzen_navigation (release mode)",
-            "cwd": "packages/dartzen_navigation",
+            "name": "dartzen_ui_navigation (release mode)",
+            "cwd": "packages/dartzen_ui_navigation",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
-            "name": "dartzen_navigation_old",
-            "cwd": "packages/dartzen_navigation_old",
+            "name": "dartzen_ui_navigation_old",
+            "cwd": "packages/dartzen_ui_navigation_old",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "dartzen_navigation_old (profile mode)",
-            "cwd": "packages/dartzen_navigation_old",
+            "name": "dartzen_ui_navigation_old (profile mode)",
+            "cwd": "packages/dartzen_ui_navigation_old",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "dartzen_navigation_old (release mode)",
-            "cwd": "packages/dartzen_navigation_old",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-        },
-        {
-            "name": "example",
-            "cwd": "packages/dartzen_navigation/example",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "example (profile mode)",
-            "cwd": "packages/dartzen_navigation/example",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "example (release mode)",
-            "cwd": "packages/dartzen_navigation/example",
+            "name": "dartzen_ui_navigation_old (release mode)",
+            "cwd": "packages/dartzen_ui_navigation_old",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
             "name": "example",
-            "cwd": "packages/dartzen_navigation_old/example",
+            "cwd": "packages/dartzen_ui_navigation/example",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "example (profile mode)",
-            "cwd": "packages/dartzen_navigation_old/example",
+            "cwd": "packages/dartzen_ui_navigation/example",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "example (release mode)",
-            "cwd": "packages/dartzen_navigation_old/example",
+            "cwd": "packages/dartzen_ui_navigation/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "example",
+            "cwd": "packages/dartzen_ui_navigation_old/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "example (profile mode)",
+            "cwd": "packages/dartzen_ui_navigation_old/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "example (release mode)",
+            "cwd": "packages/dartzen_ui_navigation_old/example",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
