@@ -72,7 +72,6 @@ apps/ZenDemo/
 ├── client/          # Flutter web app
 ├── server/          # Dart Shelf server
 ├── contracts/       # Shared data contracts
-├── firebase-data/   # Emulator seed data (auth, firestore, storage)
 ├── docker-compose.yml   # Firebase emulators
 ├── run.sh          # Single-command launcher
 └── README.md       # This file
@@ -84,7 +83,7 @@ apps/ZenDemo/
 - **Real storage**: Terms loaded from GCS emulator using language-specific files (`legal/terms.{lang}.md`)
 - **Real identity**: Uses `FirestoreIdentityRepository` with emulated Firestore
 - **Real localization**: Both client and server use `ZenLocalizationService`
-- **Seed data**: Pre-configured test users and storage files in `firebase-data/`
+- **Seed data**: Pre-configured test users and storage are populated automatically on emulator start
 
 ### Client Architecture
 
@@ -155,7 +154,7 @@ The Firebase Auth emulator is pre-seeded with test accounts:
 - **Email**: `admin@example.com`
 - **Password**: `password123`
 
-These accounts are automatically available when the emulators start. See `firebase-data/README.md` for details.
+These accounts are automatically available when the emulators start.
 
 ---
 
@@ -181,18 +180,10 @@ apps/ZenDemo/
 │   ├── lib/
 │   │   └── src/
 │   └── pubspec.yaml
-├── contracts/
-│   ├── lib/
-│   │   └── src/                  # Shared DTOs
-│   └── pubspec.yaml
-└── firebase-data/
-    ├── auth_export/              # Pre-seeded test users
-    ├── firestore_export/         # Database snapshots (auto-populated)
-    ├── storage_export/
-    │   └── legal/
-    │       ├── terms.en.md       # Terms of service (English)
-    │       └── terms.pl.md       # Terms of service (Polish)
-    └── README.md                 # Seed data documentation
+└── contracts/
+    ├── lib/
+    │   └── src/                  # Shared DTOs
+    └── pubspec.yaml
 ```
 
 ### Running Tests
@@ -271,8 +262,8 @@ docker compoObject not found in GCS` or `404`
 **Solution**: Ensure seed data exists:
 
 ```bash
-ls firebase-data/storage_export/legal/terms.html
-# Should exist with HTML content
+open http://localhost:4000/storage/demo-bucket/legal
+# Should exist files: terms.en.md, terms.pl.md
 ```
 
 If missing, the file should be recreated automatically on next emulator start.**Solution**: Ensure you're running from the correct directory:
@@ -297,7 +288,7 @@ Zen Demo exists to prove one thing: **The DartZen architecture works end-to-end.
 
 ## License
 
-Apache 2.0
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ---
 

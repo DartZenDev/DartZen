@@ -33,7 +33,8 @@ dartzen/
 │   ├── dartzen_core/       # Core primitives, contracts, and domain value objects
 │   ├── ...
 │   └── dartzen_navigation/ # Navigation widget for Flutter applications
-├── apps/                   # Example applications (future)
+├── apps/                   # Example applications
+│   └── ZenDemo/           # Full-stack demo app (Flutter web + Dart Shelf server)
 ├── melos.yaml              # Monorepo configuration
 └── CONTRIBUTING.md         # Contribution guidelines
 ```
@@ -50,6 +51,10 @@ dartzen/
 - **`dartzen_storage`**: Google Cloud Storage reader for the DartZen ecosystem.
 - **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
 - **`dartzen_ui_identity`**: Cross-platform, adaptive UI components and screens for DartZen Identity flows.
+
+### Example Applications
+
+- **`ZenDemo`**: A full-stack demo application showcasing DartZen in action with a Flutter web client and Dart Shelf server, using Firebase emulators for local development.
 
 ## 📄 License
 
