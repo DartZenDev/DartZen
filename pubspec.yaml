@@ -18,6 +18,9 @@ workspace:
   - packages/dartzen_storage
   - packages/dartzen_ui_identity
   - packages/dartzen_ui_identity/example
+  - apps/ZenDemo/contracts
+  - apps/ZenDemo/server
+  - apps/ZenDemo/client
 
 dependency_overrides:
   cli_util: ^0.4.2
@@ -48,13 +51,13 @@ melos:
       description: Run dart format --set-exit-if-changed in all packages.
     test:
       run: |
-        melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation,dartzen_ui_identity" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
-        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache" -- "dart test"
+        melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation,dartzen_ui_identity,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,zen_demo_server,zen_demo_contracts" -- "dart test"
       description: Run all Dart & Flutter tests
     test:coverage:
       run: |
-        melos exec --ignore="dartzen_navigation_example,dartzen_ui_identity" --scope="dartzen_core,dartzen_navigation" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
-        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache" -- "dart test --coverage=coverage"
+        melos exec --ignore="dartzen_navigation_example,dartzen_ui_identity" --scope="dartzen_core,dartzen_navigation,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,zen_demo_server,zen_demo_contracts" -- "dart test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage
     publish:
       exec: dart pub publish --dry-run

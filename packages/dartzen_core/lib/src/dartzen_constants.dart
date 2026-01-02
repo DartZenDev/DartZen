@@ -23,8 +23,8 @@ const String dzGcloudProjectEnvVar = 'GCLOUD_PROJECT';
 /// The name of the environment variable for the Firestore Emulator host.
 const String dzFirestoreEmulatorHostEnvVar = 'FIRESTORE_EMULATOR_HOST';
 
-/// The name of the environment variable for the Storage Emulator host.
-const String dzStorageEmulatorHostEnvVar = 'STORAGE_EMULATOR_HOST';
+/// The name of the environment variable for the Firebase Storage Emulator host.
+const String dzStorageEmulatorHostEnvVar = 'FIREBASE_STORAGE_EMULATOR_HOST';
 
 /// The name of the environment variable for the Identity Toolkit Emulator host.
 const String dzIdentityToolkitEmulatorHostEnvVar =
@@ -45,9 +45,9 @@ const String dzFirestoreEmulatorHost = String.fromEnvironment(
   dzFirestoreEmulatorHostEnvVar,
 );
 
-/// Storage Emulator host from environment.
+/// Firebase Storage Emulator host from environment.
 ///
-/// This reads from STORAGE_EMULATOR_HOST at compile time.
+/// This reads from FIREBASE_STORAGE_EMULATOR_HOST at compile time.
 /// Returns empty string if not set.
 const String dzStorageEmulatorHost = String.fromEnvironment(
   dzStorageEmulatorHostEnvVar,

@@ -3,6 +3,7 @@ repository: https://github.com/DartZenDev/DartZen
 
 packages:
   - packages/**
+  - apps/**/**
 
 
 command:
@@ -17,7 +18,7 @@ command:
     # fix: patch version bump (0.1.0 -> 0.1.1)
     # BREAKING CHANGE: major version bump (0.1.0 -> 1.0.0)
     branch: main
-    
+
   bootstrap:
     # It seems so that running "pub get" in parallel can have issues (like
     # https://github.com/dart-lang/pub/issues/3404)

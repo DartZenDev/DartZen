@@ -1,0 +1,17 @@
+services:
+  firebase-emulator:
+    image: andreysenov/firebase-tools:latest
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "9099:9099"   # Auth Emulator
+      - "9088:9088"   # Firestore Emulator
+      - "9199:9199"   # Storage Emulator
+    volumes:
+      - ./firebase.json:/home/node/firebase.json:ro
+      - ./firebase-data:/home/node/firebase-data
+    working_dir: /home/node
+    command: firebase emulators:start --project demo-zen --import=./firebase-data --export-on-exit=./firebase-data
+    environment:
+      - FIREBASE_AUTH_EMULATOR_HOST=0.0.0.0:9099
+      - FIRESTORE_EMULATOR_HOST=0.0.0.0:9088
+      - FIREBASE_STORAGE_EMULATOR_HOST=0.0.0.0:9199

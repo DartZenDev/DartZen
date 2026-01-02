@@ -7,6 +7,7 @@ coverage:
     failure: 50%
 ignore:
   - "**/example/**"
+  - "**/apps/**"
   - "**/test/**"
   - "**/test_driver/**"
   - "**/build/**"

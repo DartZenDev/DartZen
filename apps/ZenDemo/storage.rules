@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow all read access for emulator
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

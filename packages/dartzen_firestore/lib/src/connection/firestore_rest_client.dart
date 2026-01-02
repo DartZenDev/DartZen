@@ -107,7 +107,7 @@ final class FirestoreRestClient {
   }) async {
     final commitUrl = _config.isProduction
         ? 'https://firestore.googleapis.com/v1/projects/${_config.projectId}/databases/(default):commit'
-        : 'http://${_config.emulatorHost}:${_config.emulatorPort}/v1/projects/${_config.projectId}/databases/(default):commit';
+        : 'http://${_config.emulatorHost}:${_config.emulatorPort}/v1/projects/${_config.projectId}/databases/(default)/documents:commit';
 
     final response = await _httpClient.post(
       Uri.parse(commitUrl),

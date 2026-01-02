@@ -23,7 +23,7 @@ Thank you for your interest in contributing to DartZen! This guide will help you
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/your-username/dartzen.git
+   git clone https://github.com/DartZenDev/dartzen.git
    cd dartzen
    ```
 
