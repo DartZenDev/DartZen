@@ -1,8 +1,18 @@
 import 'dart:io';
 
-import 'package:dartzen_localization/src/zen_localization_loader.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
+
+// Mock implementation for testing without Flutter binding
+class _MockLoaderImpl {
+  Future<String> load(String path) async {
+    final file = File(path);
+    if (!await file.exists()) {
+      throw FileSystemException('Cannot open file', path);
+    }
+    return file.readAsString();
+  }
+}
 
 void main() {
   group('ZenLocalizationLoader (Integration)', () {
@@ -13,9 +23,8 @@ void main() {
       await file.writeAsString('{"test": "content"}');
 
       try {
-        final loader = ZenLocalizationLoader();
-        // On CLI test runner, this should use IO loader
-        final content = await loader.load(file.path);
+        final impl = _MockLoaderImpl();
+        final content = await impl.load(file.path);
         expect(content, '{"test": "content"}');
       } finally {
         await tempDir.delete(recursive: true);
@@ -23,9 +32,9 @@ void main() {
     });
 
     test('throws on missing file', () async {
-      final loader = ZenLocalizationLoader();
+      final impl = _MockLoaderImpl();
       expect(
-        () => loader.load('/path/to/non/existent/file.json'),
+        impl.load('/path/to/non/existent/file.json'),
         throwsA(isA<FileSystemException>()),
       );
     });

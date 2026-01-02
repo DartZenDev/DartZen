@@ -1,7 +1,8 @@
 ========================================
+
 # DARTZEN IMPLEMENTATION PLAN — {PACKAGE}
-STRICT MODE
-========================================
+
+# STRICT MODE
 
 ## 1. AUTHORITY & MODE
 
@@ -33,6 +34,7 @@ You MUST follow documents in this strict order of priority:
 1. This implementation plan [PACKAGE INSTRUCTIONS](#package-instructions) section below (`.github/copilot-instructions.md`)
 
 2. Architectural & Philosophical Canon:
+
    - `docs/zen_architecture.md`
    - `docs/gcp_native.md`
    - `docs/packages_overview.md`
@@ -41,10 +43,11 @@ You MUST follow documents in this strict order of priority:
 3. Root `README.md` (monorepo intent and scope)
 
 4. Development & Process Documents:
+
    - `docs/development_workflow.md`
    - `docs/versioning_and_releases.md`
 
-5. Root `/analysis_options.yaml`  
+5. Root `/analysis_options.yaml`
    and `packages/**/analysis_options.yaml`
 
 Lower-priority documents MUST NOT override higher-priority ones. When in doubt, defer to the philosophical canon over implementation convenience. These documents describe **intent**, not just structure.
@@ -144,28 +147,45 @@ Direct calls to the localization service are FORBIDDEN outside a package-scoped 
 
 Rules:
 
-* Each package MUST define its own `*_messages.dart`  
-* Messages files:  
-  * live under `lib/src/l10n/`  
-  * encapsulate all localization keys of the package  
-* `ZenLocalizationService.translate`:  
-  * may be called ONLY inside messages classes  
-  * MUST NOT be called from UI, widgets, or public APIs
+- Each package MUST define its own `*_messages.dart`
+- Messages files:
+  - live under `lib/src/l10n/`
+  - encapsulate all localization keys of the package
+- `ZenLocalizationService.translate`:
+  - may be called ONLY inside messages classes
+  - MUST NOT be called from UI, widgets, or public APIs
 
 Purpose:
 
-* eliminate repetitive localization boilerplate  
-* preserve package ownership of messages  
-* improve readability and maintainability  
-* keep localization explicit without leaking low-level APIs
+- eliminate repetitive localization boilerplate
+- preserve package ownership of messages
+- improve readability and maintainability
+- keep localization explicit without leaking low-level APIs
 
 Global or application-wide message managers are NOT allowed.
 
+## 9. TEST COVERAGE REQUIREMENTS (MANDATORY)
+
+You MUST provide unit tests covering up-to 100% without integration tests.
+
+Coverage includes:
+
+- all public APIs
+- all edge cases
+- error conditions
+- environment modes (dev vs prd)
+- platform-specific behavior (if any)
+- boundary conditions
+- serialization (if applicable)
+- mapping (if applicable)
+- core logic
+- localization messages (if applicable)
+
 ========================================
+
 ## PACKAGE INSTRUCTIONS
 
-[PACKAGE INSTRUCTIONS](#package-instructions)
-========================================
+# [PACKAGE INSTRUCTIONS](#package-instructions)
 
 ## FINAL INSTRUCTION
 
