@@ -20,8 +20,8 @@ dependencies:
     path: ../../dartzen_identity
   dartzen_localization:
     path: ../../dartzen_localization
-  dartzen_navigation:
-    path: ../../dartzen_navigation
+  dartzen_ui_navigation:
+    path: ../../dartzen_ui_navigation
   dartzen_ui_identity:
     path: ../
 

@@ -1,6 +1,6 @@
-# DartZen Navigation
+# DartZen UI Navigation
 
-[![pub package](https://img.shields.io/pub/v/dartzen_navigation.svg)](https://pub.dev/packages/dartzen_navigation)
+[![pub package](https://img.shields.io/pub/v/dartzen_ui_navigation.svg)](https://pub.dev/packages/dartzen_ui_navigation)
 [![codecov](https://codecov.io/gh/DartZenDev/DartZen/graph/badge.svg?token=HD0SYZB0VB)](https://codecov.io/gh/DartZenDev/DartZen)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -23,8 +23,8 @@ If you are working within the DartZen monorepo, add dependency to your `pubspec.
 
 ```yaml
 dependencies:
-  dartzen_navigation:
-    path: ../dartzen_navigation
+  dartzen_ui_navigation:
+    path: ../dartzen_ui_navigation
 ```
 
 ### External Usage
@@ -33,14 +33,14 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartzen_navigation: ^latest_version
+  dartzen_ui_navigation: ^latest_version
 ```
 
 ## 🚀 Quick Start
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:dartzen_navigation/dartzen_navigation.dart';
+import 'package:dartzen_ui_navigation/dartzen_ui_navigation.dart';
 
 
 void main() {

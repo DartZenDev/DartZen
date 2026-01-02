@@ -15,8 +15,8 @@ dependencies:
     path: ../dartzen_identity
   dartzen_localization:
     path: ../dartzen_localization
-  dartzen_navigation:
-    path: ../dartzen_navigation
+  dartzen_ui_navigation:
+    path: ../dartzen_ui_navigation
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.0.3
@@ -36,7 +36,7 @@ topics:
   - ui
   - flutter
   - dartzen
-  
+
 flutter:
   assets:
     - lib/src/l10n/

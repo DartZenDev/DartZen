@@ -1,12 +1,11 @@
 import 'package:dartzen_localization/dartzen_localization.dart'; // Added import
-import 'package:dartzen_navigation/dartzen_navigation.dart';
+import 'package:dartzen_ui_navigation/dartzen_ui_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('ZenNavigation renders body content', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('ZenNavigation renders body content',
+      (WidgetTester tester) async {
     const config = ZenLocalizationConfig();
     final service = ZenLocalizationService(config: config);
     var selectedIndex = 0;

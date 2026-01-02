@@ -1,4 +1,4 @@
-name: dartzen_navigation_example
+name: dartzen_ui_navigation_example
 description: "Example of using DartZenNavigation"
 publish_to: 'none'
 
@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
 
   # Navigation package from workspace
-  dartzen_navigation:
+  dartzen_ui_navigation:
     path: ../
 
   dartzen_localization:

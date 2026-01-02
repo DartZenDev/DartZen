@@ -8,8 +8,8 @@ environment:
 
 workspace:
   - packages/dartzen_core
-  - packages/dartzen_navigation
-  - packages/dartzen_navigation/example
+  - packages/dartzen_ui_navigation
+  - packages/dartzen_ui_navigation/example
   - packages/dartzen_firestore
   - packages/dartzen_transport
   - packages/dartzen_localization
@@ -51,12 +51,12 @@ melos:
       description: Run dart format --set-exit-if-changed in all packages.
     test:
       run: |
-        melos exec --ignore="dartzen_navigation_example" --scope="dartzen_core,dartzen_navigation,dartzen_ui_identity,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
+        melos exec --ignore="dartzen_ui_navigation_example" --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
         melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,zen_demo_server,zen_demo_contracts" -- "dart test"
       description: Run all Dart & Flutter tests
     test:coverage:
       run: |
-        melos exec --ignore="dartzen_navigation_example,dartzen_ui_identity" --scope="dartzen_core,dartzen_navigation,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
+        melos exec --ignore="dartzen_ui_navigation_example,dartzen_ui_identity" --scope="dartzen_core,dartzen_ui_navigation,zen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage" && \
         melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,zen_demo_server,zen_demo_contracts" -- "dart test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage
     publish:
@@ -121,11 +121,11 @@ melos:
     example:navigation:web:
       exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
       packageFilters:
-        scope: dartzen_navigation_example
+        scope: dartzen_ui_navigation_example
     example:navigation:ios:
       exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       packageFilters:
-        scope: dartzen_navigation_example
+        scope: dartzen_ui_navigation_example
     example:identity:web:
       exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
       packageFilters:

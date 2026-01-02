@@ -1,7 +1,7 @@
 {
   "home.title": "Home",
   "home.welcome": "Welcome to DartZen Navigation Demo",
-  "home.description": "This app demonstrates the adaptive navigation capabilities of the dartzen_navigation package.",
+  "home.description": "This app demonstrates the adaptive navigation capabilities of the dartzen_ui_navigation package.",
   "home.features.title": "Features:",
   "home.features.adaptive": "✓ Adaptive navigation (mobile, tablet, desktop)",
   "home.features.highlights": "✓ Platform-specific highlights",
@@ -22,7 +22,7 @@
   "settings.about.title": "About",
   "settings.about.version": "Version",
   "settings.about.package": "Package",
-  "settings.about.packageValue": "dartzen_navigation 0.1.0",
+  "settings.about.packageValue": "dartzen_ui_navigation 0.1.0",
   "profile.title": "Profile",
   "profile.editClicked": "Edit profile clicked",
   "profile.badgeCount": "Badge Count",
