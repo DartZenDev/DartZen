@@ -128,6 +128,8 @@ Fix or add:
 
 ## 6. **Test coverage**
 
+Test coverage must be up-to 100% without integration tests.
+
 Ensure:
 
 - tests exist for core functionality

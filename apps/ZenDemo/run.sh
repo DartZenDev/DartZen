@@ -231,7 +231,7 @@ echo "✅ Seeding complete!"
 
 # Step 3: Start Dart Server
 echo -e "${YELLOW}[3/5] Starting Dart server...${NC}"
-cd server
+cd dartzen_demo_server
 
 # Environment variables for server runtime (not compile-time)
 export FIRESTORE_EMULATOR_HOST="$FIRESTORE_HOST"
@@ -275,7 +275,7 @@ fi
 
 # Step 5: Start Flutter Client
 echo -e "${YELLOW}[5/5] Starting Flutter client...${NC}"
-cd client
+cd dartzen_demo_client
 flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8888 &
 FLUTTER_PID=$!
 cd ..

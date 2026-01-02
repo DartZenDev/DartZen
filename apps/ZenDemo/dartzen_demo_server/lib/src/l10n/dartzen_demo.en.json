@@ -1,0 +1,11 @@
+{
+  "dartzen_demo.ping.success": "Server is alive",
+  "dartzen_demo.websocket.connected": "Connected to server",
+  "dartzen_demo.websocket.disconnected": "Disconnected",
+  "dartzen_demo.websocket.error": "Connection error: {error}",
+  "dartzen_demo.terms.loading": "Loading terms...",
+  "dartzen_demo.terms.error": "Failed to load terms: {error}",
+  "dartzen_demo.profile.loading": "Loading profile...",
+  "dartzen_demo.profile.error": "Failed to load profile: {error}",
+  "dartzen_demo.profile.bio": "This is a ZenDemo user profile"
+}

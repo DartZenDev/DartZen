@@ -69,10 +69,10 @@ If any of these fail, Zen Demo is broken.
 
 ```
 apps/ZenDemo/
-├── client/          # Flutter web app
-├── server/          # Dart Shelf server
-├── contracts/       # Shared data contracts
-├── docker-compose.yml   # Firebase emulators
+├── dartzen_demo_client/      # Flutter web app
+├── dartzen_demo_server/      # Dart Shelf server
+├── dartzen_demo_contracts/   # Shared data contracts
+├── docker-compose.yml        # Firebase emulators
 ├── run.sh          # Single-command launcher
 └── README.md       # This file
 ```
@@ -180,7 +180,7 @@ apps/ZenDemo/
 │   ├── lib/
 │   │   └── src/
 │   └── pubspec.yaml
-└── contracts/
+└── dartzen_demo_contracts/
     ├── lib/
     │   └── src/                  # Shared DTOs
     └── pubspec.yaml
@@ -194,13 +194,13 @@ cd ../..
 melos run test
 
 # Specific package
-cd contracts
+cd dartzen_demo_contracts
 dart test
 
-cd ../server
+cd ../dartzen_demo_server
 dart test
 
-cd ../client
+cd ../dartzen_demo_client
 flutter test
 ```
 
