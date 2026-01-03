@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dartzen_localization/src/loader/loader_io.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -14,7 +15,7 @@ void main() {
       final content = await loader.load(file.path);
       expect(content, '{"foo": "bar"}');
       await tempDir.delete(recursive: true);
-    });
+    }, skip: kIsWeb);
 
     test('throws FileSystemException if file missing', () async {
       final loader = ZenLocalizationLoaderIO();
@@ -22,7 +23,7 @@ void main() {
         () => loader.load('/no/such/file.json'),
         throwsA(isA<FileSystemException>()),
       );
-    });
+    }, skip: kIsWeb);
 
     test('getLoader returns ZenLocalizationLoaderIO', () {
       final loader = getLoader();

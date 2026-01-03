@@ -5,10 +5,9 @@ import 'strategy.dart';
 /// Fallback strategy for basic logging.
 class ZenLoggerStrategyStub implements ZenLoggerStrategy {
   @override
-  void log(String message, {bool isError = false}) {
-    // Fallback: simple print if platform unknown?
-    // Or throw? Simple print is safer.
-    print(message);
+  void log(String message, {bool isError = false, String? origin}) {
+    final out = origin != null ? '[$origin] $message' : message;
+    print(out);
   }
 }
 

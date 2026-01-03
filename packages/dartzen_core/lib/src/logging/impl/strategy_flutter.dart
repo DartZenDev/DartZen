@@ -1,15 +1,14 @@
-import '../zen_logger.dart';
+import 'dart:developer' as developer;
+
 import 'strategy.dart';
 
 /// Strategy for logging in Flutter environments.
 class ZenLoggerStrategyFlutter implements ZenLoggerStrategy {
   @override
-  void log(String message, {bool isError = false}) {
-    if (isError) {
-      ZenLogger.instance.error(message);
-    } else {
-      ZenLogger.instance.info(message);
-    }
+  void log(String message, {bool isError = false, String? origin}) {
+    // Use `dart:developer` to write logs in Flutter/web environments.
+    final name = origin ?? 'dartzen.core.ZenLogger';
+    developer.log(message, level: isError ? 1000 : 800, name: name);
   }
 }
 

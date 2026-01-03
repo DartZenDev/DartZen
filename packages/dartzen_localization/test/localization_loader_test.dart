@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -29,7 +30,7 @@ void main() {
       } finally {
         await tempDir.delete(recursive: true);
       }
-    });
+    }, skip: kIsWeb);
 
     test('throws on missing file', () async {
       final impl = _MockLoaderImpl();
@@ -37,6 +38,6 @@ void main() {
         impl.load('/path/to/non/existent/file.json'),
         throwsA(isA<FileSystemException>()),
       );
-    });
+    }, skip: kIsWeb);
   });
 }

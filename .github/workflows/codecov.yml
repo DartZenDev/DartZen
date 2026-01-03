@@ -121,15 +121,16 @@ jobs:
           missing=0
           for dir in packages/* apps/*/*; do
             if [ -d "$dir/test" ]; then
-              # Accept any of the following produced by test:matrix:
-              # - standard coverage dir: coverage/test/*.vm.json
-              # - per-matrix coverage dirs: coverage_<env>_<platform>_dart/test/*.vm.json
-              # - per-package LCOV files: coverage/lcov*.info or coverage_lcov*.info
+              echo "Checking coverage artifacts for $dir"
               found=false
-              if compgen -G "$dir/coverage/test/*.vm.json" > /dev/null 2>&1; then found=true; fi
-              if compgen -G "$dir/coverage/coverage_*/*/*.vm.json" > /dev/null 2>&1; then found=true; fi
-              if [ -f "$dir/coverage/lcov_prd.info" ] || [ -f "$dir/coverage/lcov_dev.info" ] || [ -f "$dir/coverage/lcov.info" ]; then found=true; fi
-              if compgen -G "$dir/coverage/coverage_*.info" > /dev/null 2>&1; then found=true; fi
+              # look for any vm.json under the coverage tree (any depth)
+              if find "$dir/coverage" -type f -name "*.vm.json" -print -quit 2>/dev/null | grep -q .; then
+                found=true
+              fi
+              # also accept pre-converted lcov files
+              if [ -f "$dir/coverage/lcov_prd.info" ] || [ -f "$dir/coverage/lcov_dev.info" ] || [ -f "$dir/coverage/lcov.info" ]; then
+                found=true
+              fi
 
               if [ "$found" = true ]; then
                 echo "Coverage artifacts present for $dir"
