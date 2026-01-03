@@ -33,6 +33,7 @@ build/
 # Coverage reports
 coverage/
 *.lcov
+scripts/*.csv
 # Specifically for the VM artifacts you mentioned
 *_test.dart.vm.json
 

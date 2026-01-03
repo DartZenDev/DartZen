@@ -1,0 +1,72 @@
+import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
+import 'package:test/test.dart';
+
+void main() {
+  group('AuthorityContract', () {
+    test('fromDomain and toDomain round-trip', () {
+      final domain = Authority(
+        roles: {Role.admin, Role.user},
+        capabilities: {
+          const Capability.reconstruct('edit'),
+          const Capability.reconstruct('view'),
+        },
+      );
+      final contract = AuthorityContract.fromDomain(domain);
+      final roundTrip = contract.toDomain();
+      expect(roundTrip, domain);
+    });
+    test('fromJson and toJson round-trip', () {
+      final json = {
+        'roles': ['ADMIN', 'USER'],
+        'capabilities': ['edit', 'view'],
+      };
+      final contract = AuthorityContract.fromJson(json);
+      expect(contract.toJson(), json);
+    });
+  });
+
+  group('IdentityLifecycleContract', () {
+    test('fromDomain and toDomain round-trip', () {
+      const domain = IdentityLifecycle.reconstruct(
+        IdentityState.revoked,
+        'reason',
+      );
+      final contract = IdentityLifecycleContract.fromDomain(domain);
+      final roundTrip = contract.toDomain();
+      expect(roundTrip, domain);
+    });
+    test('fromJson and toJson round-trip', () {
+      final json = {'state': 'revoked', 'reason': 'foo'};
+      final contract = IdentityLifecycleContract.fromJson(json);
+      expect(contract.toJson(), json);
+    });
+  });
+
+  group('IdentityContract', () {
+    test('fromDomain and toDomain round-trip', () {
+      final domain = Identity(
+        id: const IdentityId.reconstruct('id1'),
+        lifecycle: const IdentityLifecycle.reconstruct(IdentityState.active),
+        authority: Authority(roles: {Role.admin}),
+        createdAt: ZenTimestamp.fromMilliseconds(123456),
+      );
+      final contract = IdentityContract.fromDomain(domain);
+      final roundTrip = contract.toDomain();
+      expect(roundTrip, domain);
+    });
+    test('fromJson and toJson round-trip', () {
+      final json = <String, dynamic>{
+        'id': 'id1',
+        'lifecycle': {'state': 'active'},
+        'authority': {
+          'roles': <String>['ADMIN'],
+          'capabilities': <String>[],
+        },
+        'createdAt': 123456,
+      };
+      final contract = IdentityContract.fromJson(json);
+      expect(contract.toJson(), json);
+    });
+  });
+}

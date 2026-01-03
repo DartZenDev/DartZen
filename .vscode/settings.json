@@ -24,6 +24,7 @@
     "DFIRESTORE",
     "DGCLOUD",
     "DIDENTITY",
+    "Ffile",
     "firestore",
     "fixarray",
     "fixint",

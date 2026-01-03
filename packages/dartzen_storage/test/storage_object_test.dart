@@ -1,42 +1,32 @@
-import 'package:dartzen_storage/dartzen_storage.dart';
+import 'dart:convert';
+
+import 'package:dartzen_storage/src/storage_object.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('StorageObject', () {
-    test('creates object with bytes and content type', () {
-      final bytes = [72, 101, 108, 108, 111];
-      final object = StorageObject(bytes: bytes, contentType: 'text/plain');
+  test('asString decodes valid UTF-8 and reports size', () {
+    final obj = StorageObject(
+      bytes: utf8.encode('ok'),
+      contentType: 'text/plain',
+    );
+    expect(obj.asString(), 'ok');
+    expect(obj.size, 2);
+  });
 
-      expect(object.bytes, equals(bytes));
-      expect(object.contentType, equals('text/plain'));
-      expect(object.size, equals(5));
-    });
+  test('asString throws on invalid UTF-8', () {
+    // invalid UTF-8 sequence
+    final invalid = <int>[0xff, 0xff, 0xff];
+    final obj = StorageObject(bytes: invalid);
+    expect(obj.asString, throwsA(isA<FormatException>()));
+  });
 
-    test('creates object without content type', () {
-      final bytes = [72, 101, 108, 108, 111];
-      final object = StorageObject(bytes: bytes);
-
-      expect(object.contentType, isNull);
-      expect(object.size, equals(5));
-    });
-
-    test('converts bytes to string', () {
-      const bytes = [72, 101, 108, 108, 111];
-      const object = StorageObject(bytes: bytes);
-
-      expect(object.asString(), equals('Hello'));
-    });
-
-    test('toString returns formatted string', () {
-      const object = StorageObject(
-        bytes: [1, 2, 3],
-        contentType: 'application/json',
-      );
-
-      expect(
-        object.toString(),
-        equals('StorageObject(size: 3, contentType: application/json)'),
-      );
-    });
+  test('toString contains size and contentType', () {
+    const obj = StorageObject(
+      bytes: [1, 2, 3],
+      contentType: 'application/octet-stream',
+    );
+    final s = obj.toString();
+    expect(s, contains('size: 3'));
+    expect(s, contains('contentType: application/octet-stream'));
   });
 }

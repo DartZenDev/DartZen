@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import 'zen_localization_cache.dart';
@@ -10,6 +11,9 @@ import 'zen_localization_loader.dart';
 
 /// Core service for DartZen localization.
 class ZenLocalizationService {
+  /// Exposes the internal cache for testing and advanced use.
+  ZenLocalizationCache get cache => _cache;
+
   /// The configuration for this service.
   final ZenLocalizationConfig config;
 
@@ -170,4 +174,14 @@ class ZenLocalizationService {
         }
         return value.toString();
       });
+
+  /// Exposed for tests to validate parsing behavior directly.
+  @visibleForTesting
+  Map<String, String> parseAndValidateForTest(String content, String path) =>
+      _parseAndValidate(content, path);
+
+  /// Exposed for tests to validate interpolation directly.
+  @visibleForTesting
+  String interpolateForTest(String template, Map<String, dynamic> params) =>
+      _interpolate(template, params);
 }

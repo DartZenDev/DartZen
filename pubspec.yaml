@@ -51,17 +51,11 @@ melos:
       description: Run dart format --set-exit-if-changed in all packages.
     test:
       run: |
-        melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client" -- "flutter test --dart-define=DZ_PLATFORM=macos" && \
-        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts" -- "dart test"
-      description: Run all Dart & Flutter tests
-    test:coverage:
-      run: |
-        PLATFORM=${PLATFORM:-macos}; \
-        EXTRA_ARGS=""; CONCURRENCY=""; \
-        if [ "$PLATFORM" = "web" ]; then EXTRA_ARGS="--platform=chrome"; SCOPE="dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client"; CONCURRENCY="--concurrency=1"; COVERAGE_FLAG=""; else SCOPE="dartzen_core,dartzen_ui_navigation,dartzen_ui_navigation_example,dartzen_ui_identity,dartzen_demo_client"; COVERAGE_FLAG="--coverage"; fi; \
-        melos exec $CONCURRENCY --scope="$SCOPE" -- "flutter test --dart-define=DZ_PLATFORM=$PLATFORM $COVERAGE_FLAG $EXTRA_ARGS" && \
-        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_localization,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts" -- "dart test --coverage=coverage"
-      description: Run all Dart & Flutter tests with coverage
+        # Flutter packages (with --dart-define)
+        melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage"
+        # Dart packages (pass compile-time defines via `dart run --define` so constants are tree-shaken correctly)
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts" -- "dart run --define=DZ_IS_TEST=true --define=DZ_ENV=dev test --coverage=coverage"
+      description: Run all Dart & Flutter tests with coverage, using flutter test for any package that depends on Flutter
     publish:
       exec: dart pub publish --dry-run
       description: Publish all dartzen_* packages to pub.dev (dry-run mode).
@@ -137,3 +131,22 @@ melos:
       exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       packageFilters:
         scope: dartzen_ui_identity_example
+    test:matrix:
+      run: |
+        PACKAGE=${PACKAGE:-packages/dartzen_storage}
+        ENVS="dev prd"
+        PLATFORMS="web linux android"
+        # Flutter packages should use `flutter test` (they depend on Flutter)
+        FLUTTER_SCOPE="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization"
+        # Dart-only packages use `dart run test`
+        DART_SCOPE="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts"
+
+        for e in $ENVS; do
+          for p in $PLATFORMS; do
+            echo "Running flutter tests for DZ_ENV=$e DZ_PLATFORM=$p"
+            melos exec --scope="$FLUTTER_SCOPE" -- "flutter test --dart-define=DZ_PLATFORM=$p --dart-define=DZ_ENV=$e --coverage=coverage_${e}_${p}_flutter"
+
+            echo "Running dart tests for DZ_ENV=$e DZ_PLATFORM=$p"
+            melos exec --scope="$DART_SCOPE" -- "dart run --define=DZ_IS_TEST=true --define=DZ_ENV=$e --define=DZ_PLATFORM=$p test --coverage=coverage_${e}_${p}_dart"
+          done
+        done

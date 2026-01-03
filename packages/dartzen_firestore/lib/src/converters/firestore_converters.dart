@@ -28,7 +28,13 @@ abstract final class FirestoreConverters {
   static ZenFirestoreData fieldsToData(Map<String, dynamic> fields) {
     final data = <String, dynamic>{};
     for (final entry in fields.entries) {
-      data[entry.key] = _unwrapValue(entry.value as Map<String, dynamic>);
+      final value = entry.value;
+      if (value is Map<String, dynamic>) {
+        data[entry.key] = _unwrapValue(value);
+      } else {
+        // If value is not a map (e.g. null), treat as null
+        data[entry.key] = null;
+      }
     }
     return data;
   }
@@ -37,12 +43,16 @@ abstract final class FirestoreConverters {
   static Map<String, dynamic> dataToFields(ZenFirestoreData data) {
     final fields = <String, dynamic>{};
     for (final entry in data.entries) {
-      fields[entry.key] = _wrapValue(entry.value);
+      // Only include fields where value is not null
+      if (entry.value != null) {
+        fields[entry.key] = _wrapValue(entry.value);
+      }
     }
     return fields;
   }
 
-  static dynamic _unwrapValue(Map<String, dynamic> value) {
+  static dynamic _unwrapValue(Map<String, dynamic>? value) {
+    if (value == null) return null;
     if (value.containsKey('stringValue')) return value['stringValue'] as String;
     if (value.containsKey('integerValue')) {
       return int.parse(value['integerValue'] as String);

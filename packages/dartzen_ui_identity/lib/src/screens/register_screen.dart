@@ -144,16 +144,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onPressed: _submit,
                   ),
                   SizedBox(height: theme.spacing),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(widget.messages.alreadyHaveAccount),
-                      IdentityButton(
-                        text: widget.messages.loginButton,
-                        variant: IdentityButtonVariant.text,
-                        onPressed: isLoading ? null : widget.onLoginClick,
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.messages.alreadyHaveAccount,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        IdentityButton(
+                          text: widget.messages.loginButton,
+                          variant: IdentityButtonVariant.text,
+                          onPressed: isLoading ? null : widget.onLoginClick,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
