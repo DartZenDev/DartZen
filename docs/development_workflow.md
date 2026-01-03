@@ -58,6 +58,7 @@
 | `melos run run:desktop:linux` | Run Linux in Debug mode |
 | `melos run run:desktop:linux:profile` | Run Linux in Profile mode |
 | `melos run run:desktop:linux:release` | Run Linux in Release mode |
+| `melos run test:matrix` | Run tests in all packages across multiple environments (PRD and DEV) |
 
 ### Running Examples
 

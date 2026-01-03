@@ -22,54 +22,183 @@ jobs:
       - name: Bootstrap
         run: melos bootstrap
 
-      - name: Run Tests (Android)
-        run: PLATFORM=android melos run test:coverage
 
-      - name: Run Tests (iOS)
-        run: PLATFORM=ios melos run test:coverage
-
-      - name: Run Tests (macOS)
-        run: PLATFORM=macos melos run test:coverage
-
-      - name: Run Tests (Linux)
-        run: PLATFORM=linux melos run test:coverage
-
-      - name: Run Tests (Windows)
-        run: PLATFORM=windows melos run test:coverage
-
-      - name: Run Tests (Web)
-        run: PLATFORM=web melos run test:coverage
-
-      - name: Convert JSON to LCOV & Fix Paths
+      - name: Run Tests (PRD)
         run: |
-          for dir in packages/*; do
+          set -eux
+          export DZ_ENV=prd
+          # Use the repository's matrix test script to match local runs
+          melos run test:matrix
+
+      - name: Convert PRD JSON to per-package LCOV
+        run: |
+          set -eux
+          for dir in packages/* apps/*/*; do
             if [ -d "$dir/test" ]; then
-              echo "Processing $dir..."
+              echo "Converting JSON for $dir (PRD)"
+              # Convert any coverage run directories under $dir/coverage (coverage/, coverage/coverage_* )
+              tmp_converted=()
+              for cov in "$dir"/coverage "$dir"/coverage/coverage_*; do
+                if [ -d "$cov/test" ]; then
+                  cov_base=$(basename "$cov")
+                  out="$dir/coverage/lcov_prd_${cov_base}.info"
+                  # Compute paths relative to the package dir to avoid passing
+                  # repo-root prefixed paths when `cd`'d into the package.
+                  if [[ "$cov" == "$dir"/* ]]; then
+                    rel_cov="${cov#${dir}/}"
+                  else
+                    rel_cov="$cov"
+                  fi
+                  if [[ "$out" == "$dir"/* ]]; then
+                    rel_out="${out#${dir}/}"
+                  else
+                    rel_out="$out"
+                  fi
+                  (cd "$dir" && dart pub global run coverage:format_coverage \
+                    --package="." \
+                    --report-on="lib" \
+                    --lcov \
+                    --in="$rel_cov/test" \
+                    --out="$rel_out") || true
+                  if [ -f "$out" ]; then tmp_converted+=("$out"); fi
+                  # cleanup vm.json artifacts to avoid stale overwrites
+                  if [ -d "$cov/test" ]; then
+                    find "$cov/test" -type f -name "*.vm.json" -print -delete || true
+                    rmdir "$cov/test" 2>/dev/null || true
+                  fi
+                fi
+              done
 
-              # 1. Convert JSON to LCOV for Dart packages
-              # We use --package=. and run it FROM the package directory
-              if [ -d "$dir/coverage/test" ] && [ ! -f "$dir/coverage/lcov.info" ]; then
-                echo "Converting JSON for $dir"
-                (cd "$dir" && dart pub global run coverage:format_coverage \
-                  --package="." \
-                  --report-on="lib" \
-                  --lcov \
-                  --in="coverage/test" \
-                  --out="coverage/lcov.info")
-              fi
-
-              # 2. Fix paths for Codecov
-              if [ -f "$dir/coverage/lcov.info" ]; then
+              # If we produced any per-run lcov files, merge them into lcov_prd.info
+              if [ ${#tmp_converted[@]} -gt 0 ]; then
                 package=$(basename "$dir")
-                echo "Fixing paths for $package"
-                sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov.info"
+                # concatenate; duplicates will be handled later by the aggregate script
+                cat ${tmp_converted[@]} > "$dir/coverage/lcov_prd.info" || true
+                sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov_prd.info" || true
+                awk '!/^SF:.*\/(test|example)\// && !/^SF:.*\/generated\//' "$dir/coverage/lcov_prd.info" > "$dir/coverage/lcov_prd.info.filtered" && mv "$dir/coverage/lcov_prd.info.filtered" "$dir/coverage/lcov_prd.info" || true
               fi
             fi
           done
+
+      - name: Run Tests (DEV)
+        env:
+          FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+          GCLOUD_PROJECT: test-bucket
+        run: |
+          set -eux
+          export DZ_ENV=dev
+          # Use the repository's matrix test script to match local runs
+          melos run test:matrix
+
+      - name: Convert DEV JSON to per-package LCOV
+        run: |
+          set -eux
+          for dir in packages/* apps/*/*; do
+            if [ -d "$dir/test" ]; then
+              echo "Converting JSON for $dir (DEV)"
+              tmp_converted=()
+              for cov in "$dir"/coverage "$dir"/coverage/coverage_*; do
+                if [ -d "$cov/test" ]; then
+                  cov_base=$(basename "$cov")
+                  out="$dir/coverage/lcov_dev_${cov_base}.info"
+                  if [[ "$cov" == "$dir"/* ]]; then
+                    rel_cov="${cov#${dir}/}"
+                  else
+                    rel_cov="$cov"
+                  fi
+                  if [[ "$out" == "$dir"/* ]]; then
+                    rel_out="${out#${dir}/}"
+                  else
+                    rel_out="$out"
+                  fi
+                  (cd "$dir" && dart pub global run coverage:format_coverage \
+                    --package="." \
+                    --report-on="lib" \
+                    --lcov \
+                    --in="$rel_cov/test" \
+                    --out="$rel_out") || true
+                  if [ -f "$out" ]; then tmp_converted+=("$out"); fi
+                  if [ -d "$cov/test" ]; then
+                    find "$cov/test" -type f -name "*.vm.json" -print -delete || true
+                    rmdir "$cov/test" 2>/dev/null || true
+                  fi
+                fi
+              done
+              if [ ${#tmp_converted[@]} -gt 0 ]; then
+                package=$(basename "$dir")
+                cat ${tmp_converted[@]} > "$dir/coverage/lcov_dev.info" || true
+                sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$dir/coverage/lcov_dev.info" || true
+                awk '!/^SF:.*\/(test|example)\// && !/^SF:.*\/generated\//' "$dir/coverage/lcov_dev.info" > "$dir/coverage/lcov_dev.info.filtered" && mv "$dir/coverage/lcov_dev.info.filtered" "$dir/coverage/lcov_dev.info" || true
+              fi
+            fi
+          done
+
+      # NOTE: PRD/DEV conversion already creates per-package lcov_prd.info
+      # and lcov_dev.info used for upload. The old generic conversion step has
+      # been removed to avoid redundant work and accidental overwrites.
+
+      - name: Assert coverage artifacts present
+        run: |
+          set -eux
+          missing=0
+          for dir in packages/* apps/*/*; do
+            if [ -d "$dir/test" ]; then
+              echo "Checking coverage artifacts for $dir"
+              found=false
+              # look for any vm.json under the coverage tree (any depth)
+              if find "$dir/coverage" -type f -name "*.vm.json" -print -quit 2>/dev/null | grep -q .; then
+                found=true
+              fi
+              # also accept any pre-converted lcov files anywhere under the coverage tree
+              if find "$dir/coverage" -type f -name "lcov*.info" -print -quit 2>/dev/null | grep -q .; then
+                found=true
+              fi
+
+              if [ "$found" = true ]; then
+                echo "Coverage artifacts present for $dir"
+              else
+                echo "MISSING coverage artifacts for $dir"
+                missing=1
+              fi
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Coverage artifacts missing for one or more packages; failing fast"
+            # show any coverage dirs we did find to help debugging
+            find packages apps -type d -name "coverage*" -maxdepth 4 -print || true
+            exit 1
+          fi
+
+      - name: Debug coverage artifacts
+        run: |
+          echo "Listing generated coverage files:";
+          find packages apps -type f -name 'lcov*.info' -print || true;
+          echo "Listing coverage/test directories (if any):";
+          find packages apps -type d -path '*/coverage/test' -print || true;
+          echo "Show sizes:";
+          du -sh packages/*/coverage apps/*/*/coverage || true
+
+      - name: Coverage upload sanity check
+        run: |
+          count=$(find packages apps -type f -name "lcov*.info" | wc -l || true)
+          echo "Found $count lcov*.info files";
+          if [ "${count}" -eq 0 ]; then
+            echo "ERROR: No coverage files found to upload. Listing coverage directories:";
+            ls -la packages/*/coverage apps/*/*/coverage || true;
+            exit 1;
+          fi
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./packages/
+          # Upload all PRD and DEV lcov files collected per-package
+          files: |
+            packages/*/coverage/lcov_prd.info,packages/*/coverage/lcov_dev.info,
+            apps/*/*/coverage/lcov_prd.info,apps/*/*/coverage/lcov_dev.info
           fail_ci_if_error: true
+
+      - name: Compute local aggregate coverage (sanity)
+        run: |
+          set -eux
+          ./scripts/compute_local_coverage.sh

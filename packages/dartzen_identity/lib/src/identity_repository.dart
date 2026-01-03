@@ -71,39 +71,45 @@ final class FirestoreIdentityRepository {
   }).then((r) => r.fold((inner) => inner, ZenResult.err));
 
   /// Marks the identity's email as verified and activates it if pending.
-  Future<ZenResult<void>> verifyEmail(
-    IdentityId id,
-  ) async => ZenTry.callAsync(() async {
-    try {
-      final doc = await FirestoreConnection.client.getDocument(
-        _docPath(id.value),
-      );
-      if (!doc.exists) {
-        return const ZenResult<void>.err(
-          ZenNotFoundError('Identity not found'),
+  Future<ZenResult<void>> verifyEmail(IdentityId id) async => ZenTry.callAsync(
+    () async {
+      try {
+        final doc = await FirestoreConnection.client.getDocument(
+          _docPath(id.value),
+        );
+        if (!doc.exists) {
+          return const ZenResult<void>.err(
+            ZenNotFoundError('Identity not found'),
+          );
+        }
+
+        final identityResult = IdentityMapper.fromFirestore(doc.id, doc.data!);
+        return await identityResult.fold((identity) async {
+          if (identity.lifecycle.state == IdentityState.pending) {
+            final activeResult = identity.lifecycle.activate();
+            return await activeResult.fold((nextLifecycle) async {
+              final patch = <String, dynamic>{
+                'lifecycle.state': nextLifecycle.state.name,
+              };
+              if (nextLifecycle.reason != null) {
+                patch['lifecycle.reason'] = nextLifecycle.reason;
+              }
+              await FirestoreConnection.client.patchDocument(
+                _docPath(id.value),
+                patch,
+              );
+              return const ZenResult<void>.ok(null);
+            }, (error) async => ZenResult<void>.err(error));
+          }
+          return const ZenResult<void>.ok(null);
+        }, (error) async => ZenResult<void>.err(error));
+      } catch (e, stack) {
+        return ZenResult<void>.err(
+          ZenUnknownError(e.toString(), stackTrace: stack),
         );
       }
-
-      final identityResult = IdentityMapper.fromFirestore(doc.id, doc.data!);
-      return await identityResult.fold((identity) async {
-        if (identity.lifecycle.state == IdentityState.pending) {
-          final activeResult = identity.lifecycle.activate();
-          return await activeResult.fold((nextLifecycle) async {
-            await FirestoreConnection.client.patchDocument(_docPath(id.value), {
-              'lifecycle.state': nextLifecycle.state.name,
-              'lifecycle.reason': nextLifecycle.reason,
-            });
-            return const ZenResult<void>.ok(null);
-          }, (error) async => ZenResult<void>.err(error));
-        }
-        return const ZenResult<void>.ok(null);
-      }, (error) async => ZenResult<void>.err(error));
-    } catch (e, stack) {
-      return ZenResult<void>.err(
-        ZenUnknownError(e.toString(), stackTrace: stack),
-      );
-    }
-  }).then((r) => r.fold((inner) => inner, ZenResult.err));
+    },
+  ).then((r) => r.fold((inner) => inner, ZenResult.err));
 
   /// Suspends the identity with a reason.
   Future<ZenResult<void>> suspendIdentity(IdentityId id, String reason) async {

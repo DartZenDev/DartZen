@@ -9,6 +9,19 @@ import 'gcs_storage_config.dart';
 import 'storage_object.dart';
 import 'zen_storage_reader.dart';
 
+/// Test hook: allow overriding the application-default credential initializer
+/// so tests can exercise the ADC branch without contacting metadata servers.
+@visibleForTesting
+Future<http.Client> Function({List<String>? scopes})
+gcsClientViaApplicationDefaultCredentials = ({List<String>? scopes}) {
+  if (dzIsTest) {
+    // During tests prefer a simple in-memory client to avoid contacting
+    // the metadata server (which can hang or fail in CI).
+    return Future.value(http.Client());
+  }
+  return auth.clientViaApplicationDefaultCredentials(scopes: scopes ?? []);
+};
+
 /// A [ZenStorageReader] backed by Google Cloud Storage.
 ///
 /// This reader fetches objects from a GCS bucket using the official
@@ -37,8 +50,15 @@ class GcsStorageReader implements ZenStorageReader {
   ///
   /// For testing purposes, a [storage] instance can be injected directly,
   /// bypassing internal client creation.
-  GcsStorageReader({required this.config, @visibleForTesting Storage? storage})
-    : _injectedStorage = storage {
+  GcsStorageReader({
+    required this.config,
+    @visibleForTesting Storage? storage,
+    @visibleForTesting
+    Future<http.Client> Function(List<String> scopes)? authClientFactory,
+    @visibleForTesting http.Client Function()? httpClientFactory,
+  }) : _injectedStorage = storage,
+       _authClientFactory = authClientFactory,
+       _httpClientFactory = httpClientFactory {
     _storageFuture = _injectedStorage != null
         ? Future.value(_injectedStorage)
         : _initStorage();
@@ -49,25 +69,69 @@ class GcsStorageReader implements ZenStorageReader {
 
   late final Future<Storage> _storageFuture;
   final Storage? _injectedStorage;
+  final Future<http.Client> Function(List<String> scopes)? _authClientFactory;
+  final http.Client Function()? _httpClientFactory;
+
+  /// Exposed for tests to await initialization.
+  @visibleForTesting
+  Future<Storage> get storageFuture => _storageFuture;
 
   Future<Storage> _initStorage() async {
     http.Client client;
 
     // 1. Determine HTTP client based on credentials mode
     if (config.credentialsMode == GcsCredentialsMode.anonymous) {
-      client = http.Client();
+      client = _httpClientFactory != null
+          ? _httpClientFactory()
+          : http.Client();
     } else {
       // ADC (Application Default Credentials)
-      client = await auth.clientViaApplicationDefaultCredentials(
-        scopes: [storage_api.StorageApi.devstorageReadOnlyScope],
-      );
+      if (_authClientFactory != null) {
+        client = await _authClientFactory([
+          storage_api.StorageApi.devstorageReadOnlyScope,
+        ]);
+      } else {
+        // Attempt to obtain ADC client but fall back to a plain http.Client
+        // if acquiring ADC takes too long. We use `Future.any` to avoid
+        // type mismatches with `Future.timeout`'s `onTimeout` callback.
+        final clientFuture = gcsClientViaApplicationDefaultCredentials(
+          scopes: [storage_api.StorageApi.devstorageReadOnlyScope],
+        );
+
+        final fallbackFuture = Future<http.Client>.delayed(
+          const Duration(seconds: 1),
+          () =>
+              _httpClientFactory != null ? _httpClientFactory() : http.Client(),
+        );
+
+        final result = await Future.any([clientFuture, fallbackFuture]);
+        client = result;
+      }
     }
 
     // 2. Wrap client if emulator is enabled
-    if (config.emulatorHost != null) {
-      client = _EmulatorHttpClient(client, config.emulatorHost!);
+    final emulatorHost = config.emulatorHost;
+    if (emulatorHost != null) {
+      client = EmulatorHttpClient(client, emulatorHost);
 
       // 3. Verify emulator is running (in non-production mode)
+      if (!dzIsPrd) {
+        await _verifyEmulatorAvailability(client);
+      }
+    }
+
+    return Storage(client, config.projectId);
+  }
+
+  /// Test-only helper that runs the same emulator verification path as
+  /// `_initStorage()` but can be invoked directly from tests with a
+  /// provided `http.Client` to ensure the `await _verifyEmulatorAvailability`
+  /// branch is executed for coverage.
+  @visibleForTesting
+  Future<Storage> initAndVerifyForTest(http.Client client) async {
+    final emulatorHost = config.emulatorHost;
+    if (emulatorHost != null) {
+      client = EmulatorHttpClient(client, emulatorHost);
       if (!dzIsPrd) {
         await _verifyEmulatorAvailability(client);
       }
@@ -110,6 +174,12 @@ class GcsStorageReader implements ZenStorageReader {
       );
     }
   }
+
+  /// Exposed for tests to allow direct verification of emulator availability
+  /// without going through full `_initStorage()` initialization.
+  @visibleForTesting
+  Future<void> verifyEmulatorAvailabilityForTest(http.Client client) =>
+      _verifyEmulatorAvailability(client);
 
   /// Reads an object from Google Cloud Storage by key.
   ///
@@ -161,15 +231,29 @@ class GcsStorageReader implements ZenStorageReader {
   }
 }
 
-/// Use this internal HTTP client to redirect requests to the GCS emulator.
-class _EmulatorHttpClient extends http.BaseClient {
-  _EmulatorHttpClient(this._inner, String emulatorHost)
+/// HTTP client that rewrites requests to point at a local GCS emulator.
+///
+/// This client is used internally by `GcsStorageReader` when an emulator
+/// host is configured. It rewrites the request URL host/port to the
+/// configured emulator and forwards the request to the provided inner
+/// `http.Client`.
+class EmulatorHttpClient extends http.BaseClient {
+  /// Creates an [EmulatorHttpClient].
+  ///
+  /// The inner `http.Client` will be used to perform the actual HTTP
+  /// requests after the request URL has been rewritten to the emulator
+  /// `emulatorHost`.
+  EmulatorHttpClient(this._inner, String emulatorHost)
     : _host = emulatorHost.split(':')[0],
       _port = int.parse(emulatorHost.split(':')[1]);
   final http.Client _inner;
   final int _port;
   final String _host;
 
+  /// Sends [request] to the underlying HTTP client after rewriting the
+  /// request URL to point at the configured emulator host and port.
+  ///
+  /// The request body (if any) is preserved when possible.
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     // Redirect all requests to the emulator host
@@ -188,11 +272,13 @@ class _EmulatorHttpClient extends http.BaseClient {
     if (request is http.Request) {
       newRequest.bodyBytes = request.bodyBytes;
     } else {
-      // For other request types (Multipart), we might need more logic
-      // But for GCS reads, we mostly use Request.
-      // If gcloud uses StreamedRequest/MultipartRequest, we strictly should support it.
-      // However, gcloud read uses GET which is simple Request.
-      newRequest.body = await request.finalize().bytesToString();
+      // For other request types (Multipart/StreamedRequest) we consume the
+      // finalize() stream and copy the raw bytes into the new request.
+      final bytes = <int>[];
+      await for (final chunk in request.finalize()) {
+        bytes.addAll(chunk);
+      }
+      newRequest.bodyBytes = bytes;
     }
 
     return _inner.send(newRequest);

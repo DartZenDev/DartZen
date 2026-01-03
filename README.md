@@ -22,6 +22,7 @@ DartZen embraces **minimalism**, **scalability**, and **developer zen**. Built o
 - [Packages Overview](docs/packages_overview.md): A high-level map of DartZen packages, their responsibilities, and how they are meant to be used together.
 - [Server Runtime](docs/server_runtime.md): Defines the DartZen server as a GCP-native runtime built on Shelf, focused on clarity, performance, and explicit behavior.
 - [Versioning and Releases](docs/versioning_and_releases.md): Explains independent package versioning, SemVer, and release strategy within the DartZen monorepo.
+- [Coverage aggregation](docs/coverage.md): How to generate per-package and aggregate coverage for this monorepo.
 
 ## 📦 Repository Structure
 

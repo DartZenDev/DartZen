@@ -1,12 +1,12 @@
-// ignore_for_file: avoid_print, unused_local_variable
+// ignore_for_file: avoid_print
 
-import 'package:dartzen_localization/dartzen_localization.dart';
+// import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_server/dartzen_server.dart';
 
 void main() async {
-  // 1. Initialize localization service
-  const localizationConfig = ZenLocalizationConfig();
-  final localization = ZenLocalizationService(config: localizationConfig);
+  // 1. Initialize localization service, for this example
+  // const localizationConfig = ZenLocalizationConfig();
+  // final localization = ZenLocalizationService(config: localizationConfig);
 
   // Load server module translations
   // Note: In a real app, you would load these from assets

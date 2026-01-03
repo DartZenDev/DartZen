@@ -14,8 +14,19 @@ void main() {
 
     test('dzIsPrd evaluates correctly', () {
       expect(dzIsPrd, isA<bool>());
-      // Default is 'prd', so dzIsPrd should be true unless DZ_ENV=dev
-      expect(dzIsPrd, isTrue);
+      expect(dzIsDev, isA<bool>());
+      // Cover both branches: dzIsPrd and dzIsDev
+      if (dzEnv == 'prd') {
+        expect(dzIsPrd, isTrue);
+        expect(dzIsDev, isFalse);
+      } else if (dzEnv == 'dev') {
+        expect(dzIsPrd, isFalse);
+        expect(dzIsDev, isTrue);
+      } else {
+        // Unknown env: both should be false
+        expect(dzIsPrd, isFalse);
+        expect(dzIsDev, isFalse);
+      }
     });
 
     test('dzGcloudProject returns string', () {

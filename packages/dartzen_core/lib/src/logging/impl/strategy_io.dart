@@ -5,11 +5,12 @@ import 'strategy.dart';
 /// Strategy for logging in IO environments (Server/CLI).
 class ZenLoggerStrategyIO implements ZenLoggerStrategy {
   @override
-  void log(String message, {bool isError = false}) {
+  void log(String message, {bool isError = false, String? origin}) {
+    final out = origin != null ? '[$origin] $message' : message;
     if (isError) {
-      stderr.writeln(message);
+      stderr.writeln(out);
     } else {
-      stdout.writeln(message);
+      stdout.writeln(out);
     }
   }
 }

@@ -42,15 +42,21 @@ abstract final class IdentityMapper {
       );
     }
 
+    // Safely extract reason, only if present and is String
+    // Robustly extract reason: only use if non-null and String, else null
+    String? reason;
+    if (lifecycleData.containsKey('reason')) {
+      final r = lifecycleData['reason'];
+      reason = (r is String && r.isNotEmpty) ? r : null;
+    }
+
+    final state = IdentityState.values.byName(
+      lifecycleData['state'] as String? ?? 'pending',
+    );
     return ZenResult.ok(
       Identity(
         id: identityId,
-        lifecycle: IdentityLifecycle.reconstruct(
-          IdentityState.values.byName(
-            lifecycleData['state'] as String? ?? 'pending',
-          ),
-          lifecycleData['reason'] as String?,
-        ),
+        lifecycle: IdentityLifecycle.reconstruct(state, reason),
         authority: Authority(roles: roles, capabilities: capabilities),
         createdAt: ZenTimestamp.fromMilliseconds(createdAt as int),
       ),

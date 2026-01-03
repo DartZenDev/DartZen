@@ -1,7 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:meta/meta.dart';
 
-import '../dartzen_storage.dart' show GcsStorageReader;
 import 'gcs_storage_reader.dart' show GcsStorageReader;
 
 /// Configuration for the [GcsStorageReader].
@@ -20,20 +19,30 @@ class GcsStorageConfig {
     String? projectId,
     required String bucket,
     String? prefix,
-    @visibleForTesting String? emulatorHost,
+    String? emulatorHost, // Added named parameter
+    GcsCredentialsMode? credentialsMode,
   }) {
     final effectiveProjectId = projectId ?? dzGcloudProject;
     if (effectiveProjectId.isEmpty) {
       throw StateError(
-        'Project ID must be provided via constructor or $dzGcloudProjectEnvVar environment variable.',
+        'Project ID must be provided via constructor or environment variable.',
       );
     }
+
+    final effectiveEmulatorHost =
+        emulatorHost ?? (dzIsPrd ? null : 'localhost:8080');
+    final effectiveCredentialsMode =
+        credentialsMode ??
+        (dzIsPrd
+            ? GcsCredentialsMode.applicationDefault
+            : GcsCredentialsMode.anonymous);
 
     return GcsStorageConfig._(
       projectId: effectiveProjectId,
       bucket: bucket,
       prefix: prefix,
-      emulatorHostOverride: emulatorHost,
+      emulatorHost: effectiveEmulatorHost, // Store emulatorHost
+      credentialsMode: effectiveCredentialsMode, // Store credentials mode
     );
   }
 
@@ -41,8 +50,9 @@ class GcsStorageConfig {
     required this.projectId,
     required this.bucket,
     this.prefix,
-    String? emulatorHostOverride,
-  }) : _emulatorHostOverride = emulatorHostOverride;
+    this.emulatorHost, // Store emulatorHost
+    required this.credentialsMode, // Store credentials mode
+  });
 
   /// The Google Cloud Project ID.
   ///
@@ -55,35 +65,13 @@ class GcsStorageConfig {
   /// Optional prefix for all object keys (e.g. 'images/').
   final String? prefix;
 
-  /// The host to use for connection.
-  ///
-  /// In production, this is ignored (standard GCS).
-  /// In non-production, this must be set via [dzStorageEmulatorHostEnvVar].
-  final String? _emulatorHostOverride;
-
   /// Returns the effective emulator host if running in non-production mode.
   ///
   /// Returns `null` if in production mode.
-  String? get emulatorHost {
-    if (dzIsPrd) return null;
-
-    // 1. Explicit override (testing)
-    if (_emulatorHostOverride != null) return _emulatorHostOverride;
-
-    // 2. Environment variable (required in development)
-    const envHost = dzStorageEmulatorHost;
-    if (envHost.isEmpty) {
-      throw StateError(
-        'Storage Emulator host must be configured via $dzStorageEmulatorHostEnvVar environment variable in development mode.',
-      );
-    }
-    return envHost;
-  }
+  final String? emulatorHost; // The field to store emulatorHost
 
   /// The credentials mode to use.
-  GcsCredentialsMode get credentialsMode => dzIsPrd
-      ? GcsCredentialsMode.applicationDefault
-      : GcsCredentialsMode.anonymous;
+  final GcsCredentialsMode credentialsMode;
 
   @override
   String toString() =>

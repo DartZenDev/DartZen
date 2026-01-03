@@ -98,6 +98,22 @@ void main() {
         throwsA(isA<LocalizationInitializationException>()),
       );
     });
+
+    test('_parseAndValidate throws on non-map JSON', () async {
+      loader.files['assets/l10n/dartzen.en.json'] = '[1,2,3]';
+      expect(
+        service.loadGlobalMessages('en'),
+        throwsA(isA<InvalidLocalizationFormatException>()),
+      );
+    });
+
+    test('_parseAndValidate throws on non-string value', () async {
+      loader.files['assets/l10n/dartzen.en.json'] = '{"foo": 123}';
+      expect(
+        service.loadGlobalMessages('en'),
+        throwsA(isA<InvalidLocalizationFormatException>()),
+      );
+    });
   });
 
   group('Production Behavior', () {

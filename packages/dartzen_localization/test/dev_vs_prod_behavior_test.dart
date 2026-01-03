@@ -35,7 +35,7 @@ void main() {
       test('MISSING FILE throws exception', () async {
         // Did NOT populate loader
         expect(
-          () => devService.loadGlobalMessages('en'),
+          devService.loadGlobalMessages('en'),
           throwsA(isA<MissingLocalizationFileException>()),
         );
       });

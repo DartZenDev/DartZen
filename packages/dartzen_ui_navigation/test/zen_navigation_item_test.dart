@@ -6,6 +6,8 @@ import 'package:mocktail/mocktail.dart';
 
 class MockLocalizationService extends Mock implements ZenLocalizationService {}
 
+class MockBuildContext extends Mock implements BuildContext {}
+
 void main() {
   late MockLocalizationService localizationService;
 
@@ -13,16 +15,16 @@ void main() {
     localizationService = MockLocalizationService();
     when(
       () => localizationService.translate(
-        any(),
-        language: any(named: 'language'),
-        module: any(named: 'module'),
-        params: any(named: 'params'),
+        any<String>(),
+        language: any<String>(named: 'language'),
+        module: any<String>(named: 'module'),
+        params: any<Map<String, dynamic>>(named: 'params'),
       ),
     ).thenAnswer((invocation) => invocation.positionalArguments[0] as String);
   });
 
   group('ZenNavigationItem', () {
-    test('creates item with required fields', () {
+    testWidgets('creates item with required fields', (tester) async {
       final item = ZenNavigationItem(
         id: 'home',
         label: 'Home',
@@ -36,7 +38,7 @@ void main() {
       expect(item.badgeCount, isNull);
     });
 
-    test('creates item with badge count', () {
+    testWidgets('creates item with badge count', (tester) async {
       final item = ZenNavigationItem(
         id: 'messages',
         label: 'Messages',
@@ -48,7 +50,7 @@ void main() {
       expect(item.badgeCount, 5);
     });
 
-    test('builder returns correct widget', () {
+    testWidgets('builder returns correct widget', (tester) async {
       final item = ZenNavigationItem(
         id: 'home',
         label: 'Home',
@@ -128,5 +130,3 @@ void main() {
     });
   });
 }
-
-class MockBuildContext extends Mock implements BuildContext {}

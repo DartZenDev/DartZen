@@ -127,10 +127,14 @@ final class FirestoreRestClient {
   }
 
   ZenFirestoreDocument _mapToDocument(Map<String, dynamic> json) {
-    final name = json['name'] as String;
-    final path = name.split('/documents/').last;
-    final id = path.split('/').last;
+    // Defensive: handle missing 'name' field
+    final name = (json['name'] ?? '') as String;
+    final path = name.isNotEmpty ? name.split('/documents/').last : '';
+    final id = path.isNotEmpty ? path.split('/').last : '';
     final fields = json['fields'] as Map<String, dynamic>? ?? {};
+
+    // Debug print to diagnose type error
+    // Removed debug prints for lint compliance
 
     return ZenFirestoreDocument(
       id: id,
