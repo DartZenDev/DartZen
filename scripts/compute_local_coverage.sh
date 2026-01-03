@@ -3,50 +3,69 @@
 set -euo pipefail
 
 # Ensure per-package LCOV exists by converting any VM JSON coverage under
-# `packages/*/coverage/test` into `packages/*/coverage/lcov.info`.
-# Prefer an existing `coverage/lcov.info` when it is newer than the VM JSON
-# artifacts to avoid overwriting a fresh `flutter test --coverage` result
-for pkgdir in packages/*; do
-  [ -d "$pkgdir" ] || continue
-  if [ -d "$pkgdir/coverage/test" ]; then
-    # Determine whether to convert VM JSON -> LCOV. If a coverage/lcov.info
-    # already exists and is newer than the newest vm.json file, skip conversion.
-    convert=true
-    if [ -f "$pkgdir/coverage/lcov.info" ]; then
-      # Newest vm.json mtime (seconds since epoch); fall back to 0 when none.
-      newest_vm_json_mtime=$(find "$pkgdir/coverage/test" -type f -name "*.vm.json" -print0 | xargs -0 stat -f "%m" 2>/dev/null | sort -n | tail -1 || echo 0)
-      lcov_mtime=$(stat -f "%m" "$pkgdir/coverage/lcov.info" 2>/dev/null || echo 0)
-      if [ -n "$lcov_mtime" ] && [ "$lcov_mtime" -ge "$newest_vm_json_mtime" ]; then
-        echo "Skipping conversion for $pkgdir: existing coverage/lcov.info is newer than vm.json files"
-        convert=false
-      fi
-    fi
+# `packages/*/coverage` and any nested `apps/*/.../coverage` into per-package
+# `coverage/lcov_*.info`. This scans packages and apps recursively for
+# coverage directories so app-level vm.json artifacts are converted too.
+converted_global=()
+while IFS= read -r -d '' cov_root; do
+  # cov_root is a .../coverage directory; the package/app directory is its parent
+  pkgdir=$(dirname "$cov_root")
+  converted=()
+  for cov in "$cov_root" "$cov_root"/coverage_*; do
+    if [ -d "$cov/test" ]; then
+      cov_base=$(basename "$cov")
+      out="$pkgdir/coverage/lcov_${cov_base}.info"
 
-    if [ "$convert" = true ]; then
-      echo "Converting JSON coverage -> LCOV for $pkgdir"
-      (cd "$pkgdir" && dart pub global run coverage:format_coverage \
-        --package="." --report-on="lib" --lcov --in="coverage/test" --out="coverage/lcov.info") || true
-    fi
+      # Determine whether to convert VM JSON -> LCOV. If a coverage/lcov.info
+      # already exists and is newer than the newest vm.json file, skip conversion for this run.
+      convert=true
+      if [ -f "$pkgdir/coverage/lcov.info" ]; then
+        vm_count=$(find "$cov/test" -type f -name "*.vm.json" 2>/dev/null | wc -l || echo 0)
+        if [ "$vm_count" -gt 0 ]; then
+          newest_vm_json_mtime=$(find "$cov/test" -type f -name "*.vm.json" -print0 | xargs -0 stat -f "%m" 2>/dev/null | sort -n | tail -1 || echo 0)
+        else
+          newest_vm_json_mtime=0
+        fi
+        lcov_mtime=$(stat -f "%m" "$pkgdir/coverage/lcov.info" 2>/dev/null || echo 0)
+        if [ -n "$lcov_mtime" ] && [ "$lcov_mtime" -ge "$newest_vm_json_mtime" ]; then
+          echo "Skipping conversion for $cov: existing coverage/lcov.info is newer than vm.json files"
+          convert=false
+        fi
+      fi
 
-    if [ -f "$pkgdir/coverage/lcov.info" ]; then
-      package=$(basename "$pkgdir")
-      # Try GNU sed first, fall back to macOS sed syntax
-      if sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$pkgdir/coverage/lcov.info" 2>/dev/null; then
-        :
-      else
-        sed -i '' "s|SF:lib/|SF:packages/$package/lib/|g" "$pkgdir/coverage/lcov.info" 2>/dev/null || true
+      if [ "$convert" = true ]; then
+        echo "Converting JSON coverage -> LCOV for $cov"
+        rel_cov=${cov#${pkgdir}/}
+        rel_out=${out#${pkgdir}/}
+        (cd "$pkgdir" && dart pub global run coverage:format_coverage \
+          --package="." --report-on="lib" --lcov --in="$rel_cov/test" --out="$rel_out" ) || true
       fi
-      awk '!/^SF:.*\/(test|example)\// && !/^SF:.*\/generated\//' "$pkgdir/coverage/lcov.info" > "$pkgdir/coverage/lcov.info.filtered" && mv "$pkgdir/coverage/lcov.info.filtered" "$pkgdir/coverage/lcov.info" || true
-      # Cleanup VM JSON artifacts to avoid stale conversions overwriting
-      # freshly-generated `coverage/lcov.info` in subsequent runs.
-      if [ -d "$pkgdir/coverage/test" ]; then
-        find "$pkgdir/coverage/test" -type f -name "*.vm.json" -print -delete || true
-        # remove empty test dir if possible
-        rmdir "$pkgdir/coverage/test" 2>/dev/null || true
+
+      if [ -f "$out" ]; then
+        converted+=("$out")
+        converted_global+=("$out")
+        # cleanup VM JSON artifacts for this run
+        if [ -d "$cov/test" ]; then
+          find "$cov/test" -type f -name "*.vm.json" -print -delete || true
+          rmdir "$cov/test" 2>/dev/null || true
+        fi
       fi
     fi
+  done
+
+  # Merge converted per-run lcovs into a single lcov.info for the package
+  if [ ${#converted[@]} -gt 0 ]; then
+    pkg_lcov="$pkgdir/coverage/lcov.info"
+    cat ${converted[@]} > "$pkg_lcov" || true
+    package=$(basename "$pkgdir")
+    if sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null; then
+      :
+    else
+      sed -i '' "s|SF:lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null || true
+    fi
+    awk '!/^SF:.*\/(test|example)\// && !/^SF:.*\/generated\//' "$pkg_lcov" > "$pkgdir/coverage/lcov.info.filtered" && mv "$pkgdir/coverage/lcov.info.filtered" "$pkg_lcov" || true
   fi
-done
+done < <(find packages apps -type d -name coverage -print0 2>/dev/null || true)
 
 find_lcov() {
   # find lcov.info under packages/ and apps/, but exclude example and generated directories
@@ -77,7 +96,8 @@ for pkgdir in packages/* apps/*; do
   else
     # For packages, look in the package's coverage directory only
     if [ -d "$pkgdir/coverage" ]; then
-      while IFS= read -r -d '' f; do pkg_lcovs+=("$f"); done < <(find "$pkgdir/coverage" -maxdepth 1 -type f -name "lcov*.info" -print0 2>/dev/null || true)
+      # collect any lcov files under the package's coverage directory, including nested per-run dirs
+      while IFS= read -r -d '' f; do pkg_lcovs+=("$f"); done < <(find "$pkgdir/coverage" -type f -name "lcov*.info" -print0 2>/dev/null || true)
     fi
   fi
   if [ ${#pkg_lcovs[@]} -eq 0 ]; then
