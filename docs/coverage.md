@@ -28,6 +28,7 @@ before running the script.
 
 - CI uploads per-package, per-environment LCOV files: `packages/<pkg>/coverage/lcov_prd.info` and `packages/<pkg>/coverage/lcov_dev.info`.
 - The repository's `melos run test:matrix` task should run the test matrix (PRD and DEV combinations and platforms) and produce coverage artifacts either as VM JSON under `packages/<pkg>/coverage/test/*.vm.json` or (for Flutter tests) directly as `packages/<pkg>/coverage/lcov.info`.
+- The repository's `melos run test:matrix` task runs the matrix and produces coverage artifacts. The `test:matrix` script creates per-run coverage directories named like `coverage_<env>_<platform>_dart` or `coverage_<env>_<platform>_flutter` inside each package; those dirs contain a `test/*.vm.json` output. The CI conversion steps convert those directories into `lcov_prd.info` and `lcov_dev.info` per package for upload.
 - The CI workflow converts VM JSON -> LCOV per-package into `lcov_prd.info` and `lcov_dev.info` and then uploads those files to Codecov. The compute script `./scripts/compute_local_coverage.sh` is a local/CI sanity tool that normalizes/merges these LCOVs and computes an aggregate percentage.
 
 If your `melos run test:matrix` does not produce per-package coverage artifacts, the CI assertion step will fail; ensure `melos run test:matrix` is run from the repo root and that each package's test task writes coverage to its `coverage` directory.

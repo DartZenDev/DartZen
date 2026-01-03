@@ -104,7 +104,17 @@ jobs:
           missing=0
           for dir in packages/*; do
             if [ -d "$dir/test" ]; then
-              if [ -d "$dir/coverage/test" ] || [ -f "$dir/coverage/lcov_prd.info" ] || [ -f "$dir/coverage/lcov_dev.info" ] || [ -f "$dir/coverage/lcov.info" ]; then
+              # Accept any of the following produced by test:matrix:
+              # - standard coverage dir: coverage/test/*.vm.json
+              # - per-matrix coverage dirs: coverage_<env>_<platform>_dart/test/*.vm.json
+              # - per-package LCOV files: coverage/lcov*.info or coverage_lcov*.info
+              found=false
+              if compgen -G "$dir/coverage/test/*.vm.json" > /dev/null 2>&1; then found=true; fi
+              if compgen -G "$dir/coverage_*/*/*.vm.json" > /dev/null 2>&1; then found=true; fi
+              if [ -f "$dir/coverage/lcov_prd.info" ] || [ -f "$dir/coverage/lcov_dev.info" ] || [ -f "$dir/coverage/lcov.info" ]; then found=true; fi
+              if compgen -G "$dir/coverage_*/*.info" > /dev/null 2>&1; then found=true; fi
+
+              if [ "$found" = true ]; then
                 echo "Coverage artifacts present for $dir"
               else
                 echo "MISSING coverage artifacts for $dir"
@@ -114,7 +124,8 @@ jobs:
           done
           if [ "$missing" -ne 0 ]; then
             echo "Coverage artifacts missing for one or more packages; failing fast"
-            ls -la packages/*/coverage || true
+            # show any coverage dirs we did find to help debugging
+            find packages -type d -name "coverage*" -maxdepth 3 -print || true
             exit 1
           fi
 
