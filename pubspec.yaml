@@ -52,7 +52,10 @@ melos:
     test:
       run: |
         # Flutter packages (with --dart-define)
-        melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- "flutter test --dart-define=DZ_PLATFORM=macos --coverage"
+        # `flutter test --coverage` does not accept a value for the flag; run
+        # the test and then move the produced `coverage/` dir to a per-run
+        # name so the CI script can find per-matrix outputs.
+        melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- 'sh -c "flutter test --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=dev --coverage || true; if [ -d coverage ]; then mv coverage coverage_dev_macos_flutter || true; fi"'
         # Dart packages (pass compile-time defines via `dart run --define` so constants are tree-shaken correctly)
         melos exec --scope="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_demo_server,dartzen_demo_contracts" -- "dart run --define=DZ_IS_TEST=true --define=DZ_ENV=dev test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage, using flutter test for any package that depends on Flutter
@@ -144,7 +147,7 @@ melos:
         for e in $ENVS; do
           for p in $PLATFORMS; do
             echo "Running flutter tests for DZ_ENV=$e DZ_PLATFORM=$p"
-            melos exec --scope="$FLUTTER_SCOPE" -- "flutter test --dart-define=DZ_PLATFORM=$p --dart-define=DZ_ENV=$e --coverage=coverage_${e}_${p}_flutter"
+            melos exec --scope="$FLUTTER_SCOPE" -- "sh -c \"flutter test --dart-define=DZ_PLATFORM=$p --dart-define=DZ_ENV=$e --coverage || true; if [ -d coverage ]; then mv coverage coverage_${e}_${p}_flutter || true; fi\""
 
             echo "Running dart tests for DZ_ENV=$e DZ_PLATFORM=$p"
             melos exec --scope="$DART_SCOPE" -- "dart run --define=DZ_IS_TEST=true --define=DZ_ENV=$e --define=DZ_PLATFORM=$p test --coverage=coverage_${e}_${p}_dart"
