@@ -35,8 +35,21 @@ while IFS= read -r -d '' cov_root; do
 
       if [ "$convert" = true ]; then
         echo "Converting JSON coverage -> LCOV for $cov"
-        rel_cov=${cov#${pkgdir}/}
-        rel_out=${out#${pkgdir}/}
+        # Compute paths relative to the package dir robustly. If $cov is under
+        # $pkgdir, strip the prefix; otherwise keep the original path. This
+        # prevents invoking format_coverage with a repo-root relative path
+        # while `cd`'d into the package directory (which would make the path
+        # invalid).
+        if [[ "$cov" == "$pkgdir"/* ]]; then
+          rel_cov="${cov#${pkgdir}/}"
+        else
+          rel_cov="$cov"
+        fi
+        if [[ "$out" == "$pkgdir"/* ]]; then
+          rel_out="${out#${pkgdir}/}"
+        else
+          rel_out="$out"
+        fi
         (cd "$pkgdir" && dart pub global run coverage:format_coverage \
           --package="." --report-on="lib" --lcov --in="$rel_cov/test" --out="$rel_out" ) || true
       fi

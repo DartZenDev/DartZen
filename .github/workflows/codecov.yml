@@ -42,12 +42,24 @@ jobs:
                 if [ -d "$cov/test" ]; then
                   cov_base=$(basename "$cov")
                   out="$dir/coverage/lcov_prd_${cov_base}.info"
+                  # Compute paths relative to the package dir to avoid passing
+                  # repo-root prefixed paths when `cd`'d into the package.
+                  if [[ "$cov" == "$dir"/* ]]; then
+                    rel_cov="${cov#${dir}/}"
+                  else
+                    rel_cov="$cov"
+                  fi
+                  if [[ "$out" == "$dir"/* ]]; then
+                    rel_out="${out#${dir}/}"
+                  else
+                    rel_out="$out"
+                  fi
                   (cd "$dir" && dart pub global run coverage:format_coverage \
                     --package="." \
                     --report-on="lib" \
                     --lcov \
-                    --in="$cov/test" \
-                    --out="$out") || true
+                    --in="$rel_cov/test" \
+                    --out="$rel_out") || true
                   if [ -f "$out" ]; then tmp_converted+=("$out"); fi
                   # cleanup vm.json artifacts to avoid stale overwrites
                   if [ -d "$cov/test" ]; then
@@ -89,12 +101,22 @@ jobs:
                 if [ -d "$cov/test" ]; then
                   cov_base=$(basename "$cov")
                   out="$dir/coverage/lcov_dev_${cov_base}.info"
+                  if [[ "$cov" == "$dir"/* ]]; then
+                    rel_cov="${cov#${dir}/}"
+                  else
+                    rel_cov="$cov"
+                  fi
+                  if [[ "$out" == "$dir"/* ]]; then
+                    rel_out="${out#${dir}/}"
+                  else
+                    rel_out="$out"
+                  fi
                   (cd "$dir" && dart pub global run coverage:format_coverage \
                     --package="." \
                     --report-on="lib" \
                     --lcov \
-                    --in="$cov/test" \
-                    --out="$out") || true
+                    --in="$rel_cov/test" \
+                    --out="$rel_out") || true
                   if [ -f "$out" ]; then tmp_converted+=("$out"); fi
                   if [ -d "$cov/test" ]; then
                     find "$cov/test" -type f -name "*.vm.json" -print -delete || true
