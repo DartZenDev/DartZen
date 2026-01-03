@@ -149,8 +149,8 @@ jobs:
               if find "$dir/coverage" -type f -name "*.vm.json" -print -quit 2>/dev/null | grep -q .; then
                 found=true
               fi
-              # also accept pre-converted lcov files
-              if [ -f "$dir/coverage/lcov_prd.info" ] || [ -f "$dir/coverage/lcov_dev.info" ] || [ -f "$dir/coverage/lcov.info" ]; then
+              # also accept any pre-converted lcov files anywhere under the coverage tree
+              if find "$dir/coverage" -type f -name "lcov*.info" -print -quit 2>/dev/null | grep -q .; then
                 found=true
               fi
 
