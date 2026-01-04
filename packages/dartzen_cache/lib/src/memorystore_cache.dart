@@ -1,8 +1,44 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dartzen_core/dartzen_core.dart';
+import 'package:meta/meta.dart';
+
 import 'cache_client.dart';
 import 'cache_errors.dart';
+
+/// Test hook: allow injection of a socket factory for unit tests so the
+/// socket-based code paths can be exercised without opening real network
+/// connections. Visible for testing only.
+@visibleForTesting
+typedef SocketFactory =
+    Future<Socket> Function(
+      String host,
+      int port, {
+      Duration? timeout,
+      bool useTls,
+    });
+
+// Test hooks: expose the underlying Socket connect functions so tests can
+// substitute fake implementations without touching the public API.
+/// Connector signature used for injecting a fake `Socket.connect`-like function
+/// in tests. Visible for testing only.
+@visibleForTesting
+typedef SocketConnector =
+    Future<Socket> Function(String host, int port, {Duration? timeout});
+
+/// Test-only transport abstraction. Implementations should return RESP-formatted
+/// responses (including CRLF sequences). Marked `@visibleForTesting` so it's
+/// not part of the public API surface for consumers.
+@visibleForTesting
+abstract class RedisTransport {
+  /// Sends a Redis command (given as argument list) and returns the raw
+  /// RESP-formatted response as a `String` including CRLF sequences.
+  ///
+  /// This abstraction exists for tests so the network layer can be mocked
+  /// without opening real sockets.
+  Future<String> sendCommand(List<String> args);
+}
 
 /// GCP Memorystore (Redis) cache implementation.
 ///
@@ -41,6 +77,12 @@ class MemorystoreCache implements CacheClient {
   Socket? _socket;
   bool _connected = false;
 
+  /// Optional transport used for tests.
+  final RedisTransport? _transport;
+  final SocketFactory? _socketFactory;
+  final SocketConnector? _socketConnectorInstance;
+  final SocketConnector? _secureSocketConnectorInstance;
+
   /// Creates a Memorystore cache client.
   ///
   /// The client lazily connects to Redis on the first operation.
@@ -49,7 +91,14 @@ class MemorystoreCache implements CacheClient {
     required this.port,
     required this.useTls,
     this.defaultTtl,
-  });
+    RedisTransport? transport,
+    SocketFactory? socketFactory,
+    SocketConnector? socketConnector,
+    SocketConnector? secureSocketConnector,
+  }) : _transport = dzIsTest ? transport : null,
+       _socketFactory = dzIsTest ? socketFactory : null,
+       _socketConnectorInstance = dzIsTest ? socketConnector : null,
+       _secureSocketConnectorInstance = dzIsTest ? secureSocketConnector : null;
 
   /// Establishes connection to Redis server.
   Future<void> _ensureConnected() async {
@@ -58,14 +107,24 @@ class MemorystoreCache implements CacheClient {
     }
 
     try {
-      if (useTls) {
-        _socket = await SecureSocket.connect(
+      if (_socketFactory != null) {
+        _socket = await _socketFactory(
+          host,
+          port,
+          timeout: const Duration(seconds: 5),
+          useTls: useTls,
+        );
+      } else if (useTls) {
+        final connector =
+            _secureSocketConnectorInstance ?? SecureSocket.connect;
+        _socket = await connector(
           host,
           port,
           timeout: const Duration(seconds: 5),
         );
       } else {
-        _socket = await Socket.connect(
+        final connector = _socketConnectorInstance ?? Socket.connect;
+        _socket = await connector(
           host,
           port,
           timeout: const Duration(seconds: 5),
@@ -81,8 +140,31 @@ class MemorystoreCache implements CacheClient {
     }
   }
 
+  /// Test hook: allow tests to trigger connection logic without performing
+  /// any command I/O. Visible for testing only.
+  @visibleForTesting
+  Future<void> testEnsureConnected() {
+    if (!dzIsTest) {
+      throw UnsupportedError('testEnsureConnected is available only in tests');
+    }
+    return _ensureConnected();
+  }
+
   /// Sends a Redis command and reads the response.
   Future<String> _sendCommand(List<String> args) async {
+    // If a test transport is provided, use it. This makes unit testing the
+    // command handling deterministic without opening sockets.
+    if (_transport != null) {
+      try {
+        return await _transport.sendCommand(args);
+      } catch (e, stack) {
+        throw CacheConnectionError(
+          'Redis command failed',
+          cause: e,
+          stackTrace: stack,
+        );
+      }
+    }
     await _ensureConnected();
 
     final socket = _socket;
@@ -92,16 +174,9 @@ class MemorystoreCache implements CacheClient {
 
     try {
       // Build Redis protocol message (RESP)
-      final buffer = StringBuffer();
-      buffer.write('*${args.length}\r\n');
-      for (final arg in args) {
-        final bytes = utf8.encode(arg);
-        buffer.write('\$${bytes.length}\r\n');
-        buffer.write(arg);
-        buffer.write('\r\n');
-      }
+      final cmd = buildRedisCommand(args);
 
-      socket.write(buffer.toString());
+      socket.write(cmd);
       await socket.flush();
 
       // Read response
@@ -115,6 +190,26 @@ class MemorystoreCache implements CacheClient {
         stackTrace: stack,
       );
     }
+  }
+
+  /// Build a Redis RESP command string from the argument list.
+  ///
+  /// This helper is visible for testing so unit tests can verify the exact
+  /// wire-format without opening sockets.
+  @visibleForTesting
+  String buildRedisCommand(List<String> args) {
+    if (!dzIsTest) {
+      throw UnsupportedError('buildRedisCommand is available only in tests');
+    }
+    final buffer = StringBuffer();
+    buffer.write('*${args.length}\r\n');
+    for (final arg in args) {
+      final bytes = utf8.encode(arg);
+      buffer.write('\$${bytes.length}\r\n');
+      buffer.write(arg);
+      buffer.write('\r\n');
+    }
+    return buffer.toString();
   }
 
   @override
