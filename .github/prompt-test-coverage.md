@@ -73,39 +73,57 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
 - Infrastructure and adapter code may use dependency injection for testability
 - Tests must be deterministic and CI-safe
 
-#### Environment, compile-time & runtime flags
+#### Environment, runtime flags and recommended approach
 
-- Tests **MUST** respect and rely on the existing DartZen constants: `dzIsTest`, `dzIsPrd`, `DZ_ENV`, and `DZ_PLATFORM`.
-- Tests **MUST NOT** introduce new global environment flags or platform switches.
+- Tests **MUST** respect and rely on `DZ_ENV` and `DZ_PLATFORM` to exercise
+  environment-specific code paths. CI and local validation run two test
+  passes per package (`DZ_ENV=dev` and `DZ_ENV=prd`) and merge coverage from
+  both runs.
+- Prefer dependency injection and keep
+  test-only helpers inside `test/` or dev-only libraries.
+- How CI/local test runs work (example invocations):
 
-- `dzIsTest` is a compile‑time constant. To enable test‑only branches that are safe to remove from release artifacts, compile tests with `DZ_IS_TEST=true` (see examples below). Do **not** implement a runtime override for `dzIsTest` — runtime toggles defeat compile‑time tree‑shaking and may leak test‑only code into production bundles.
-
-- How to run tests with defines (examples):
-
-  - Flutter package (preferred for packages that depend on Flutter):
+  - Flutter package (example):
 
     ```bash
-    flutter test --dart-define=DZ_IS_TEST=true \
-      --dart-define=DZ_ENV=dev --dart-define=DZ_PLATFORM=macos --coverage
+    # PRD run
+    flutter test --dart-define=DZ_ENV=prd --dart-define=DZ_PLATFORM=macos --coverage
+
+    # DEV run
+    flutter test --dart-define=DZ_ENV=dev --dart-define=DZ_PLATFORM=macos --coverage
     ```
 
-  - NOTE: In this monorepo `dart test` (and invocations wrapped by `melos`) may not reliably recompile dependencies with new `--define` values; as a result, compile‑time flags such as `DZ_IS_TEST=true` can appear to be ignored and test code guarded by `dzIsTest` will be skipped. Because of this fragility, treat compile‑time defines as useful for CI or clean builds only, and prefer the DI approach described below for local and per‑package testing.
+  - Pure Dart package (example):
 
-- Practical caveats and recommendations:
-  - Because forcing defines across a dependency graph can be brittle and may not work reliably with the test runner in this repo, **prefer dependency injection (DI)** for test hooks in pure Dart packages: accept `transport`, `socketFactory`, or connector parameters in constructors so tests can inject fakes that live only in `test/`. Keeping fake implementations in `test/` (or dev-only libraries) and never importing them from `lib/` prevents test code from being included in release bundles.
-  - If you do rely on compile‑time defines for CI, ensure CI performs a clean build or exports `DZ_IS_TEST=true` in the job environment so the entire graph is compiled with the define. Avoid relying on `dart test` passing a `--define` to already cached compiled dependencies.
-  - Conditional imports **MUST NOT** be emulated using runtime flags; continue to use proper compile‑time defines and platform selectors.
-  - Do not mock platform constants — run platform variants via `--platform` in the test matrix so the test runner uses the appropriate compiler/runtime.
+    ```bash
+    # PRD run
+    dart test --define=DZ_ENV=prd --define=DZ_PLATFORM=linux --coverage=coverage
 
-- CI requirement: ensure CI job definitions either export `DZ_IS_TEST=true` or run test invocations with the required `--define` flags so that compile‑time test branches are exercised in CI.
+    # DEV run
+    dart test --define=DZ_ENV=dev --define=DZ_PLATFORM=linux --coverage=coverage
+    ```
 
-### dzIsTest and test hooks (CLARIFICATION)
+- Practical recommendations:
+  - Prefer dependency injection (DI) for test hooks in packages: accept
+    `transport`, `socketFactory`, connector, or similar parameters so tests
+    can inject fakes that live in `test/` and are never imported from
+    `lib/`.
+  - Keep test-only wiring inside `test/` or dev-only libraries so production
+    builds remain tree-shakeable without global compile-time flags.
+  - Run both `DZ_ENV=dev` and `DZ_ENV=prd` passes and collect coverage from
+    each; the CI and compute scripts merge the resulting artifacts.
+  - Group related tests into test suites within a single test file per package. Avoid splitting tests for the same production file across multiple test files.
 
-- `dzIsTest` is a compile-time constant and must remain so. Tests may use `--define=DZ_IS_TEST=true` during compilation to enable test-only branches, and production builds must never rely on a runtime override of this flag.
-- Use `dzIsTest` to guard helpers or branches that must be omitted from release artifacts (for example, test-only factories or helpers). Placing such code behind `if (dzIsTest) { ... }` ensures the compiler can tree-shake it out of production bundles.
-- For pure Dart packages where passing compile-time defines through the test runner can be brittle, prefer dependency injection for testability: accept `transport`, `socketFactory`, connector, or similar hooks in constructors so tests can inject fakes from `test/` code. Keeping fake implementations in `test/` (or dev-only libraries) and never importing them from `lib/` prevents test-only code from being included in release bundles.
-- Do NOT add runtime switches that flip `dzIsTest` at runtime — this defeats compile-time tree-shaking and risks leaking test-only behavior into production bundles (especially relevant for web builds where bundle size and content are critical).
+### Test hooks and guidance (CLARIFICATION)
 
+- Use DI and keep test helpers under
+  `test/` or dev-only libraries so production artifacts are unaffected.
+- If a package contains code that absolutely must be excluded from release
+  bundles, use proper compile-time constants locally and ensure any such
+  usage is limited and well-documented; prefer DI whenever possible.
+- Never implement runtime switches that attempt to toggle compile-time
+  behavior — these defeat tree-shaking and can leak test-only code into
+  production builds.
 
 ---
 
@@ -152,29 +170,25 @@ If coverage cannot be increased for a specific file, you must clearly justify wh
 
 `dart test packages/PACKAGE_NAME`
 
-✅ **ALWAYS** follow `pubspec.yaml`:
+✅ **ALWAYS** follow `pubspec.yaml` and run both environment passes:
 
 - Check the `test` script to see how tests are expected to run
 - Check `test:matrix` to understand how **maximum coverage** is validated
 
 Correct example (adjust scope if needed):
 
-`melos exec --scope="PACKAGE_NAME" -- \`
-`"dart run \`
-`--define=DZ_IS_TEST=true \`
-`--define=DZ_ENV=dev \`
-`--define=DZ_PLATFORM=linux \`
-`test --coverage=coverage"`
+`melos exec --scope="PACKAGE_NAME" -- \
+  "dart run test --define=DZ_ENV=dev --define=DZ_PLATFORM=linux --coverage=coverage"`
 
-You must respect all required `--define` flags.
+`melos exec --scope="PACKAGE_NAME" -- \
+  "dart run test --define=DZ_ENV=prd --define=DZ_PLATFORM=linux --coverage=coverage"`
 
-Use `dart` or `flutter` as appropriate for the package.
+You must run both `DZ_ENV=dev` and `DZ_ENV=prd` passes and collect coverage
+from each. CI will convert/merge per-run artifacts into per-package `lcov_dev`/
+`lcov_prd` files and then compute aggregated coverage.
 
-- All tests MUST be executed with the correct DartZen environment flags.
-- The test runner invocation MUST explicitly set:
-  - `DZ_IS_TEST=true`
-  - a non-production `DZ_ENV`
-  - an explicit `DZ_PLATFORM`
+- Use `dart` or `flutter` as appropriate for the package.
+- Tests must set an explicit `DZ_ENV` and `DZ_PLATFORM` for each run.
 - Tests that rely on implicit defaults or assume production values are invalid.
 
 ---

@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dartzen_core/dartzen_core.dart';
 import 'package:meta/meta.dart';
 
 import 'cache_client.dart';
 import 'cache_errors.dart';
+
+// NOTE: test helpers and injection points are available to tests via
+// `@visibleForTesting` APIs. Do not add entry-point pragmas or runtime
+// defines here; keep this file tree-shakeable for production builds.
 
 /// Test hook: allow injection of a socket factory for unit tests so the
 /// socket-based code paths can be exercised without opening real network
@@ -39,6 +42,8 @@ abstract class RedisTransport {
   /// without opening real sockets.
   Future<String> sendCommand(List<String> args);
 }
+
+// (moved to top-level)
 
 /// GCP Memorystore (Redis) cache implementation.
 ///
@@ -95,10 +100,15 @@ class MemorystoreCache implements CacheClient {
     SocketFactory? socketFactory,
     SocketConnector? socketConnector,
     SocketConnector? secureSocketConnector,
-  }) : _transport = dzIsTest ? transport : null,
-       _socketFactory = dzIsTest ? socketFactory : null,
-       _socketConnectorInstance = dzIsTest ? socketConnector : null,
-       _secureSocketConnectorInstance = dzIsTest ? secureSocketConnector : null;
+  }) : _transport = transport,
+       _socketFactory = socketFactory,
+       _socketConnectorInstance = socketConnector,
+       _secureSocketConnectorInstance = secureSocketConnector;
+
+  // VM entry-point marker used to force a stable call site for coverage
+  // NOTE: test helpers and injection points are available to tests via
+  // `@visibleForTesting` APIs. Do not add entry-point pragmas or runtime
+  // defines here; keep this file tree-shakeable for production builds.
 
   /// Establishes connection to Redis server.
   Future<void> _ensureConnected() async {
@@ -143,12 +153,7 @@ class MemorystoreCache implements CacheClient {
   /// Test hook: allow tests to trigger connection logic without performing
   /// any command I/O. Visible for testing only.
   @visibleForTesting
-  Future<void> testEnsureConnected() {
-    if (!dzIsTest) {
-      throw UnsupportedError('testEnsureConnected is available only in tests');
-    }
-    return _ensureConnected();
-  }
+  Future<void> testEnsureConnected() => _ensureConnected();
 
   /// Sends a Redis command and reads the response.
   Future<String> _sendCommand(List<String> args) async {
@@ -198,9 +203,7 @@ class MemorystoreCache implements CacheClient {
   /// wire-format without opening sockets.
   @visibleForTesting
   String buildRedisCommand(List<String> args) {
-    if (!dzIsTest) {
-      throw UnsupportedError('buildRedisCommand is available only in tests');
-    }
+    // BuildRedisCommand is visible for testing; tests may call it directly.
     final buffer = StringBuffer();
     buffer.write('*${args.length}\r\n');
     for (final arg in args) {

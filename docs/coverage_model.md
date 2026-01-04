@@ -6,6 +6,7 @@ DartZen targets **maximal achievable test coverage** while preserving
 **compile-time tree shaking** and **deterministic builds**.
 
 Coverage numbers in this repository are:
+
 - aggregated across multiple build environments (DEV and PRD)
 - aggregated across multiple platforms
 - never interpreted from a single test run
@@ -50,8 +51,7 @@ If your `melos run test:matrix` does not produce per-package or per-app coverage
 
 ## 🧭 Environment-based coverage model
 
-DartZen codebases use compile-time environment constants (`DZ_ENV`,
-`DZ_PLATFORM`, `DZ_IS_TEST`) to enable:
+DartZen codebases use compile-time environment constants (`DZ_ENV`, `DZ_PLATFORM`) to enable:
 
 - dead-code elimination via tree shaking
 - strict separation of DEV and PRD code paths
@@ -61,11 +61,19 @@ Important rules:
 
 - `DZ_ENV` controls **which code paths exist** in a given build.
 - DEV and PRD branches are tested in **separate runs** and merged.
-- `DZ_IS_TEST` is allowed **only for dependency wiring and initialization**.
-- `DZ_IS_TEST` must never introduce a third behavioral branch or alter
-  business logic outcomes.
+- CI and local validation run the test matrix twice using `--define=DZ_ENV=dev` and `--define=DZ_ENV=prd` so coverage is collected from both environments.
+- If a package requires test-only wiring that must be tree-shaken from
+  production, prefer dependency injection and keeping test-only helpers
+  inside `test/` (or dev-only libraries). Avoid introducing global
+  compile-time flags that must be propagated across the dependency graph.
+- Tests for a given production source file should be consolidated: for
+  `lib/src/foo.dart` there should be a single corresponding test file
+  (for example `test/foo_test.dart`). Do not split tests for the same
+  production file across multiple named test files.
+  - Group related tests into test suites within a single test file per package. Avoid splitting tests for the same production file across multiple test files.
 
 Full coverage is defined as:
+
 > all reachable code paths across DEV and PRD builds are executed by tests.
 
 ## 📋 Inventory uncovered packages (mandatory)

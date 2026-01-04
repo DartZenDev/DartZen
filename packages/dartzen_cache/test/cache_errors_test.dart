@@ -17,4 +17,11 @@ void main() {
     expect(s, contains('CacheSerializationError'));
     expect(s, contains('key: my-key'));
   });
+
+  test('CacheConnectionError toString without cause', () {
+    const err = CacheConnectionError('no network');
+    final s = err.toString();
+    expect(s, contains('CacheConnectionError'));
+    expect(s, contains('no network'));
+  });
 }
