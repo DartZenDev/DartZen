@@ -127,4 +127,23 @@ void main() {
       skip: !_isDev && false,
     );
   });
+
+  group('GcsStorageConfig (test - override)', () {
+    test('emulatorHost returns override in test', () {
+      final config = GcsStorageConfig(
+        projectId: 'project',
+        bucket: 'bucket',
+        emulatorHost: 'localhost:9090',
+      );
+
+      expect(config.emulatorHost, 'localhost:9090');
+      if (dzIsPrd) {
+        expect(config.credentialsMode, GcsCredentialsMode.applicationDefault);
+        expect(config.toString(), contains('PRD'));
+      } else {
+        expect(config.credentialsMode, GcsCredentialsMode.anonymous);
+        expect(config.toString(), contains('EMULATOR'));
+      }
+    });
+  });
 }
