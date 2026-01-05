@@ -223,6 +223,27 @@ void main() {
     });
   });
 
+  group('IdentityTokenVerifierConfig', () {
+    test('throws if projectId is empty', () {
+      expect(
+        () => IdentityTokenVerifierConfig(projectId: ''),
+        throwsA(isA<StateError>()),
+      );
+    });
+    test('accepts valid projectId', () {
+      final config = IdentityTokenVerifierConfig(projectId: 'foo');
+      expect(config.projectId, 'foo');
+    });
+    test('accepts httpClient', () {
+      final client = http.Client();
+      final config = IdentityTokenVerifierConfig(
+        projectId: 'foo',
+        httpClient: client,
+      );
+      expect(config.httpClient, client);
+    });
+  });
+
   group('ExternalIdentityData', () {
     test('toString includes userId, email and emailVerified', () {
       const data = ExternalIdentityData(

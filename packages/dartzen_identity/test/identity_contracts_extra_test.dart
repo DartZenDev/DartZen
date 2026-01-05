@@ -1,17 +1,6 @@
-import 'package:dartzen_identity/dartzen_identity.dart';
-import 'package:test/test.dart';
+// This file was merged into `identity_contracts_test.dart`.
+// Kept as a placeholder to avoid duplicate runs; provides an empty main.
 
-void main() {
-  group('AuthorityContract', () {
-    test('toDomain with invalid role/capability', () {
-      const contract = AuthorityContract(
-        roles: ['INVALID!'],
-        capabilities: ['invalid-cap'],
-      );
-      final authority = contract.toDomain();
-      // Should reconstruct as-is, even if invalid, since reconstruct bypasses validation
-      expect(authority.roles.first.name, 'INVALID!');
-      expect(authority.capabilities.first.id, 'invalid-cap');
-    });
-  });
-}
+void main() {}
+// This test file was merged into `identity_contracts_test.dart`.
+// This file intentionally left empty to avoid duplicate test runs.

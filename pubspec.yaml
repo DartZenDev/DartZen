@@ -157,7 +157,6 @@ melos:
             else
               melos exec --scope="$FLUTTER_SCOPE" -- "sh -c \"flutter test --dart-define=DZ_PLATFORM=$p --dart-define=DZ_ENV=$e --coverage || true; if [ -d coverage ]; then mv coverage coverage_tmp || true; mkdir -p coverage || true; mv coverage_tmp coverage/coverage_${e}_${p}_flutter || true; fi\""
             fi
-            fi
 
             echo "Running dart tests for DZ_ENV=$e DZ_PLATFORM=$p"
             melos exec --scope="$DART_SCOPE" -- "dart --define=DZ_ENV=$e --define=DZ_PLATFORM=$p test --coverage=coverage/coverage_${e}_${p}_dart"
