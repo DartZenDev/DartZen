@@ -27,11 +27,11 @@ void main() {
       // The key point is that ServerMessages is the ONLY place
       // where ZenLocalizationService.translate is called for server keys
       expect(messages, isA<ServerMessages>());
-
-      // All server localization must go through this class:
-      // - messages.healthOk()
-      // - messages.errorUnknown()
-      // - messages.errorNotFound()
+      // Calling the accessors will delegate to `translate()` which isn't
+      // loaded in unit tests; assert they throw the localization exception
+      expect(() => messages.healthOk(), throwsA(isA<ZenLocalizationException>()));
+      expect(() => messages.errorUnknown(), throwsA(isA<ZenLocalizationException>()));
+      expect(() => messages.errorNotFound(), throwsA(isA<ZenLocalizationException>()));
     });
   });
 }

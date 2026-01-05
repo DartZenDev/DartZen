@@ -29,7 +29,7 @@ while IFS= read -r -d '' f; do
     }
     END { if (pkg!="" && missed>0) print pkg","file","missed }
   ' "$f" >> "$OUT"
-done < <(find packages -type f -name "lcov*.info" \( -not -path '*/example/*' -a -not -path '*/generated/*' \) -print0 2>/dev/null)
+done < <(find packages -maxdepth 6 -type f -name "lcov*.info" \( -not -path '*/example/*' -a -not -path '*/generated/*' \) -print0 2>/dev/null)
 
 if [ "$found" -eq 0 ]; then
   echo "No lcov.info files found (excluded example/generated)."

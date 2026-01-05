@@ -68,8 +68,8 @@ while IFS= read -r -d '' cov_root; do
 
   # Merge converted per-run lcovs into a single lcov.info for the package
   if [ ${#converted[@]} -gt 0 ]; then
-    pkg_lcov="$pkgdir/coverage/lcov.info"
-    cat ${converted[@]} > "$pkg_lcov" || true
+  pkg_lcov="$pkgdir/coverage/lcov.info"
+  cat "${converted[@]}" > "$pkg_lcov" || true
     package=$(basename "$pkgdir")
     # Canonicalize SF lines that may contain absolute paths (SF:/abs/path/.../packages/<pkg>/lib/)
     if sed -i "s|SF:.*/packages/$package/lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null; then
@@ -126,26 +126,33 @@ for pkgdir in packages/* apps/*; do
 
   # Merge DA entries across all lcov files: for each source file+line keep sum hits across runs to reflect combined execution counts.
   # awk will output combined per-file totals
+  # Merge DA entries across all lcov files: combine files into a temporary
+  # concatenated stream to avoid passing a very long argument list to awk
+  # (and to be robust against any strange filename edge-cases).
+  tmp_lcov_concat=$(mktemp)
+  for _f in "${pkg_lcovs[@]}"; do
+    cat "$_f" >> "$tmp_lcov_concat" || true
+  done
+
   read cov loc < <(
     awk '
       BEGIN { OFS = " " }
       /^SF:/ { sf = substr($0,4); next }
       /^DA:/ {
         split($0,a,":"); split(a[2],b,","); line = b[1]; hits = b[2] + 0; key = sf "|" line;
-        # Sum hits across multiple lcov inputs so aggregated DA reflects combined execution counts
         if (key in sum) sum[key] += hits; else sum[key] = hits;
         next
       }
       END {
-        # compute total and covered by source file based on summed hits
         for (k in sum) {
           split(k, parts, "|"); file = parts[1]; total[file]++; if (sum[k] > 0) covered[file]++;
         }
         c = 0; t = 0; for (f in total) { c += covered[f] + 0; t += total[f] + 0 }
         print c, t
       }
-    ' "${pkg_lcovs[@]}"
+    ' "$tmp_lcov_concat"
   )
+  rm -f "$tmp_lcov_concat"
 
   cov=${cov:-0}
   loc=${loc:-0}
