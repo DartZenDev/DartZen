@@ -17,10 +17,6 @@ const bool dzIsDev = dzEnv == 'dev';
 /// Whether the current environment is production.
 const bool dzIsPrd = dzEnv == 'prd';
 
-/// Whether the current environment is for testing.
-const bool dzIsTest =
-    String.fromEnvironment('DZ_IS_TEST', defaultValue: 'false') == 'true';
-
 /// The name of the environment variable for the Google Cloud Project ID.
 const String dzGcloudProjectEnvVar = 'GCLOUD_PROJECT';
 

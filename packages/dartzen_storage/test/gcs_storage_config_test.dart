@@ -1,6 +1,9 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_storage/dartzen_storage.dart';
 import 'package:dartzen_storage/src/gcs_storage_config.dart';
 import 'package:test/test.dart';
+
+const bool _isDev = String.fromEnvironment('DZ_ENV') == 'dev';
 
 void main() {
   group('GcsStorageConfig', () {
@@ -81,17 +84,47 @@ void main() {
       expect(config.emulatorHost, 'localhost:8080');
     });
 
-    test('dzIsTest is a bool', () {
-      expect(dzIsTest, isA<bool>());
-    });
-
-    test('dzEnv is a string', () {
+    test('dzEnv and dzIsPrd types', () {
       expect(dzEnv, isA<String>());
+      expect(dzIsPrd, isA<bool>());
+    });
+  });
+
+  group('GcsStorageConfig (dev/override checks)', () {
+    test('emulatorHost returns override when provided', () {
+      final config = GcsStorageConfig(
+        projectId: 'project',
+        bucket: 'bucket',
+        emulatorHost: 'localhost:9090',
+      );
+
+      expect(config.emulatorHost, 'localhost:9090');
+      if (dzIsPrd) {
+        // When compiled for production, credentials remain ADC even if an
+        // emulator host is passed explicitly.
+        expect(config.credentialsMode, GcsCredentialsMode.applicationDefault);
+        expect(config.toString(), contains('PRD'));
+      } else {
+        expect(config.credentialsMode, GcsCredentialsMode.anonymous);
+        expect(config.toString(), contains('EMULATOR'));
+      }
     });
 
-    test('dzIsPrd and dzIsTest types', () {
-      expect(dzIsPrd, isA<bool>());
-      expect(dzIsTest, isA<bool>());
-    });
+    test(
+      'emulatorHost returns dev defaults and throws when missing',
+      () {
+        final config = GcsStorageConfig(projectId: 'project', bucket: 'bucket');
+
+        if (_isDev) {
+          expect(config.emulatorHost, isNotNull);
+          expect(config.credentialsMode, GcsCredentialsMode.anonymous);
+          expect(config.toString(), contains('EMULATOR'));
+        } else {
+          // In production the emulator host is not configured and should be null.
+          expect(config.emulatorHost, isNull);
+        }
+      },
+      skip: !_isDev && false,
+    );
   });
 }

@@ -69,4 +69,32 @@ void main() {
       expect(contract.toJson(), json);
     });
   });
+
+  group('AuthorityContract edge cases', () {
+    test('handles missing roles/capabilities', () {
+      final contract = AuthorityContract.fromJson(const {});
+      expect(contract.roles, isEmpty);
+      expect(contract.capabilities, isEmpty);
+    });
+
+    test('handles null roles/capabilities', () {
+      final contract = AuthorityContract.fromJson(const {
+        'roles': null,
+        'capabilities': null,
+      });
+      expect(contract.roles, isEmpty);
+      expect(contract.capabilities, isEmpty);
+    });
+
+    test('toDomain with invalid role/capability', () {
+      const contract = AuthorityContract(
+        roles: ['INVALID!'],
+        capabilities: ['invalid-cap'],
+      );
+      final authority = contract.toDomain();
+      // reconstruct should preserve values even if they would be invalid
+      expect(authority.roles.first.name, 'INVALID!');
+      expect(authority.capabilities.first.id, 'invalid-cap');
+    });
+  });
 }

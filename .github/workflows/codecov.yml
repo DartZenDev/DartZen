@@ -87,7 +87,6 @@ jobs:
         run: |
           set -eux
           export DZ_ENV=dev
-          # Use the repository's matrix test script to match local runs
           melos run test:matrix
 
       - name: Convert DEV JSON to per-package LCOV

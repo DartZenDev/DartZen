@@ -13,14 +13,8 @@ import 'zen_storage_reader.dart';
 /// so tests can exercise the ADC branch without contacting metadata servers.
 @visibleForTesting
 Future<http.Client> Function({List<String>? scopes})
-gcsClientViaApplicationDefaultCredentials = ({List<String>? scopes}) {
-  if (dzIsTest) {
-    // During tests prefer a simple in-memory client to avoid contacting
-    // the metadata server (which can hang or fail in CI).
-    return Future.value(http.Client());
-  }
-  return auth.clientViaApplicationDefaultCredentials(scopes: scopes ?? []);
-};
+gcsClientViaApplicationDefaultCredentials = ({List<String>? scopes}) =>
+    auth.clientViaApplicationDefaultCredentials(scopes: scopes ?? []);
 
 /// A [ZenStorageReader] backed by Google Cloud Storage.
 ///

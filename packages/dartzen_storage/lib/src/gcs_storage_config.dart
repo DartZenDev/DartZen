@@ -31,6 +31,7 @@ class GcsStorageConfig {
 
     final effectiveEmulatorHost =
         emulatorHost ?? (dzIsPrd ? null : 'localhost:8080');
+
     final effectiveCredentialsMode =
         credentialsMode ??
         (dzIsPrd

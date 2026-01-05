@@ -71,6 +71,13 @@ while IFS= read -r -d '' cov_root; do
     pkg_lcov="$pkgdir/coverage/lcov.info"
     cat ${converted[@]} > "$pkg_lcov" || true
     package=$(basename "$pkgdir")
+    # Canonicalize SF lines that may contain absolute paths (SF:/abs/path/.../packages/<pkg>/lib/)
+    if sed -i "s|SF:.*/packages/$package/lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null; then
+      :
+    else
+      sed -i '' "s|SF:.*/packages/$package/lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null || true
+    fi
+    # Also convert SF:lib/ relative paths to the package-qualified form
     if sed -i "s|SF:lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null; then
       :
     else
@@ -117,7 +124,7 @@ for pkgdir in packages/* apps/*; do
     continue
   fi
 
-  # Merge DA entries across all lcov files: for each source file+line keep the max hit value
+  # Merge DA entries across all lcov files: for each source file+line keep sum hits across runs to reflect combined execution counts.
   # awk will output combined per-file totals
   read cov loc < <(
     awk '
@@ -125,13 +132,14 @@ for pkgdir in packages/* apps/*; do
       /^SF:/ { sf = substr($0,4); next }
       /^DA:/ {
         split($0,a,":"); split(a[2],b,","); line = b[1]; hits = b[2] + 0; key = sf "|" line;
-        if (key in max) { if (hits > max[key]) max[key] = hits } else max[key] = hits;
+        # Sum hits across multiple lcov inputs so aggregated DA reflects combined execution counts
+        if (key in sum) sum[key] += hits; else sum[key] = hits;
         next
       }
       END {
-        # compute total and covered by source file
-        for (k in max) {
-          split(k, parts, "|"); file = parts[1]; total[file]++; if (max[k] > 0) covered[file]++;
+        # compute total and covered by source file based on summed hits
+        for (k in sum) {
+          split(k, parts, "|"); file = parts[1]; total[file]++; if (sum[k] > 0) covered[file]++;
         }
         c = 0; t = 0; for (f in total) { c += covered[f] + 0; t += total[f] + 0 }
         print c, t

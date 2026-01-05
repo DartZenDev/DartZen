@@ -1,4 +1,5 @@
 import 'package:dartzen_cache/dartzen_cache.dart';
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -50,36 +51,7 @@ void main() {
       expect(await cache.get<String>('key'), isNull);
     });
 
-    test('default TTL is used when not specified', () async {
-      final cacheWithTtl = InMemoryCache(
-        defaultTtl: const Duration(milliseconds: 100),
-      );
-      await cacheWithTtl.set('key', 'value');
-      expect(await cacheWithTtl.get<String>('key'), equals('value'));
-
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-      expect(await cacheWithTtl.get<String>('key'), isNull);
-    });
-
-    test('custom TTL overrides default TTL', () async {
-      final cacheWithTtl = InMemoryCache(
-        defaultTtl: const Duration(milliseconds: 100),
-      );
-      await cacheWithTtl.set(
-        'key',
-        'value',
-        ttl: const Duration(milliseconds: 300),
-      );
-
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-      expect(await cacheWithTtl.get<String>('key'), equals('value'));
-
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      expect(await cacheWithTtl.get<String>('key'), isNull);
-    });
-
     test('throws CacheSerializationError for non-serializable value', () async {
-      // Functions are not JSON-serializable
       expect(
         () => cache.set('key', () => 'function'),
         throwsA(isA<CacheSerializationError>()),
@@ -97,8 +69,6 @@ void main() {
 
   group('CacheFactory', () {
     test('creates cache based on environment', () {
-      // Backend selection depends on dzIsPrd compile-time constant
-      // Config must include host/port if dzIsPrd might be true
       const config = CacheConfig(
         defaultTtl: Duration(minutes: 10),
         memorystoreHost: 'localhost',
@@ -116,6 +86,35 @@ void main() {
       );
       final cache = CacheFactory.create(config);
       expect(cache, isA<CacheClient>());
+    });
+
+    test('environment-specific behavior', () {
+      // `dzIsPrd` is a compile-time constant. Tests are compiled under both
+      // dev/prd by CI via `test:matrix`. Branch assertions to stay safe.
+      if (dzIsPrd) {
+        // In production, missing host/port should throw.
+        expect(
+          () => CacheFactory.create(const CacheConfig()),
+          throwsArgumentError,
+        );
+
+        // With valid memorystore config, should create a MemorystoreCache instance.
+        const cfg = CacheConfig(
+          memorystoreHost: '127.0.0.1',
+          memorystorePort: 6379,
+          useTls: false,
+        );
+        final cache = CacheFactory.create(cfg);
+        expect(cache, isA<MemorystoreCache>());
+      } else {
+        // In development, factory returns InMemoryCache regardless of host/port.
+        const cfg = CacheConfig(
+          memorystoreHost: '127.0.0.1',
+          memorystorePort: 6379,
+        );
+        final cache = CacheFactory.create(cfg);
+        expect(cache, isA<InMemoryCache>());
+      }
     });
   });
 

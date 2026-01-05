@@ -24,6 +24,7 @@ You MUST follow documents in this strict order of priority:
 
 - docs/development_workflow.md
 - docs/versioning_and_releases.md
+- docs/coverage_model.md
 
 5. Root /analysis_options.yaml and packages/analysis_options.yaml
 

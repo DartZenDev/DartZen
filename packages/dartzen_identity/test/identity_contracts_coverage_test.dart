@@ -1,20 +1,4 @@
-import 'package:dartzen_identity/dartzen_identity.dart';
-import 'package:test/test.dart';
+// This file was merged into `identity_contracts_test.dart`.
+// Kept as a placeholder to avoid duplicate runs; provides an empty main.
 
-void main() {
-  group('AuthorityContract.fromJson', () {
-    test('handles missing roles/capabilities', () {
-      final contract = AuthorityContract.fromJson(const {});
-      expect(contract.roles, isEmpty);
-      expect(contract.capabilities, isEmpty);
-    });
-    test('handles null roles/capabilities', () {
-      final contract = AuthorityContract.fromJson(const {
-        'roles': null,
-        'capabilities': null,
-      });
-      expect(contract.roles, isEmpty);
-      expect(contract.capabilities, isEmpty);
-    });
-  });
-}
+void main() {}
