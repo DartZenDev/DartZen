@@ -24,7 +24,6 @@ Before writing or changing anything, you **must read and follow** the rules and 
 
 Additionally, **before starting work**, read and respect:
 
-- `/TEST_COVERAGE_PLAN.md`
 - `/docs/coverage_model.md`
 - `.github/implementation-plan-template.md`
 
