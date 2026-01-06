@@ -1,3 +1,4 @@
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/src/connection/firestore_config.dart';
 import 'package:test/test.dart';
 
@@ -106,6 +107,271 @@ void main() {
       const prodConfig = FirestoreConfig.production();
 
       expect(prodConfig.toString(), equals('FirestoreConfig(PRD)'));
+    });
+  });
+
+  group('FirestoreConfig factory and helpers', () {
+    test('throws when projectId is missing', () {
+      // dzGcloudProject is a compile-time constant. If it's empty the
+      // factory should throw; if it's provided at compile-time the factory
+      // should succeed. Guard the expectation so tests are deterministic.
+      if (dzGcloudProject.isEmpty) {
+        expect(FirestoreConfig.new, throwsStateError);
+      } else {
+        expect(FirestoreConfig.new, returnsNormally);
+      }
+    });
+
+    test('production helper has expected fields and toString', () {
+      const cfg = FirestoreConfig.production(projectId: 'prd-1');
+      expect(cfg.isProduction, isTrue);
+      expect(cfg.projectId, equals('prd-1'));
+      expect(cfg.emulatorHost, isNull);
+      expect(cfg.emulatorPort, isNull);
+      expect(cfg.toString(), contains('PRD'));
+    });
+
+    test('emulator helper sets host/port and toString', () {
+      const cfg = FirestoreConfig.emulator(
+        host: '127.0.0.1',
+        port: 9090,
+        projectId: 'dev-1',
+      );
+      expect(cfg.isProduction, isFalse);
+      expect(cfg.projectId, equals('dev-1'));
+      expect(cfg.emulatorHost, equals('127.0.0.1'));
+      expect(cfg.emulatorPort, equals(9090));
+      expect(cfg.toString(), contains('EMULATOR'));
+    });
+
+    test(
+      'factory parses emulator host when not production, otherwise returns production',
+      () {
+        final cfg = FirestoreConfig(
+          projectId: 'p1',
+          emulatorHost: 'host.local:1234',
+        );
+        if (dzIsPrd) {
+          expect(cfg.isProduction, isTrue);
+        } else {
+          expect(cfg.isProduction, isFalse);
+          expect(cfg.emulatorHost, equals('host.local'));
+          expect(cfg.emulatorPort, equals(1234));
+        }
+      },
+    );
+
+    test(
+      'factory throws ArgumentError for invalid host format when not production',
+      () {
+        if (dzIsPrd) {
+          // In production mode factory ignores emulatorHost and returns production.
+          final cfg = FirestoreConfig(projectId: 'p2', emulatorHost: 'invalid');
+          expect(cfg.isProduction, isTrue);
+        } else {
+          expect(
+            () => FirestoreConfig(projectId: 'p2', emulatorHost: 'invalid'),
+            throwsArgumentError,
+          );
+        }
+      },
+    );
+
+    test(
+      'factory throws ArgumentError for non-numeric port when not production',
+      () {
+        if (dzIsPrd) {
+          final cfg = FirestoreConfig(
+            projectId: 'p3',
+            emulatorHost: 'host:abc',
+          );
+          expect(cfg.isProduction, isTrue);
+        } else {
+          expect(
+            () => FirestoreConfig(projectId: 'p3', emulatorHost: 'host:abc'),
+            throwsArgumentError,
+          );
+        }
+      },
+    );
+  });
+
+  group('FirestoreConfig factory (emulator-mode behaviors)', () {
+    const isPrd = dzIsPrd;
+
+    test('throws when effective project id is empty', () {
+      if (isPrd) {
+        // In production builds the factory should succeed; provide a
+        // non-empty projectId to avoid the factory's validation failure.
+        final cfg = FirestoreConfig(
+          projectId: 'prd-project',
+          emulatorHost: 'localhost:8080',
+        );
+        expect(cfg.isProduction, isTrue);
+        expect(cfg.projectId, equals('prd-project'));
+      } else {
+        expect(
+          () => FirestoreConfig(projectId: '', emulatorHost: 'localhost:8080'),
+          throwsStateError,
+        );
+      }
+    });
+
+    test('throws when emulator host is empty in dev mode', () {
+      if (isPrd) {
+        final cfg = FirestoreConfig(projectId: 'dev-project', emulatorHost: '');
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(projectId: 'dev-project', emulatorHost: ''),
+          throwsStateError,
+        );
+      }
+    });
+
+    test('throws when emulator host missing port', () {
+      if (isPrd) {
+        final cfg = FirestoreConfig(
+          projectId: 'dev-project',
+          emulatorHost: 'localhost',
+        );
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(
+            projectId: 'dev-project',
+            emulatorHost: 'localhost',
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+
+    test('throws when emulator port is not numeric', () {
+      if (isPrd) {
+        final cfg = FirestoreConfig(
+          projectId: 'dev-project',
+          emulatorHost: 'localhost:abc',
+        );
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(
+            projectId: 'dev-project',
+            emulatorHost: 'localhost:abc',
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+
+    test('parses host and port correctly', () {
+      final cfg = FirestoreConfig(
+        projectId: 'my-proj',
+        emulatorHost: '127.0.0.1:8085',
+      );
+      if (isPrd) {
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(cfg.isProduction, isFalse);
+        expect(cfg.emulatorHost, '127.0.0.1');
+        expect(cfg.emulatorPort, 8085);
+        expect(cfg.projectId, 'my-proj');
+        expect(cfg.toString().contains('EMULATOR'), isTrue);
+      }
+    });
+
+    test('additional permutations: explicit host/port and error cases', () {
+      // explicit host:port
+      final explicit = FirestoreConfig(
+        projectId: 'p-exp',
+        emulatorHost: 'host.local:1234',
+      );
+      if (isPrd) {
+        expect(explicit.isProduction, isTrue);
+      } else {
+        expect(explicit.isProduction, isFalse);
+        expect(explicit.emulatorHost, equals('host.local'));
+        expect(explicit.emulatorPort, equals(1234));
+      }
+
+      // missing port
+      if (isPrd) {
+        final cfg = FirestoreConfig(
+          projectId: 'p-miss',
+          emulatorHost: 'hostonly',
+        );
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(projectId: 'p-miss', emulatorHost: 'hostonly'),
+          throwsArgumentError,
+        );
+      }
+
+      // non-numeric port
+      if (isPrd) {
+        final cfg = FirestoreConfig(
+          projectId: 'p-non',
+          emulatorHost: 'host:abc',
+        );
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(projectId: 'p-non', emulatorHost: 'host:abc'),
+          throwsArgumentError,
+        );
+      }
+
+      // empty emulator host
+      if (isPrd) {
+        final cfg = FirestoreConfig(projectId: 'p-empty', emulatorHost: '');
+        expect(cfg.isProduction, isTrue);
+      } else {
+        expect(
+          () => FirestoreConfig(projectId: 'p-empty', emulatorHost: ''),
+          throwsStateError,
+        );
+      }
+    });
+  });
+
+  group('FirestoreConfig helpers', () {
+    test('production helper toString and equality', () {
+      const a = FirestoreConfig.production(projectId: 'prd-id');
+      const b = FirestoreConfig.production(projectId: 'prd-id');
+      expect(a, equals(b));
+      expect(a.toString(), contains('PRD'));
+    });
+
+    test('emulator helper default values', () {
+      const e = FirestoreConfig.emulator();
+      expect(e.isProduction, isFalse);
+      expect(e.emulatorHost, 'localhost');
+      expect(e.emulatorPort, 8080);
+      expect(e.projectId, 'dev-project');
+    });
+
+    test('equality and hashCode edge branches', () {
+      const a = FirestoreConfig.production(projectId: 'same');
+      // identical path
+      const b = a;
+      expect(identical(a, b), isTrue);
+      expect(a == b, isTrue);
+
+      // different type comparison should be false
+      expect(a == ('not-config' as Object), isFalse);
+
+      // different values produce different hashCodes
+      const c = FirestoreConfig.production(projectId: 'other');
+      expect(a == c, isFalse);
+      expect(a.hashCode == c.hashCode, isFalse);
+
+      // emulator instances with different ports are not equal
+      const e1 = FirestoreConfig.emulator(projectId: 'p');
+      const e2 = FirestoreConfig.emulator(port: 8081, projectId: 'p');
+      expect(e1 == e2, isFalse);
+      expect(e1.hashCode == e2.hashCode, isFalse);
     });
   });
 }

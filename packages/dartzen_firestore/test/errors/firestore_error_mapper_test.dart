@@ -8,7 +8,6 @@ import 'package:test/test.dart';
 
 class MockLocalizationLoader extends ZenLocalizationLoader {
   @override
-  @override
   Future<String> load(String path) async => jsonEncode({
     'firestore.error.permission_denied': 'Permission denied',
     'firestore.error.not_found': 'Document not found',

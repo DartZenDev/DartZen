@@ -2,7 +2,71 @@ import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('ZenRequest', () {
+  group('ZenRequest/ZenResponse deep-equals & hash', () {
+    test('deep equals for nested maps and lists and stable hashCode', () {
+      final dataA = {
+        'a': 1,
+        'nested': {
+          'list': [
+            1,
+            2,
+            {'x': 'y'},
+          ],
+          'map': {'k': 'v'},
+        },
+      };
+
+      final r1 = ZenRequest(id: 'id1', path: '/p', data: dataA);
+      final r2 = ZenRequest.fromMap(r1.toMap());
+
+      expect(r1, equals(r2));
+      expect(r1.hashCode, equals(r2.hashCode));
+    });
+
+    test('non-equality when nested data differs', () {
+      final base = {
+        'a': 1,
+        'b': {'x': 2},
+      };
+      final r1 = ZenRequest(id: '1', path: '/p', data: base);
+      const r2 = ZenRequest(
+        id: '1',
+        path: '/p',
+        data: {
+          'a': 1,
+          'b': {'x': 3},
+        },
+      );
+      expect(r1 == r2, isFalse);
+      expect(r1.hashCode == r2.hashCode, isFalse);
+    });
+
+    test('order-insensitive map equality for hash stability', () {
+      final m1 = {'k1': 1, 'k2': 2};
+      final m2 = {'k2': 2, 'k1': 1};
+      final r1 = ZenResponse(id: 'r', status: 200, data: m1);
+      final r2 = ZenResponse(id: 'r', status: 200, data: m2);
+      expect(r1, equals(r2));
+      // Hash codes may differ due to map entry iteration/order; only require equality.
+    });
+
+    test('ZenResponse error/success flags and equality', () {
+      const ok = ZenResponse(id: 'ok', status: 200, data: {'v': true});
+      const err = ZenResponse(id: 'err', status: 404, error: 'Not found');
+
+      expect(ok.isSuccess, isTrue);
+      expect(ok.isError, isFalse);
+
+      expect(err.isSuccess, isFalse);
+      expect(err.isError, isTrue);
+
+      final err2 = ZenResponse.fromMap(err.toMap());
+      expect(err2, equals(err));
+      expect(err2.hashCode, equals(err.hashCode));
+    });
+  });
+
+  group('ZenRequest basic behaviors', () {
     test('creates request with all fields', () {
       const request = ZenRequest(
         id: '123',
@@ -98,7 +162,7 @@ void main() {
     });
   });
 
-  group('ZenResponse', () {
+  group('ZenResponse basic behaviors', () {
     test('creates response with all fields', () {
       const response = ZenResponse(
         id: '123',

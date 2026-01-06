@@ -94,5 +94,30 @@ void main() {
       expect(telemetry.lastCall, equals('onBatchCommit'));
       expect(telemetry.lastMetadata?['targetModule'], equals('identity'));
     });
+
+    test('custom telemetry receives all hooks (write/notFound/error)', () {
+      final telemetry = MockTelemetry();
+      final meta = {'targetModule': 'test-mod'};
+
+      telemetry.onWrite(
+        'col/doc',
+        const Duration(milliseconds: 5),
+        metadata: meta,
+      );
+      expect(telemetry.lastCall, equals('onWrite'));
+      expect(telemetry.lastMetadata?['targetModule'], equals('test-mod'));
+
+      telemetry.onNotFound('col/missing', metadata: meta);
+      expect(telemetry.lastCall, equals('onNotFound'));
+      expect(telemetry.lastMetadata?['targetModule'], equals('test-mod'));
+
+      telemetry.onError(
+        'commit',
+        const ZenUnknownError('boom'),
+        metadata: meta,
+      );
+      expect(telemetry.lastCall, equals('onError'));
+      expect(telemetry.lastMetadata?['targetModule'], equals('test-mod'));
+    });
   });
 }

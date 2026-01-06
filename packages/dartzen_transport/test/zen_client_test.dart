@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:http/http.dart' as http;
@@ -475,6 +476,152 @@ void main() {
 
         client.close();
       });
+
+      group('ZenClient edge cases', () {
+        test('handles unknown transport header gracefully', () async {
+          final mock = MockClient(
+            (request) async => http.Response.bytes(
+              utf8.encode(jsonEncode({'data': 'x'})),
+              200,
+              headers: {zenTransportHeaderName: 'unknown-format'},
+            ),
+          );
+
+          final client = ZenClient(baseUrl: baseUrl, httpClient: mock);
+
+          // Should not throw; decoded data becomes null due to parse/decode failure
+          final resp = await client.get('/api/x');
+          expect(resp.status, 200);
+          expect(resp.data, isNull);
+
+          client.close();
+        });
+
+        test('msgpack decoding failure yields null data (no throw)', () async {
+          final invalidMsgpack = Uint8List.fromList([0xC1]); // reserved/invalid
+
+          final mock = MockClient(
+            (request) async => http.Response.bytes(
+              invalidMsgpack,
+              200,
+              headers: {zenTransportHeaderName: 'msgpack'},
+            ),
+          );
+
+          final client = ZenClient(
+            baseUrl: baseUrl,
+            format: ZenTransportFormat.msgpack,
+            httpClient: mock,
+          );
+
+          final resp = await client.get('/api/msg');
+          // Decoder should fail internally and client should return null data
+          expect(resp.status, 200);
+          expect(resp.data, isNull);
+
+          client.close();
+        });
+
+        test(
+          'custom headers override default Content-Type and format header',
+          () async {
+            final mock = MockClient((request) async {
+              // Custom headers passed by caller should win
+              expect(
+                request.headers['Content-Type'],
+                equals('application/custom'),
+              );
+              expect(
+                request.headers[zenTransportHeaderName],
+                equals('customfmt'),
+              );
+
+              return http.Response(
+                jsonEncode({'ok': true}),
+                200,
+                headers: {zenTransportHeaderName: 'json'},
+              );
+            });
+
+            final client = ZenClient(baseUrl: baseUrl, httpClient: mock);
+
+            await client.get(
+              '/api/custom',
+              headers: {
+                'Content-Type': 'application/custom',
+                zenTransportHeaderName: 'customfmt',
+              },
+            );
+
+            client.close();
+          },
+        );
+      });
+    });
+  });
+
+  group('ZenTransport basic behaviors', () {
+    test('ZenTransportFormat.parse accepts valid and rejects invalid', () {
+      expect(ZenTransportFormat.parse('json'), equals(ZenTransportFormat.json));
+      expect(
+        ZenTransportFormat.parse('msgpack'),
+        equals(ZenTransportFormat.msgpack),
+      );
+      expect(
+        () => ZenTransportFormat.parse('invalid'),
+        throwsA(isA<ZenTransportException>()),
+      );
+    });
+
+    test('ZenRequest/ZenResponse toMap/fromMap and equality/hashCode', () {
+      const req = ZenRequest(id: '1', path: '/x', data: {'k': 'v'});
+      final rmap = req.toMap();
+      final req2 = ZenRequest.fromMap(rmap);
+      expect(req2, equals(req));
+      expect(req.hashCode, equals(req2.hashCode));
+
+      const resp = ZenResponse(id: '1', status: 200, data: {'ok': true});
+      final rmap2 = resp.toMap();
+      final resp2 = ZenResponse.fromMap(rmap2);
+      expect(resp2, equals(resp));
+      expect(resp.isSuccess, isTrue);
+      expect(resp.isError, isFalse);
+    });
+
+    test('ZenMessage encode/decodeWith roundtrip (json and msgpack)', () {
+      const req = ZenRequest(id: '42', path: '/test', data: {'n': 1});
+
+      final jsonBytes = req.encodeWith(ZenTransportFormat.json);
+      final decodedJson = ZenMessage.decodeWith(
+        Uint8List.fromList(jsonBytes),
+        ZenTransportFormat.json,
+      );
+      expect(decodedJson['id'], equals('42'));
+
+      final mpBytes = req.encodeWith(ZenTransportFormat.msgpack);
+      final decodedMp = ZenMessage.decodeWith(
+        Uint8List.fromList(mpBytes),
+        ZenTransportFormat.msgpack,
+      );
+      expect(decodedMp['id'], equals('42'));
+    });
+
+    test('ZenClient decodes response and extracts error/message', () async {
+      final bodyMap = {'id': 'r1', 'status': 400, 'error': 'bad'};
+      final bodyBytes = ZenEncoder.encode(bodyMap, ZenTransportFormat.json);
+
+      final mock = MockClient(
+        (http.Request request) async => http.Response.bytes(
+          bodyBytes,
+          400,
+          headers: {zenTransportHeaderName: 'json'},
+        ),
+      );
+
+      final client = ZenClient(baseUrl: 'http://localhost', httpClient: mock);
+      final resp = await client.get('/x');
+      expect(resp.status, equals(400));
+      expect(resp.error, contains('bad'));
     });
   });
 }

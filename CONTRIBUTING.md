@@ -176,7 +176,7 @@ Then create a Pull Request on GitHub.
 
 ### Implementation Plan
 
-All new DartZen packages must be implemented using the official Implementation Plan Template located at `./github/implementation-plan-template.md`.
+All new DartZen packages must be implemented using the official Implementation Plan Template located at `./github/prompt-implementation-plan.md`.
 
 ### Dart Analysis
 
@@ -207,6 +207,8 @@ melos run format:check
 ```bash
 melos run test
 ```
+
+To increase new DartZen package test coverage, follow the "Write Tests for DartZen Package" plan located at `./github/prompt-test-coverage.md`.
 
 ### Documentation
 

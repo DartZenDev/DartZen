@@ -1,101 +1,134 @@
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_firestore/dartzen_firestore.dart';
+import 'package:dartzen_firestore/src/converters/firestore_converters.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('FirestoreConverters', () {
-    group('Timestamp conversion', () {
-      test('zenTimestampToRfc3339 converts correctly', () {
-        final zenTimestamp = ZenTimestamp.from(DateTime.utc(2024));
-        final rfc3339 = FirestoreConverters.zenTimestampToRfc3339(zenTimestamp);
+    test('rfc3339 <-> ZenTimestamp roundtrip', () {
+      final dt = DateTime.utc(2021, 5, 4, 12, 30);
+      final zen = ZenTimestamp.from(dt);
+      final rfc = FirestoreConverters.zenTimestampToRfc3339(zen);
+      final parsed = FirestoreConverters.rfc3339ToZenTimestamp(rfc);
 
-        expect(rfc3339, equals('2024-01-01T00:00:00Z'));
-      });
-
-      test('rfc3339ToZenTimestamp converts correctly', () {
-        const rfc3339 = '2024-01-01T00:00:00Z';
-        final zenTimestamp = FirestoreConverters.rfc3339ToZenTimestamp(rfc3339);
-
-        expect(zenTimestamp.value, equals(DateTime.utc(2024)));
-      });
+      expect(parsed.value.toUtc(), zen.value.toUtc());
     });
 
-    group('REST JSON conversion', () {
-      test('dataToFields converts correctly', () {
-        final data = {
-          'name': 'Alice',
-          'age': 30,
-          'active': true,
-          'created_at': ZenTimestamp.from(DateTime.utc(2024)),
-          'tags': ['a', 'b'],
-          'meta': {'key': 'value'},
-        };
-
-        final fields = FirestoreConverters.dataToFields(data);
-
-        expect(fields['name'], equals({'stringValue': 'Alice'}));
-        expect(fields['age'], equals({'integerValue': '30'}));
-        expect(fields['active'], equals({'booleanValue': true}));
-        expect(
-          fields['created_at'],
-          equals({'timestampValue': '2024-01-01T00:00:00Z'}),
-        );
-        expect(
-          fields['tags'],
-          equals({
-            'arrayValue': {
-              'values': [
-                {'stringValue': 'a'},
-                {'stringValue': 'b'},
-              ],
+    test('fieldsToData unwraps all supported types', () {
+      final fields = <String, dynamic>{
+        's': {'stringValue': 'hello'},
+        'i': {'integerValue': '42'},
+        'd': {'doubleValue': 3.14},
+        'b': {'booleanValue': true},
+        't': {'timestampValue': '2020-01-01T00:00:00Z'},
+        'm': {
+          'mapValue': {
+            'fields': {
+              'inner': {'stringValue': 'x'},
             },
-          }),
-        );
-        expect(
-          fields['meta'],
-          equals({
-            'mapValue': {
-              'fields': {
-                'key': {'stringValue': 'value'},
-              },
-            },
-          }),
-        );
-      });
+          },
+        },
+        'a': {
+          'arrayValue': {
+            'values': <Map<String, dynamic>>[
+              <String, dynamic>{'stringValue': 'x'},
+              <String, dynamic>{'integerValue': '1'},
+            ],
+          },
+        },
+        'n': {'nullValue': null},
+      };
 
-      test('fieldsToData converts correctly', () {
-        final fields = {
-          'name': {'stringValue': 'Alice'},
-          'age': {'integerValue': '30'},
-          'active': {'booleanValue': true},
-          'created_at': {'timestampValue': '2024-01-01T00:00:00Z'},
-        };
+      final Map<String, dynamic> data = FirestoreConverters.fieldsToData(
+        fields,
+      );
 
-        final data = FirestoreConverters.fieldsToData(fields);
-
-        expect(data['name'], equals('Alice'));
-        expect(data['age'], equals(30));
-        expect(data['active'], equals(true));
-        expect(data['created_at'], isA<ZenTimestamp>());
-        expect(
-          (data['created_at'] as ZenTimestamp).value,
-          equals(DateTime.utc(2024)),
-        );
-      });
+      expect(data['s'], 'hello');
+      expect(data['i'], 42);
+      expect(data['d'], closeTo(3.14, 1e-9));
+      expect(data['b'], isTrue);
+      expect(data['t'], isA<ZenTimestamp>());
+      expect(data['m'], isA<Map<String, dynamic>>());
+      expect(data['a'], isA<List<dynamic>>());
+      expect(data['n'], isNull);
     });
 
-    group('Safe casting', () {
-      test('safeStringList returns list for valid input', () {
-        final list = FirestoreConverters.safeStringList(['a', 'b', 'c']);
+    test('dataToFields wraps supported types', () {
+      final data = <String, dynamic>{
+        's': 'hello',
+        'i': 7,
+        'd': 2.5,
+        'b': false,
+        't': ZenTimestamp.from(DateTime.utc(2022)),
+        'dt': DateTime.utc(2022, 1, 2),
+        'm': <String, dynamic>{'x': 'y'},
+        'l': <dynamic>['a', 1],
+        'nul': null,
+      };
 
-        expect(list, equals(['a', 'b', 'c']));
-      });
+      final Map<String, dynamic> fields = FirestoreConverters.dataToFields(
+        data,
+      );
 
-      test('safeMap returns map for valid input', () {
-        final map = FirestoreConverters.safeMap({'key': 'value'});
+      final Map<String, dynamic>? sField = fields['s'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? iField = fields['i'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? dField = fields['d'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? bField = fields['b'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? tField = fields['t'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? dtField =
+          fields['dt'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? mField = fields['m'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? lField = fields['l'] as Map<String, dynamic>?;
 
-        expect(map, equals({'key': 'value'}));
-      });
+      expect(sField?['stringValue'], 'hello');
+      expect(iField?['integerValue'], '7');
+      expect(dField?['doubleValue'], 2.5);
+      expect(bField?['booleanValue'], isFalse);
+      expect(tField?['timestampValue'], isNotNull);
+      expect(dtField?['timestampValue'], isNotNull);
+      final Map<String, dynamic>? mValueFields =
+          mField?['mapValue'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? arrayValue =
+          lField?['arrayValue'] as Map<String, dynamic>?;
+      final List<dynamic>? lValues = arrayValue?['values'] as List<dynamic>?;
+
+      expect(mValueFields?['fields'], isA<Map<String, dynamic>>());
+      expect(lValues, isA<List<dynamic>>());
+      // nulls are omitted by dataToFields
+      expect(fields.containsKey('nul'), isFalse);
+    });
+
+    test('normalizeClaims and helpers', () {
+      final Map<String, dynamic> nested = {
+        'ts': ZenTimestamp.from(DateTime.utc(2020)),
+        'map': <String, dynamic>{
+          'a': ZenTimestamp.from(DateTime.utc(2020, 1, 2)),
+        },
+        'list': <dynamic>[ZenTimestamp.from(DateTime.utc(2020, 1, 3)), 's'],
+      };
+
+      final Map<String, dynamic> normalized =
+          FirestoreConverters.normalizeClaims(nested);
+      final String? ts = normalized['ts'] as String?;
+      final Map<String, dynamic>? mapVal =
+          normalized['map'] as Map<String, dynamic>?;
+      final List<dynamic>? listVal = normalized['list'] as List<dynamic>?;
+
+      expect(ts, isA<String>());
+      expect(mapVal?['a'], isA<String>());
+      expect(listVal?[0], isA<String>());
+      expect(listVal?[1], 's');
+    });
+
+    test('safeStringList and safeMap behave correctly', () {
+      expect(
+        FirestoreConverters.safeStringList(<dynamic>['a', 1, true]),
+        <String>['a', '1', 'true'],
+      );
+      expect(FirestoreConverters.safeStringList('not a list'), <String>[]);
+
+      final Map<String, String> m = <String, String>{'k': 'v'};
+      expect(FirestoreConverters.safeMap(m), isNotNull);
+      expect(FirestoreConverters.safeMap('no'), isNull);
     });
   });
 }

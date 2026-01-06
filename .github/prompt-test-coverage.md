@@ -1,4 +1,4 @@
-## **PROMPT: Write Tests for DartZen Package**
+# **PROMPT: Write Tests for DartZen Package**
 
 You are acting as a **test engineer** for the DartZen monorepo.
 
@@ -9,7 +9,7 @@ Your only mission is **writing correct, maintainable tests** that increase cover
 
 ---
 
-### **1\. Mandatory reading (DO THIS FIRST)**
+## **1\. Mandatory reading (DO THIS FIRST)**
 
 Before writing or changing anything, you **must read and follow** the rules and principles described in **all** of the following documents:
 
@@ -25,13 +25,12 @@ Before writing or changing anything, you **must read and follow** the rules and 
 Additionally, **before starting work**, read and respect:
 
 - `/docs/coverage_model.md`
-- `.github/implementation-plan-template.md`
 
 These documents override any default assumptions you may have.
 
 ---
 
-### **2\. Scope and constraints (ABSOLUTE RULES)**
+## **2\. Scope and constraints (ABSOLUTE RULES)**
 
 - ❌ **DO NOT modify package source files**
 - ❌ **DO NOT refactor production code**
@@ -50,7 +49,7 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
 
 ---
 
-### **3\. Allowed exceptions**
+## **3\. Allowed exceptions**
 
 - `@visibleForTesting` **IS ALLOWED** for:
   - network adapters
@@ -64,7 +63,7 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
 
 ---
 
-### **4\. Testing strategy requirements**
+## **4\. Testing strategy requirements**
 
 - Prefer **behavioral testing** over implementation testing
 - Test through **public APIs** whenever possible
@@ -72,7 +71,7 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
 - Infrastructure and adapter code may use dependency injection for testability
 - Tests must be deterministic and CI-safe
 
-#### Environment, runtime flags and recommended approach
+## Environment, runtime flags and recommended approach
 
 - Tests **MUST** respect and rely on `DZ_ENV` and `DZ_PLATFORM` to exercise
   environment-specific code paths. CI and local validation run two test
@@ -113,7 +112,7 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
     each; the CI and compute scripts merge the resulting artifacts.
   - Group related tests into test suites within a single test file per package. Avoid splitting tests for the same production file across multiple test files.
 
-### Test hooks and guidance (CLARIFICATION)
+## Test hooks and guidance (CLARIFICATION)
 
 - Use DI and keep test helpers under
   `test/` or dev-only libraries so production artifacts are unaffected.
@@ -126,7 +125,7 @@ Look at **neighboring packages’ tests** to understand what is allowed and what
 
 ---
 
-### **5\. Coverage workflow (STRICT, STEP-BY-STEP)**
+## **5\. Coverage workflow (STRICT, STEP-BY-STEP)**
 
 You must follow this loop **for each file** in the package:
 
@@ -148,7 +147,7 @@ You must follow this loop **for each file** in the package:
 Coverage increase is **not optional**.
 If coverage cannot be increased for a specific file, you must clearly justify why.
 
-#### Coverage and inventory verification (MANDATORY)
+## Coverage and inventory verification (MANDATORY)
 
 - After writing and running tests, the assistant MUST execute:
   `scripts/inventory_uncovered.sh`
@@ -163,7 +162,7 @@ If coverage cannot be increased for a specific file, you must clearly justify wh
 
 ---
 
-### **6\. Running tests (IMPORTANT)**
+## **6\. Running tests (IMPORTANT)**
 
 ❌ **DO NOT** run tests like this:
 
@@ -177,10 +176,10 @@ If coverage cannot be increased for a specific file, you must clearly justify wh
 Correct example (adjust scope if needed):
 
 `melos exec --scope="PACKAGE_NAME" -- \
-  "dart run test --define=DZ_ENV=dev --define=DZ_PLATFORM=linux --coverage=coverage"`
+  "dart --define=DZ_ENV=dev --define=DZ_PLATFORM=linux test --coverage=coverage"`
 
 `melos exec --scope="PACKAGE_NAME" -- \
-  "dart run test --define=DZ_ENV=prd --define=DZ_PLATFORM=linux --coverage=coverage"`
+  "dart --define=DZ_ENV=prd --define=DZ_PLATFORM=linux test --coverage=coverage"`
 
 You must run both `DZ_ENV=dev` and `DZ_ENV=prd` passes and collect coverage
 from each. CI will convert/merge per-run artifacts into per-package `lcov_dev`/
@@ -192,7 +191,7 @@ from each. CI will convert/merge per-run artifacts into per-package `lcov_dev`/
 
 ---
 
-### **7\. Quality gates (NON-NEGOTIABLE)**
+## **7\. Quality gates (NON-NEGOTIABLE)**
 
 - `melos analyze` must pass with **zero issues**
 - All tests must pass locally
@@ -202,7 +201,7 @@ from each. CI will convert/merge per-run artifacts into per-package `lcov_dev`/
 
 ---
 
-### **8\. Final instruction**
+## **8\. Final instruction**
 
 The final response MUST explicitly reference the results of `scripts/inventory_uncovered.sh`.
 

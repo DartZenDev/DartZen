@@ -139,4 +139,108 @@ void main() {
       expect(a == c, isFalse);
     });
   });
+
+  group('Identity and Lifecycle behavior', () {
+    test('revoke with reason transitions to revoked with reason', () {
+      final l = IdentityLifecycle.initial();
+      final res = l.revoke('policy violation');
+      expect(res.isSuccess, isTrue);
+      final r = ok<IdentityLifecycle>(res);
+      expect(r.state, IdentityState.revoked);
+      expect(r.reason, 'policy violation');
+    });
+
+    test('activate on revoked returns unauthorized', () {
+      final l0 = IdentityLifecycle.initial();
+      final l = ok<IdentityLifecycle>(l0.revoke('reason'));
+      final res = l.activate();
+      expect(res.isFailure, isTrue);
+      expect(err<IdentityLifecycle>(res), isA<ZenUnauthorizedError>());
+    });
+
+    test('Identity.fromFacts activates when emailVerified true', () {
+      final id = ok<IdentityId>(IdentityId.create('user_from_facts'));
+      final cap = ok<Capability>(Capability.create('edit'));
+      final authority = Authority(capabilities: {cap});
+      final createdAt = ZenTimestamp.now();
+      final res = Identity.fromFacts(
+        id: id,
+        authority: authority,
+        facts: const IdentityVerificationFacts(emailVerified: true),
+        createdAt: createdAt,
+      );
+      expect(res.isSuccess, isTrue);
+      final identity = ok<Identity>(res);
+      expect(identity.lifecycle.state, IdentityState.active);
+    });
+
+    test('Identity.fromFacts remains pending when emailVerified false', () {
+      final id = ok<IdentityId>(IdentityId.create('user_from_facts_no'));
+      const authority = Authority();
+      final createdAt = ZenTimestamp.now();
+      final res = Identity.fromFacts(
+        id: id,
+        authority: authority,
+        facts: const IdentityVerificationFacts(emailVerified: false),
+        createdAt: createdAt,
+      );
+      expect(res.isSuccess, isTrue);
+      final identity = ok<Identity>(res);
+      expect(identity.lifecycle.state, IdentityState.pending);
+    });
+
+    test('Identity.can returns unauthorized when not active', () {
+      final id = ok<IdentityId>(IdentityId.create('pending_user'));
+      final identity = Identity.createPending(id: id);
+      final cap = ok<Capability>(Capability.create('edit'));
+      final res = identity.can(cap);
+      expect(res.isFailure, isTrue);
+      expect(err<bool>(res), isA<ZenUnauthorizedError>());
+    });
+
+    test('Identity.can returns capability check when active', () {
+      final id = ok<IdentityId>(IdentityId.create('active_user'));
+      final cap = ok<Capability>(Capability.create('edit'));
+      final authority = Authority(capabilities: {cap});
+      final createdAt = ZenTimestamp.now();
+      final identity = ok<Identity>(
+        Identity.fromFacts(
+          id: id,
+          authority: authority,
+          facts: const IdentityVerificationFacts(emailVerified: true),
+          createdAt: createdAt,
+        ),
+      );
+      final res = identity.can(cap);
+      expect(res.isSuccess, isTrue);
+      expect(ok<bool>(res), isTrue);
+
+      final other = ok<Capability>(Capability.create('view'));
+      final res2 = identity.can(other);
+      expect(res2.isSuccess, isTrue);
+      expect(ok<bool>(res2), isFalse);
+    });
+
+    test('withLifecycle and withAuthority produce distinct identities', () {
+      final id = ok<IdentityId>(IdentityId.create('u4'));
+      final identity = Identity.createPending(id: id);
+      final newLifecycle = ok<IdentityLifecycle>(
+        identity.lifecycle.disable('temp'),
+      );
+      final updated = identity.withLifecycle(newLifecycle);
+      expect(updated.lifecycle.state, IdentityState.disabled);
+      final newAuth = Authority(roles: {ok<Role>(Role.create('ADMIN'))});
+      final updatedAuth = identity.withAuthority(newAuth);
+      expect(updatedAuth.authority, newAuth);
+      expect(identity == updatedAuth, isFalse);
+    });
+
+    test('disable on revoked returns unauthorized', () {
+      final l0 = IdentityLifecycle.initial();
+      final revoked = ok<IdentityLifecycle>(l0.revoke('bad'));
+      final res = revoked.disable('temp');
+      expect(res.isFailure, isTrue);
+      expect(err<IdentityLifecycle>(res), isA<ZenUnauthorizedError>());
+    });
+  });
 }

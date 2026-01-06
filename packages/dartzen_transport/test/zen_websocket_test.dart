@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:test/test.dart';
 
@@ -181,8 +183,47 @@ void main() {
         });
       });
     });
-  });
 
+    group('additional branches', () {
+      test('header selection and parse behavior', () {
+        // Validate header parsing via ZenTransportFormat.parse
+        expect(
+          ZenTransportFormat.parse('json'),
+          equals(ZenTransportFormat.json),
+        );
+        expect(
+          ZenTransportFormat.parse('msgpack'),
+          equals(ZenTransportFormat.msgpack),
+        );
+        expect(
+          () => ZenTransportFormat.parse('bogus'),
+          throwsA(isA<ZenTransportException>()),
+        );
+      });
+
+      test('decoding non-map payload in ZenMessage.decodeWith throws', () {
+        // Create a JSON payload that is a list, not a map.
+        final bytes = ZenEncoder.encode([1, 2, 3], ZenTransportFormat.json);
+        expect(
+          () => ZenMessage.decodeWith(
+            Uint8List.fromList(bytes),
+            ZenTransportFormat.json,
+          ),
+          throwsA(isA<FormatException>()),
+        );
+      });
+
+      test('mapping throws on unexpected message types', () {
+        expect(
+          () => ZenWebSocket.mapMessageToResponse(
+            'not-bytes',
+            ZenTransportFormat.json,
+          ),
+          throwsA(isA<FormatException>()),
+        );
+      });
+    });
+  });
   // Note: Full ZenWebSocket integration tests require a live WebSocket server
   // and are better suited for integration test suites rather than unit tests.
   // The above tests verify that the encoding/decoding logic used by ZenWebSocket
