@@ -237,7 +237,7 @@ void main() {
         await FirestoreConnection.initialize(
           const FirestoreConfig.emulator(),
           httpClient: client,
-      );
+        );
 
         final telemetry = _TestTelemetry();
 
@@ -252,22 +252,33 @@ void main() {
         expect(result.isSuccess, isTrue);
         expect(commitRequests, isNotEmpty);
 
-        final body = jsonDecode(commitRequests.single.body) as Map<String, dynamic>;
-        final writes = (body['writes'] as List<dynamic>).cast<Map<String, dynamic>>();
+        final body =
+            jsonDecode(commitRequests.single.body) as Map<String, dynamic>;
+        final writes = (body['writes'] as List<dynamic>)
+            .cast<Map<String, dynamic>>();
 
         // There should be two writes; find update write and set write
         final updateWrite = writes.firstWhere((w) {
           final update = w['update'] as Map<String, dynamic>?;
-          return update != null && update['name']?.toString().contains('updoc') == true;
+          return update != null &&
+              update['name']?.toString().contains('updoc') == true;
         });
 
         final setWrite = writes.firstWhere((w) {
           final update = w['update'] as Map<String, dynamic>?;
-          return update != null && update['name']?.toString().contains('setdoc') == true;
+          return update != null &&
+              update['name']?.toString().contains('setdoc') == true;
         });
 
-        expect((updateWrite['currentDocument'] as Map<String, dynamic>)['exists'], isTrue);
-        expect((setWrite['currentDocument'] as Map<String, dynamic>)['exists'], isFalse);
-    });
+        expect(
+          (updateWrite['currentDocument'] as Map<String, dynamic>)['exists'],
+          isTrue,
+        );
+        expect(
+          (setWrite['currentDocument'] as Map<String, dynamic>)['exists'],
+          isFalse,
+        );
+      },
+    );
   });
 }

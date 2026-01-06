@@ -9,14 +9,14 @@ import 'package:test/test.dart';
 class MockLocalizationLoader extends ZenLocalizationLoader {
   @override
   Future<String> load(String path) async => jsonEncode({
-        'firestore.error.permission_denied': 'Permission denied',
-        'firestore.error.not_found': 'Document not found',
-        'firestore.error.timeout': 'Operation timed out',
-        'firestore.error.unavailable': 'Firestore service unavailable',
-        'firestore.error.corrupted_data': 'Corrupted or invalid data',
-        'firestore.error.operation_failed': 'Firestore operation failed',
-        'firestore.error.unknown': 'Unknown Firestore error',
-      });
+    'firestore.error.permission_denied': 'Permission denied',
+    'firestore.error.not_found': 'Document not found',
+    'firestore.error.timeout': 'Operation timed out',
+    'firestore.error.unavailable': 'Firestore service unavailable',
+    'firestore.error.corrupted_data': 'Corrupted or invalid data',
+    'firestore.error.operation_failed': 'Firestore operation failed',
+    'firestore.error.unknown': 'Unknown Firestore error',
+  });
 }
 
 void main() {

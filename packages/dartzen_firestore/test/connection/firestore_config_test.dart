@@ -360,7 +360,7 @@ void main() {
       expect(a == b, isTrue);
 
       // different type comparison should be false
-      expect(a == 'not-config', isFalse);
+      expect(a == ('not-config' as Object), isFalse);
 
       // different values produce different hashCodes
       const c = FirestoreConfig.production(projectId: 'other');
@@ -374,5 +374,4 @@ void main() {
       expect(e1.hashCode == e2.hashCode, isFalse);
     });
   });
-
 }

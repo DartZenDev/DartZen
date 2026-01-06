@@ -163,7 +163,8 @@ void main() {
 
     test('FileContentProvider infers .js and .pdf content types', () async {
       final dir = await Directory.systemTemp.createTemp('dz_test_js_pdf_');
-      final js = File('${dir.path}/app.js')..writeAsStringSync('console.log(1);');
+      final js = File('${dir.path}/app.js')
+        ..writeAsStringSync('console.log(1);');
       final pdf = File('${dir.path}/doc.pdf')..writeAsStringSync('PDF TEXT');
       final provider = FileContentProvider(dir.path);
 

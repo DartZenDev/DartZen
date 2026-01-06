@@ -99,7 +99,11 @@ void main() {
       final telemetry = MockTelemetry();
       final meta = {'targetModule': 'test-mod'};
 
-      telemetry.onWrite('col/doc', const Duration(milliseconds: 5), metadata: meta);
+      telemetry.onWrite(
+        'col/doc',
+        const Duration(milliseconds: 5),
+        metadata: meta,
+      );
       expect(telemetry.lastCall, equals('onWrite'));
       expect(telemetry.lastMetadata?['targetModule'], equals('test-mod'));
 

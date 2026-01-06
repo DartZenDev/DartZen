@@ -29,9 +29,18 @@ void main() {
       expect(messages, isA<ServerMessages>());
       // Calling the accessors will delegate to `translate()` which isn't
       // loaded in unit tests; assert they throw the localization exception
-      expect(() => messages.healthOk(), throwsA(isA<ZenLocalizationException>()));
-      expect(() => messages.errorUnknown(), throwsA(isA<ZenLocalizationException>()));
-      expect(() => messages.errorNotFound(), throwsA(isA<ZenLocalizationException>()));
+      expect(
+        () => messages.healthOk(),
+        throwsA(isA<ZenLocalizationException>()),
+      );
+      expect(
+        () => messages.errorUnknown(),
+        throwsA(isA<ZenLocalizationException>()),
+      );
+      expect(
+        () => messages.errorNotFound(),
+        throwsA(isA<ZenLocalizationException>()),
+      );
     });
   });
 }

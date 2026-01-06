@@ -4,8 +4,12 @@ import 'package:test/test.dart';
 
 class _FakeLocalization implements ZenLocalizationService {
   @override
-  String translate(String key,
-      {required String language, String? module, Map<String, dynamic>? params}) {
+  String translate(
+    String key, {
+    required String language,
+    String? module,
+    Map<String, dynamic>? params,
+  }) {
     if (params != null && params.containsKey('host')) {
       return 'emulator ${params['host']}:${params['port']}';
     }
@@ -39,11 +43,14 @@ void main() {
       expect(s, contains('8085'));
     });
 
-    test('productionConnection and emulatorUnavailable return translations', () {
-      expect(msgs.productionConnection(), contains('translated:'));
-      final u = msgs.emulatorUnavailable('host.local', 9090);
-      expect(u, contains('host.local'));
-      expect(u, contains('9090'));
-    });
+    test(
+      'productionConnection and emulatorUnavailable return translations',
+      () {
+        expect(msgs.productionConnection(), contains('translated:'));
+        final u = msgs.emulatorUnavailable('host.local', 9090);
+        expect(u, contains('host.local'));
+        expect(u, contains('9090'));
+      },
+    );
   });
 }

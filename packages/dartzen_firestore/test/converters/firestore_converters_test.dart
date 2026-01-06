@@ -33,12 +33,14 @@ void main() {
               <String, dynamic>{'stringValue': 'x'},
               <String, dynamic>{'integerValue': '1'},
             ],
-          }
+          },
         },
         'n': {'nullValue': null},
       };
 
-      final Map<String, dynamic> data = FirestoreConverters.fieldsToData(fields);
+      final Map<String, dynamic> data = FirestoreConverters.fieldsToData(
+        fields,
+      );
 
       expect(data['s'], 'hello');
       expect(data['i'], 42);
@@ -63,14 +65,17 @@ void main() {
         'nul': null,
       };
 
-      final Map<String, dynamic> fields = FirestoreConverters.dataToFields(data);
+      final Map<String, dynamic> fields = FirestoreConverters.dataToFields(
+        data,
+      );
 
       final Map<String, dynamic>? sField = fields['s'] as Map<String, dynamic>?;
       final Map<String, dynamic>? iField = fields['i'] as Map<String, dynamic>?;
       final Map<String, dynamic>? dField = fields['d'] as Map<String, dynamic>?;
       final Map<String, dynamic>? bField = fields['b'] as Map<String, dynamic>?;
       final Map<String, dynamic>? tField = fields['t'] as Map<String, dynamic>?;
-      final Map<String, dynamic>? dtField = fields['dt'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? dtField =
+          fields['dt'] as Map<String, dynamic>?;
       final Map<String, dynamic>? mField = fields['m'] as Map<String, dynamic>?;
       final Map<String, dynamic>? lField = fields['l'] as Map<String, dynamic>?;
 
@@ -80,8 +85,10 @@ void main() {
       expect(bField?['booleanValue'], isFalse);
       expect(tField?['timestampValue'], isNotNull);
       expect(dtField?['timestampValue'], isNotNull);
-      final Map<String, dynamic>? mValueFields = mField?['mapValue'] as Map<String, dynamic>?;
-      final Map<String, dynamic>? arrayValue = lField?['arrayValue'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? mValueFields =
+          mField?['mapValue'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? arrayValue =
+          lField?['arrayValue'] as Map<String, dynamic>?;
       final List<dynamic>? lValues = arrayValue?['values'] as List<dynamic>?;
 
       expect(mValueFields?['fields'], isA<Map<String, dynamic>>());
@@ -99,9 +106,11 @@ void main() {
         'list': <dynamic>[ZenTimestamp.from(DateTime.utc(2020, 1, 3)), 's'],
       };
 
-      final Map<String, dynamic> normalized = FirestoreConverters.normalizeClaims(nested);
+      final Map<String, dynamic> normalized =
+          FirestoreConverters.normalizeClaims(nested);
       final String? ts = normalized['ts'] as String?;
-      final Map<String, dynamic>? mapVal = normalized['map'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? mapVal =
+          normalized['map'] as Map<String, dynamic>?;
       final List<dynamic>? listVal = normalized['list'] as List<dynamic>?;
 
       expect(ts, isA<String>());
@@ -123,4 +132,3 @@ void main() {
     });
   });
 }
-
