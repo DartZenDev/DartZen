@@ -4,107 +4,155 @@ import 'package:dartzen_ui_identity/src/state/identity_repository.dart';
 import 'package:dartzen_ui_identity/src/state/identity_session_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-class MockIdentityRepository extends Mock implements IdentityRepository {}
+class _FakeRepo implements IdentityRepository {
+  ZenResult<IdentityContract?> getCurrentIdentityResult;
+  ZenResult<IdentityContract> loginResult;
+  ZenResult<IdentityContract> registerResult;
+  ZenResult<void> restoreResult;
+  ZenResult<void> logoutResult;
+
+  _FakeRepo({
+    ZenResult<IdentityContract?>? getCurrentIdentityResult,
+    ZenResult<IdentityContract>? loginResult,
+    ZenResult<IdentityContract>? registerResult,
+    ZenResult<void>? restoreResult,
+    ZenResult<void>? logoutResult,
+  }) : getCurrentIdentityResult =
+           getCurrentIdentityResult ?? const ZenResult.ok(null),
+       loginResult =
+           loginResult ?? const ZenResult.err(ZenUnknownError('not set')),
+       registerResult =
+           registerResult ?? const ZenResult.err(ZenUnknownError('not set')),
+       restoreResult =
+           restoreResult ?? const ZenResult.err(ZenUnknownError('not set')),
+       logoutResult =
+           logoutResult ?? const ZenResult.err(ZenUnknownError('not set'));
+
+  @override
+  Future<ZenResult<IdentityContract?>> getCurrentIdentity() async =>
+      getCurrentIdentityResult;
+
+  @override
+  Future<ZenResult<IdentityContract>> loginWithEmail({
+    required String email,
+    required String password,
+  }) async => loginResult;
+
+  @override
+  Future<ZenResult<IdentityContract>> registerWithEmail({
+    required String email,
+    required String password,
+  }) async => registerResult;
+
+  @override
+  Future<ZenResult<void>> restorePassword({required String email}) async =>
+      restoreResult;
+
+  @override
+  Future<ZenResult<void>> logout() async => logoutResult;
+}
+
+IdentityContract _makeContract(String id) => IdentityContract(
+  id: id,
+  lifecycle: IdentityLifecycleContract(state: IdentityState.active.name),
+  authority: const AuthorityContract(roles: [], capabilities: []),
+  createdAt: DateTime.now().millisecondsSinceEpoch,
+);
 
 void main() {
-  late MockIdentityRepository repository;
-  late ProviderContainer container;
-
-  setUp(() {
-    repository = MockIdentityRepository();
-    // Default mock for getCurrentIdentity
-    when(
-      () => repository.getCurrentIdentity(),
-    ).thenAnswer((_) async => const ZenResult.ok(null));
-
-    container = ProviderContainer(
-      overrides: [identityRepositoryProvider.overrideWithValue(repository)],
+  test('build sets initial session from repository', () async {
+    final fake = _FakeRepo(
+      getCurrentIdentityResult: ZenResult.ok(_makeContract('sub')),
     );
+    final container = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fake)],
+    );
+
+    final value = await container.read(identitySessionStoreProvider.future);
+    expect(value, isNotNull);
+    expect(value?.id.value, 'sub');
   });
 
-  tearDown(() {
-    container.dispose();
+  test('login success updates state and returns ok', () async {
+    final contract = _makeContract('u1');
+    final fake = _FakeRepo(
+      getCurrentIdentityResult: const ZenResult.ok(null),
+      loginResult: ZenResult.ok(contract),
+      logoutResult: const ZenResult.ok(null),
+    );
+
+    final container = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fake)],
+    );
+    final notifier = container.read(identitySessionStoreProvider.notifier);
+
+    final res = await notifier.login('a@b.com', 'pw');
+    expect(res.isSuccess, true);
+    final current = container.read(identitySessionStoreProvider);
+    expect(current.asData?.value?.id.value, 'u1');
+
+    // logout clears state
+    final out = await notifier.logout();
+    expect(out.isSuccess, true);
+    final after = container.read(identitySessionStoreProvider);
+    expect(after.asData?.value, isNull);
   });
 
-  group('IdentitySessionStore', () {
-    test('initial state is data(null)', () async {
-      await container.read(identitySessionStoreProvider.future);
+  test('login failure returns error and leaves state null', () async {
+    final fake = _FakeRepo(
+      getCurrentIdentityResult: const ZenResult.ok(null),
+      loginResult: const ZenResult.err(ZenValidationError('bad')),
+    );
 
-      final state = container.read(identitySessionStoreProvider);
-      expect(state, const AsyncValue<Identity?>.data(null));
-    });
+    final container = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fake)],
+    );
+    final notifier = container.read(identitySessionStoreProvider.notifier);
 
-    test('login success updates state', () async {
-      final model = IdentityContract(
-        id: 'user-1',
-        lifecycle: const IdentityLifecycleContract(state: 'active'),
-        authority: const AuthorityContract(roles: ['USER']),
-        createdAt: ZenTimestamp.now().millisecondsSinceEpoch,
-      );
+    final res = await notifier.login('a@b.com', 'pw');
+    expect(res.isFailure, true);
+    final current = container.read(identitySessionStoreProvider);
+    expect(current.asData?.value, isNull);
+  });
 
-      when(
-        () => repository.loginWithEmail(
-          email: 'test@example.com',
-          password: 'password',
-        ),
-      ).thenAnswer((_) async => ZenResult.ok(model));
+  test('register mirrors login behavior', () async {
+    final contract = _makeContract('r1');
+    final fake = _FakeRepo(
+      getCurrentIdentityResult: const ZenResult.ok(null),
+      registerResult: ZenResult.ok(contract),
+    );
 
-      final store = container.read(identitySessionStoreProvider.notifier);
-      final result = await store.login('test@example.com', 'password');
+    final container = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fake)],
+    );
+    final notifier = container.read(identitySessionStoreProvider.notifier);
 
-      expect(result.isSuccess, isTrue);
-      expect(
-        container.read(identitySessionStoreProvider).value?.id.value,
-        'user-1',
-      );
-    });
+    final res = await notifier.register('x@y.com', 'pw');
+    expect(res.isSuccess, true);
+    final current = container.read(identitySessionStoreProvider);
+    expect(current.asData?.value?.id.value, 'r1');
+  });
 
-    test('login failure does not update state with error', () async {
-      when(
-        () => repository.loginWithEmail(
-          email: 'test@example.com',
-          password: 'wrong',
-        ),
-      ).thenAnswer(
-        (_) async => const ZenResult.err(ZenUnauthorizedError('Invalid')),
-      );
+  test('restorePassword returns result from repo', () async {
+    final fakeOk = _FakeRepo(restoreResult: const ZenResult.ok(null));
+    final containerOk = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fakeOk)],
+    );
+    final notifierOk = containerOk.read(identitySessionStoreProvider.notifier);
+    final ok = await notifierOk.restorePassword('a@b.com');
+    expect(ok.isSuccess, true);
 
-      final store = container.read(identitySessionStoreProvider.notifier);
-      final result = await store.login('test@example.com', 'wrong');
-
-      expect(result.isFailure, isTrue);
-      expect(container.read(identitySessionStoreProvider).value, isNull);
-    });
-
-    test('logout clears state', () async {
-      final model = IdentityContract(
-        id: 'user-1',
-        lifecycle: const IdentityLifecycleContract(state: 'active'),
-        authority: const AuthorityContract(roles: ['USER']),
-        createdAt: ZenTimestamp.now().millisecondsSinceEpoch,
-      );
-
-      when(
-        () => repository.loginWithEmail(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenAnswer((_) async => ZenResult.ok(model));
-      when(
-        () => repository.logout(),
-      ).thenAnswer((_) async => const ZenResult.ok(null));
-
-      final store = container.read(identitySessionStoreProvider.notifier);
-      await store.login('test@example.com', 'password');
-      expect(
-        container.read(identitySessionStoreProvider).value?.id.value,
-        'user-1',
-      );
-
-      await store.logout();
-      expect(container.read(identitySessionStoreProvider).value, isNull);
-    });
+    final fakeErr = _FakeRepo(
+      restoreResult: const ZenResult.err(ZenNotFoundError('no')),
+    );
+    final containerErr = ProviderContainer(
+      overrides: [identityRepositoryProvider.overrideWithValue(fakeErr)],
+    );
+    final notifierErr = containerErr.read(
+      identitySessionStoreProvider.notifier,
+    );
+    final err = await notifierErr.restorePassword('a@b.com');
+    expect(err.isFailure, true);
   });
 }

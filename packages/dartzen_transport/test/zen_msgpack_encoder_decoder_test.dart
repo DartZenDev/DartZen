@@ -69,7 +69,7 @@ void main() {
     test('array/map exact thresholds', () {
       final a15 = List.generate(15, (i) => i);
       final a16 = List.generate(16, (i) => i);
-      final a65535 = List.generate(65535, (i) => i % 256);
+      // large array omitted to avoid heavy allocation in test
 
       final m15 = {for (var i = 0; i < 15; i++) 'k$i': i};
       final m16 = {for (var i = 0; i < 16; i++) 'k$i': i};

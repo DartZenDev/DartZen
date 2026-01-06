@@ -52,8 +52,9 @@ class ZenWebSocket {
     ZenTransportFormat format,
   ) {
     if (message is Uint8List) return ZenResponse.decodeWith(message, format);
-    if (message is List<int>)
+    if (message is List<int>) {
       return ZenResponse.decodeWith(Uint8List.fromList(message), format);
+    }
     throw FormatException('Unexpected message type: ${message.runtimeType}');
   }
 

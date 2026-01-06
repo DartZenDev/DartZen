@@ -269,8 +269,9 @@ void main() {
             request.url.path.endsWith('/documents')) {
           return http.Response('{}', 200);
         }
-        if (request.method == 'PATCH')
+        if (request.method == 'PATCH') {
           return http.Response('server error', 500);
+        }
         return http.Response('{}', 200);
       });
 
@@ -293,8 +294,9 @@ void main() {
             request.url.path.endsWith('/documents')) {
           return http.Response('{}', 200);
         }
-        if (request.method == 'PATCH')
+        if (request.method == 'PATCH') {
           return http.Response('server error', 500);
+        }
         return http.Response('{}', 200);
       });
 
