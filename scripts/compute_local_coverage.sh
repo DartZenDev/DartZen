@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Compute per-package and aggregate coverage from lcov.info files under packages/
 set -euo pipefail
+# NOTE: cleaning coverage artifacts must be done before running tests that
+# produce VM JSON files. The collector script `collect_smoke_test_coverage.sh`
+# performs cleaning prior to test runs. Do not run the cleaner here or it may
+# remove newly-generated VM JSON files before conversion.
 
 # Ensure per-package LCOV exists by converting any VM JSON coverage under
 # `packages/*/coverage` and any nested `apps/*/.../coverage` into per-package

@@ -63,7 +63,7 @@ void main() {
       );
 
       expect(
-        () => client.getDocument('col/x'),
+        () async => await client.getDocument('col/x'),
         throwsA(isA<http.ClientException>()),
       );
     });
@@ -84,14 +84,16 @@ void main() {
       await client.patchDocument('col/doc1', <String, dynamic>{'x': 1});
       expect(called, isTrue);
 
-      // now simulate failure
       final clientFail = FirestoreRestClient(
         config: const FirestoreConfig.emulator(),
         httpClient: MockClient((request) async => http.Response('bad', 500)),
       );
 
       expect(
-        () => clientFail.patchDocument('col/doc1', <String, dynamic>{'x': 1}),
+        () async => await clientFail.patchDocument(
+          'col/doc1',
+          <String, dynamic>{'x': 1},
+        ),
         throwsA(isA<http.ClientException>()),
       );
     });
@@ -144,7 +146,116 @@ void main() {
       );
 
       expect(
-        () => clientFail.commit(<Map<String, dynamic>>[
+        () async => await clientFail.commit(<Map<String, dynamic>>[
+          <String, dynamic>{'update': <String, dynamic>{}},
+        ]),
+        throwsA(isA<http.ClientException>()),
+      );
+    });
+  });
+
+  group('FirestoreRestClient error and mapping branches', () {
+    test('getDocument throws on non-200 (500)', () async {
+      final client = MockClient(
+        (http.Request req) async => http.Response('err', 500),
+      );
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      expect(
+        () async => await rest.getDocument('col/doc'),
+        throwsA(isA<http.ClientException>()),
+      );
+    });
+
+    test('getDocument returns placeholder on 404 (error mapping)', () async {
+      final client = MockClient(
+        (http.Request req) async => http.Response('not found', 404),
+      );
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      final doc = await rest.getDocument('col/mydoc');
+      expect(doc.id, equals('mydoc'));
+      expect(doc.path, equals('col/mydoc'));
+    });
+
+    test('getDocument maps when name missing (empty id/path)', () async {
+      final client = MockClient(
+        (http.Request req) async => http.Response(
+          jsonEncode({
+            'fields': {
+              'a': {'stringValue': 'x'},
+            },
+          }),
+          200,
+        ),
+      );
+
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      final doc = await rest.getDocument('col/whatever');
+      expect(doc.id, isEmpty);
+      expect(doc.path, isEmpty);
+      expect(doc.data?['a'], equals('x'));
+    });
+
+    test('patchDocument throws on non-200', () async {
+      final client = MockClient(
+        (http.Request req) async => http.Response('err', 500),
+      );
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      expect(
+        () async => await rest.patchDocument('col/doc', {'x': 1}),
+        throwsA(isA<http.ClientException>()),
+      );
+    });
+
+    test('beginTransaction throws on non-200', () async {
+      final client = MockClient((http.Request req) async {
+        if (req.url.path.endsWith(':beginTransaction')) {
+          return http.Response('err', 500);
+        }
+        return http.Response('{}', 200);
+      });
+
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      expect(
+        () async => await rest.beginTransaction(),
+        throwsA(isA<http.ClientException>()),
+      );
+    });
+
+    test('commit throws on non-200', () async {
+      final client = MockClient((http.Request req) async {
+        if (req.url.path.endsWith(':commit')) {
+          return http.Response('err', 500);
+        }
+        return http.Response('{}', 200);
+      });
+
+      final rest = FirestoreRestClient(
+        config: const FirestoreConfig.emulator(),
+        httpClient: client,
+      );
+
+      expect(
+        () async => await rest.commit(<Map<String, dynamic>>[
           <String, dynamic>{'update': <String, dynamic>{}},
         ]),
         throwsA(isA<http.ClientException>()),

@@ -27,12 +27,23 @@ void main() {
       expect(msgs.notFound(), contains('translated:'));
       expect(msgs.operationFailed(), contains('translated:'));
       expect(msgs.unknown(), contains('translated:'));
+      // additional basic accessors
+      expect(msgs.timeout(), contains('translated:'));
+      expect(msgs.unavailable(), contains('translated:'));
+      expect(msgs.corruptedData(), contains('translated:'));
     });
 
     test('emulatorConnection formats params', () {
       final s = msgs.emulatorConnection('127.0.0.1', 8085);
       expect(s, contains('127.0.0.1'));
       expect(s, contains('8085'));
+    });
+
+    test('productionConnection and emulatorUnavailable return translations', () {
+      expect(msgs.productionConnection(), contains('translated:'));
+      final u = msgs.emulatorUnavailable('host.local', 9090);
+      expect(u, contains('host.local'));
+      expect(u, contains('9090'));
     });
   });
 }
