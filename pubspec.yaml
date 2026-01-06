@@ -139,7 +139,7 @@ melos:
       run: |
         PACKAGE=${PACKAGE:-packages/dartzen_storage}
         ENVS="dev prd"
-        PLATFORMS="web linux android"
+        PLATFORMS="web ios android macos linux windows"
         # Flutter packages should use `flutter test` (they depend on Flutter)
         FLUTTER_SCOPE="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization"
         # Dart-only packages use `dart run test`

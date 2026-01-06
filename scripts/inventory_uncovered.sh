@@ -7,29 +7,51 @@ rm -f "$OUT"
 
 echo "package,file,missed_lines" > "$OUT"
 
-# find filtered lcov files
-# find and iterate lcov files (exclude example/generated)
+# Use per-package merged coverage files only (coverage/lcov.info) to avoid
+# emitting per-run duplicates (lcov_*.info). This ensures each package/file
+# appears once with the aggregated missed-line count.
 found=0
-while IFS= read -r -d '' f; do
+
+# The merged lcov.info may contain multiple SF blocks (one per run). For
+# accurate, de-duplicated missed-line counts, sum DA hits across the entire
+# file per source-line and then emit one CSV row per source file with the
+# number of lines that had 0 total hits.
+for pkgdir in packages/*; do
+  [ -d "$pkgdir" ] || continue
+  pkg=$(basename "$pkgdir")
+  # find any lcov files under the package's coverage directory (including nested per-run dirs)
+  lcovs=()
+  while IFS= read -r -d '' lf; do
+    lcovs+=("$lf")
+  done < <(find "$pkgdir/coverage" -type f -name "lcov*.info" -print0 2>/dev/null || true)
+  if [ ${#lcovs[@]} -eq 0 ]; then
+    continue
+  fi
   found=1
-  pkg_from_path=$(echo "$f" | awk -F"/" '{print $2}')
-  awk -v PKG="$pkg_from_path" '
-    BEGIN{missed=0; pkg=PKG; file=""}
-    /^SF:/ {
-      if (pkg!="" && missed>0) print pkg","file","missed;
-      split($0,a,":"); full=a[2];
-      # file path relative to package: everything after "/lib/"
-      libpos = index(full, "/lib/");
-      if (libpos>0) file = substr(full, libpos+1); else file = full;
-      missed=0;
-      next
-    }
+  # concatenate all lcovs for this package and aggregate DA hits per source-line
+  tmp_concat=$(mktemp)
+  for lf in "${lcovs[@]}"; do
+    cat "$lf" >> "$tmp_concat" || true
+  done
+  awk -v PKG="$pkg" '
+    BEGIN { pkg = PKG }
+    /^SF:/ { sf = substr($0,4); next }
     /^DA:/ {
-      split($0,a,":"); split(a[2],c,","); hits = c[2]+0; if (hits==0) missed++;
+      split($0,a,":"); split(a[2],b,","); line = b[1]; hits = b[2]+0; key = sf "|" line; sum[key] += hits; next
     }
-    END { if (pkg!="" && missed>0) print pkg","file","missed }
-  ' "$f" >> "$OUT"
-done < <(find packages -maxdepth 6 -type f -name "lcov*.info" \( -not -path '*/example/*' -a -not -path '*/generated/*' \) -print0 2>/dev/null)
+    END {
+      for (k in sum) {
+        split(k, parts, "|"); file = parts[1]; total_lines[file]++; if (sum[k] == 0) missed_lines[file]++;
+      }
+      for (file in total_lines) {
+        libpos = index(file, "/lib/"); if (libpos>0) rel = substr(file, libpos+1); else rel = file;
+        missed = missed_lines[file] + 0;
+        if (missed > 0) print pkg "," rel "," missed;
+      }
+    }
+  ' "$tmp_concat" >> "$OUT"
+  rm -f "$tmp_concat"
+done
 
 if [ "$found" -eq 0 ]; then
   echo "No lcov.info files found (excluded example/generated)."
