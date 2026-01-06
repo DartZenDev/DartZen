@@ -44,10 +44,8 @@ class _FakeLocalization implements ZenLocalizationService {
   final Map<String, String> _map;
   _FakeLocalization(this._map);
 
-  @override
   Map<String, String> getGlobal(String language) => _map;
 
-  @override
   Map<String, String> getModule(String module, String language) => _map;
 
   @override

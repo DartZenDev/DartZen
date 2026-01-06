@@ -1,3 +1,4 @@
+import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_localization/dartzen_localization.dart';
 import 'package:dartzen_ui_navigation/dartzen_ui_navigation.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,8 @@ void main() {
 
   group('ZenNavigation widget structure', () {
     testWidgets('accepts all required parameters', (WidgetTester tester) async {
+      // ZenNavigation uses native platform builders and is not implemented on web.
+      if (dzIsWeb) return;
       final items = [
         ZenNavigationItem(
           id: 'home',
@@ -97,6 +100,8 @@ void main() {
     });
 
     testWidgets('handles item selection callback', (WidgetTester tester) async {
+      // ZenNavigation uses native platform builders and is not implemented on web.
+      if (dzIsWeb) return;
       final items = [
         ZenNavigationItem(
           id: 'home',

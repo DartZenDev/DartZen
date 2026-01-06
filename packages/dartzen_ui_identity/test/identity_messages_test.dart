@@ -62,8 +62,6 @@ void main() {
     String? calledLanguage;
     String? calledKey;
 
-    final svc = _FakeLocalization({});
-
     // override translate to capture parameters
     final capturing = _CapturingLocalization((
       key, {
