@@ -16,13 +16,16 @@ Only the aggregated result reflects real coverage.
 
 ## 🛠️ Coverage aggregation
 
-This repository includes a helper script to compute per-package and aggregate
-coverage: `./scripts/compute_local_coverage.sh`.
+This repository includes a helper script to compute per-package and aggregate coverage: `./scripts/compute_local_coverage.sh`.
 
 - Run it from the repository root. It expects coverage artifacts under `packages/*/coverage` and `apps/*/*/coverage` (the script scans both trees).
 - The script prefers an existing `coverage/lcov.info` for a package when that file is newer than any `coverage/test/*.vm.json` artifacts. This prevents an older JSON-to-LCOV conversion from overwriting a fresh `flutter test --coverage` result.
 
 To regenerate and include `dartzen_localization` coverage (example):
+
+Remove existing coverage if you need by running: `./scripts/clean_coverage.sh`. This removes existing coverage artifacts from all packages and apps to ensure a fresh computation.
+
+Then run:
 
 ```bash
 # from repo root
@@ -32,13 +35,26 @@ cd packages/dartzen_localization && flutter test --coverage
 ./scripts/compute_local_coverage.sh
 ```
 
-If you want to force re-conversion from VM JSON files, either remove the
-package `coverage/lcov.info` (or `lcov_dev.info` / `lcov_prd.info`) or delete
-the `coverage/test` VM JSON files (or the per-run `coverage_<env>_*/test/*.vm.json`)
-before running the script.
-
 Coverage artifacts from different environments (DEV/PRD) are **complementary**.
 Missing coverage in one environment may be provided by another.
+
+### Smoke test
+
+To quickly verify test coverage aggregation, run:
+
+```bash
+./scripts/collect_smoke_test_coverage.sh
+```
+
+This script runs a set of tests across all packages/apps in both DEV and PRD environments for Linux and Web platforms, collects coverage artifacts, and computes aggregate coverage.
+
+If you need to run the smoke tests for a specific package/app only, send it as an argument:
+
+```bash
+./scripts/collect_smoke_test_coverage.sh packages/dartzen_storage
+```
+
+Note: This script cleans existing coverage artifacts before running tests to ensure fresh results.
 
 ## ⚙️ Canonical upload files and expected `melos` behavior
 
@@ -83,3 +99,5 @@ To identify uncovered packages, modules, or files, always run:
 ```bash
 ./scripts/inventory_uncovered.sh
 ```
+
+This script scans all packages and apps for coverage reports and lists any packages/modules/files and put them into `scripts/coverage_uncovered.csv`.
