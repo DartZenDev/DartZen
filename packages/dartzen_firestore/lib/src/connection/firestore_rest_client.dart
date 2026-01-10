@@ -126,6 +126,31 @@ final class FirestoreRestClient {
     }
   }
 
+  /// Runs a structured query against Firestore using the REST `runQuery` endpoint.
+  ///
+  /// Returns the raw decoded JSON array response from the backend. This helper
+  /// respects emulator vs production configuration via [_baseUrl].
+  Future<List<dynamic>> runStructuredQuery(
+    Map<String, dynamic> structuredQuery,
+  ) async {
+    final url = Uri.parse('$_baseUrl:runQuery');
+    final response = await _httpClient.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'structuredQuery': structuredQuery}),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as List<dynamic>;
+      return json;
+    }
+
+    throw http.ClientException(
+      'Failed to run structured query: ${response.statusCode} ${response.body}',
+      url,
+    );
+  }
+
   ZenFirestoreDocument _mapToDocument(Map<String, dynamic> json) {
     // Defensive: handle missing 'name' field
     final name = (json['name'] ?? '') as String;
