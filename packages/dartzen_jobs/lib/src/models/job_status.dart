@@ -1,5 +1,3 @@
-
-
 /// Represents the exhaustive list of execution outcomes for a job.
 enum JobStatus {
   /// The job handler completed successfully.
