@@ -18,6 +18,7 @@ Widget _widget({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 }) {
   final double width = MediaQuery.of(context).size.width;
@@ -37,6 +38,7 @@ Widget _widget({
                 selected: i == selectedIndex,
                 onTap: () {
                   onItemSelected(i);
+                  onItemSelectedId?.call(items[i].id);
                   Navigator.of(context).pop();
                 },
               ),
@@ -55,16 +57,22 @@ Widget _widget({
         child: Row(
           children: <Widget>[
             for (int i = 0; i < items.length; i++)
-              TextButton.icon(
-                onPressed: () {
-                  onItemSelected(i);
-                },
-                icon: navigationBadge(items[i], i == selectedIndex),
-                label: Text(items[i].label),
-                style: TextButton.styleFrom(
-                  foregroundColor: i == selectedIndex
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
+              Semantics(
+                label: items[i].label,
+                button: true,
+                selected: i == selectedIndex,
+                child: TextButton.icon(
+                  onPressed: () {
+                    onItemSelected(i);
+                    onItemSelectedId?.call(items[i].id);
+                  },
+                  icon: navigationBadge(items[i], i == selectedIndex),
+                  label: Text(items[i].label),
+                  style: TextButton.styleFrom(
+                    foregroundColor: i == selectedIndex
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
           ],

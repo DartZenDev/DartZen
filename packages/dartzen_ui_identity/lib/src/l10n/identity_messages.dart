@@ -43,6 +43,8 @@ class IdentityMessages {
   String get profileTitle => _t('profile.title');
   String get rolesTitle => _t('roles.title');
   String get rolesLabel => _t('roles.label');
+  String get profileAvatarLabel => _t('profile.avatar.label');
+  String get backButtonTooltip => _t('back.button.tooltip');
 
   String get restorePasswordInfo => _t('restore.password.info');
   String get resetLinkSentSuccess => _t('reset.link.sent.success');

@@ -15,6 +15,7 @@ Widget _widget({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 }) =>
     const Text(

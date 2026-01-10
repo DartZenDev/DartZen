@@ -134,6 +134,7 @@ void main() {
     final repo = _FakeRepo(login: (_, __) async => ZenResult.ok(contract));
 
     var called = false;
+    Identity? loginIdentity;
 
     await tester.pumpWidget(
       ProviderScope(
@@ -143,6 +144,7 @@ void main() {
           home: LoginScreen(
             messages: msgs,
             onLoginSuccess: () => called = true,
+            onLoginSuccessWithIdentity: (id) => loginIdentity = id,
           ),
         ),
       ),
@@ -159,6 +161,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(called, isTrue);
+    expect(loginIdentity?.id.value, 'u1');
   });
 
   testWidgets('failed login shows error SnackBar', (tester) async {

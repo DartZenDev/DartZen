@@ -50,58 +50,64 @@ class IdentityTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: theme.subtitleStyle.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
+        ExcludeSemantics(
+          child: Text(
+            label,
+            style: theme.subtitleStyle.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
         SizedBox(height: theme.spacing / 2),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          autofillHints: autofillHints,
-          textInputAction: textInputAction,
-          onFieldSubmitted: onFieldSubmitted,
-          validator: validator,
-          enabled: enabled,
-          style: theme.subtitleStyle.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            errorText: errorText,
-            filled: true,
-            fillColor: theme.surfaceColor,
-            suffixIcon: suffixIcon,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: theme.spacing,
-              vertical: theme.spacing,
+        Semantics(
+          label: label,
+          textField: true,
+          child: TextFormField(
+            controller: controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            autofillHints: autofillHints,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted,
+            validator: validator,
+            enabled: enabled,
+            style: theme.subtitleStyle.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: borderSide,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: borderSide,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: borderSide.copyWith(
-                width: 2,
-                color: theme.brandColor,
+            decoration: InputDecoration(
+              hintText: hint,
+              errorText: errorText,
+              filled: true,
+              fillColor: theme.surfaceColor,
+              suffixIcon: suffixIcon,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: theme.spacing,
+                vertical: theme.spacing,
               ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: errorBorderSide,
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: errorBorderSide.copyWith(width: 2),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: borderSide,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: borderSide,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: borderSide.copyWith(
+                  width: 2,
+                  color: theme.brandColor,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: errorBorderSide,
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: errorBorderSide.copyWith(width: 2),
+              ),
             ),
           ),
         ),

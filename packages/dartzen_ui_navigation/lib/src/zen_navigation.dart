@@ -44,6 +44,7 @@ class ZenNavigation extends StatelessWidget {
     required this.localization,
     required this.language,
     super.key,
+    this.onItemSelectedId,
     this.labelMore,
   });
 
@@ -52,6 +53,10 @@ class ZenNavigation extends StatelessWidget {
 
   /// The callback function that is called when a navigation item is selected.
   final ValueChanged<int> onItemSelected;
+
+  /// The callback function that is called when a navigation item is selected.
+  /// This callback provides the unique identifier of the selected item.
+  final ValueChanged<String>? onItemSelectedId;
 
   /// The list of navigation items.
   final List<ZenNavigationItem> items;
@@ -75,6 +80,7 @@ class ZenNavigation extends StatelessWidget {
       context: context,
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
+      onItemSelectedId: onItemSelectedId,
       items: items,
       localization: localization,
       language: language,
@@ -91,5 +97,6 @@ typedef PlatformNavigationBuilder = Widget Function({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 });

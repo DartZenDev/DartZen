@@ -77,6 +77,33 @@ The example app showcases how to use `ZenNavigation` with `IdentityMessages`. It
 
 Refer to [example/lib/main.dart](example/lib/main.dart) for implementation details.
 
+## 📊 Telemetry Integration
+
+`dartzen_ui_identity` screens provide identity-aware callbacks that allow you to easily integrate telemetry and analytics (like Google Analytics or Firebase Analytics) without the package depending on any specific library.
+
+### Example: Tracking Login Success
+
+```dart
+LoginScreen(
+  messages: messages,
+  onLoginSuccessWithIdentity: (Identity identity) {
+    // 1. Log event to your analytics provider
+    analytics.logEvent(
+      name: 'login',
+      parameters: {
+        'user_id': identity.id.value,
+        'method': 'email_password',
+      },
+    );
+
+    // 2. Perform navigation
+    context.go('/home');
+  },
+)
+```
+
+By using these callbacks, you can capture full domain metadata at the moment of success.
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

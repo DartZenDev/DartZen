@@ -106,27 +106,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
 ## 📱 Platform Support
 
-The package supports the following platforms:
-
-- Android
-- iOS
-- Web
-- Desktop
-
-The tree-shaking feature is implemented via the environment variable `DZ_PLATFORM`. This is a compile-time constant that is used to conditionally include or exclude platform-specific code. Additionally, the `DZ_PLATFORM` is used to conditionally include or exclude platform-specific assets to provide the best possible experience for each platform.
-
-To run the example, use the following commands:
+The package automatically adapts to the current platform. To ensure proper tree-shaking and platform-specific behavior, specify the target platform using the `DZ_PLATFORM` environment variable at compile time:
 
 ```bash
-flutter run --dart-define=DZ_PLATFORM=ios # and select iPhone
-
+flutter run --dart-define=DZ_PLATFORM=ios
 flutter run -d chrome --dart-define=DZ_PLATFORM=web
-flutter run -d macos --dart-define=DZ_PLATFORM=macos
-flutter run -d windows --dart-define=DZ_PLATFORM=windows
-flutter run -d linux --dart-define=DZ_PLATFORM=linux
-flutter run -d android --dart-define=DZ_PLATFORM=android
-flutter run -d ios --dart-define=DZ_PLATFORM=ios
 ```
+
+Supported values: `ios`, `android`, `web`, `macos`, `windows`, `linux`. If `DZ_PLATFORM` is not set, a debug assertion will fail.
+
+## 📊 Telemetry Integration
+
+`ZenNavigation` provides an optional `onItemSelectedId` callback specifically designed for standardizing telemetry and analytics events across layers without manually mapping indices.
+
+```dart
+ZenNavigation(
+  items: _navItems,
+  selectedIndex: _selectedIndex,
+  onItemSelected: (index) => setState(() => _selectedIndex = index),
+  // Direct ID-based callback for analytics
+  onItemSelectedId: (id) {
+    MyAnalytics.track('navigation_click', {'item_id': id});
+  },
+);
+```
+
+This pattern keeps the UI layer decoupled from any specific telemetry package (like `firebase_analytics`) while making integration trivial for application developers.
 
 ## 📛 Badge Support
 

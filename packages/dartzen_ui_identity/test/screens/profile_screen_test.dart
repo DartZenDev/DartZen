@@ -44,16 +44,17 @@ class _FakeRepo implements IdentityRepository {
 class _FakeLocalization implements ZenLocalizationService {
   final Map<String, String> _map;
   _FakeLocalization(this._map);
-  Map<String, String> getGlobal(String language) => _map;
-  Map<String, String> getModule(String module, String language) => _map;
+
+  @override
   String translate(
     String key, {
     required String language,
     String? module,
     Map<String, dynamic> params = const {},
   }) => _map[key] ?? key;
+
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -64,6 +65,8 @@ void main() {
       'not.authenticated': 'Not Auth',
       'roles.label': 'Roles',
       'logout.button': 'Logout',
+      'profile.avatar.label': 'Avatar',
+      'back.button.tooltip': 'Back',
     }),
     en,
   );
@@ -94,10 +97,13 @@ void main() {
     );
 
     var called = false;
+    Identity? logoutIdentity;
     final repo = _FakeRepo(
       current: ZenResult.ok(contract),
       logoutResult: const ZenResult.ok(null),
     );
+
+    final semantics = tester.ensureSemantics();
 
     await tester.pumpWidget(
       ProviderScope(
@@ -107,6 +113,7 @@ void main() {
           home: ProfileScreen(
             messages: msgs,
             onLogoutSuccess: () => called = true,
+            onLogoutSuccessWithIdentity: (id) => logoutIdentity = id,
           ),
         ),
       ),
@@ -117,9 +124,22 @@ void main() {
     expect(find.text('user-1'), findsOneWidget);
     expect(find.text('ADMIN'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.logout));
+    // Check Semantics
+    expect(
+      tester.getSemantics(find.byTooltip('Logout').first).tooltip,
+      contains('Logout'),
+    );
+    expect(
+      tester.getSemantics(find.byType(CircleAvatar)).label,
+      contains('Avatar'),
+    );
+
+    await tester.tap(find.byIcon(Icons.logout).first);
     await tester.pumpAndSettle();
 
     expect(called, isTrue);
+    expect(logoutIdentity?.id.value, 'user-1');
+
+    semantics.dispose();
   });
 }
