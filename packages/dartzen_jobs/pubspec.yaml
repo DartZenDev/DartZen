@@ -1,0 +1,25 @@
+name: dartzen_jobs
+description: A unified background and scheduled jobs package for DartZen applications.
+version: 0.0.1
+homepage: https://github.com/DartZenDev/DartZen
+repository: https://github.com/DartZenDev/DartZen/tree/main/packages/dartzen_jobs
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.10.4 <4.0.0'
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_firestore:
+    path: ../dartzen_firestore
+  dartzen_telemetry:
+    path: ../dartzen_telemetry
+  http: ^1.2.0
+  meta: ^1.11.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  mocktail: ^1.0.0
+  test: ^1.25.0

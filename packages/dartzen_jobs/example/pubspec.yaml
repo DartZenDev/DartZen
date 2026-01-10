@@ -1,0 +1,16 @@
+name: dartzen_jobs_example
+description: Example application demonstrating dartzen_jobs
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  dartzen_core:
+    path: ../../dartzen_core
+  dartzen_firestore:
+    path: ../../dartzen_firestore
+  dartzen_jobs:
+    path: ../../dartzen_jobs
+  dartzen_telemetry:
+    path: ../../dartzen_telemetry 

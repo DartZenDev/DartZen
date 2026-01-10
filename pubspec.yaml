@@ -8,18 +8,19 @@ environment:
 
 workspace:
   - packages/dartzen_core
-  - packages/dartzen_ui_navigation
-  - packages/dartzen_ui_navigation/example
-  - packages/dartzen_firestore
-  - packages/dartzen_transport
-  - packages/dartzen_localization
-  - packages/dartzen_identity
   - packages/dartzen_cache
+  - packages/dartzen_identity
+  - packages/dartzen_jobs
+  - packages/dartzen_localization
+  - packages/dartzen_firestore
   - packages/dartzen_storage
   - packages/dartzen_server
   - packages/dartzen_telemetry
+  - packages/dartzen_transport
   - packages/dartzen_ui_identity
   - packages/dartzen_ui_identity/example
+  - packages/dartzen_ui_navigation
+  - packages/dartzen_ui_navigation/example
   - apps/ZenDemo/dartzen_demo_contracts
   - apps/ZenDemo/dartzen_demo_server
   - apps/ZenDemo/dartzen_demo_client
@@ -59,7 +60,7 @@ melos:
         # name so the CI script can find per-matrix outputs.
         melos exec --scope="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- 'sh -c "flutter test --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=dev --coverage || true; if [ -d coverage ]; then mv coverage coverage_tmp || true; mkdir -p coverage || true; mv coverage_tmp coverage/coverage_dev_macos_flutter || true; fi"'
         # Dart packages (pass compile-time defines via `dart --define` so constants are tree-shaken correctly)
-        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_telemetry,dartzen_server,dartzen_demo_server,dartzen_demo_contracts" -- "dart --define=DZ_ENV=dev test --coverage=coverage"
+        melos exec --scope="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_jobs,dartzen_firestore,dartzen_cache,dartzen_telemetry,dartzen_server,dartzen_demo_server,dartzen_demo_contracts" -- "dart --define=DZ_ENV=dev test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage, using flutter test for any package that depends on Flutter
     publish:
       exec: dart pub publish --dry-run
@@ -144,7 +145,7 @@ melos:
         # Flutter packages should use `flutter test` (they depend on Flutter)
         FLUTTER_SCOPE="dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization"
         # Dart-only packages use `dart run test`
-        DART_SCOPE="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_firestore,dartzen_cache,dartzen_server,dartzen_telemetry,dartzen_demo_server,dartzen_demo_contracts"
+        DART_SCOPE="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_jobs,dartzen_firestore,dartzen_cache,dartzen_server,dartzen_telemetry,dartzen_demo_server,dartzen_demo_contracts"
 
         for e in $ENVS; do
           for p in $PLATFORMS; do
