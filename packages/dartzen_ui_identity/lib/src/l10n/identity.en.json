@@ -24,6 +24,8 @@
   "reset.link.sent.success": "Reset link sent to your email",
   "already.have.account": "Already have an account?",
   "not.authenticated": "Not authenticated",
-  "roles.label": "Roles:"
+  "roles.label": "Roles:",
+  "profile.avatar.label": "Profile avatar",
+  "back.button.tooltip": "Go back"
 }
 

@@ -21,6 +21,7 @@ Widget _widget({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 }) {
   final messages = NavigationMessages(localization, language);
@@ -40,21 +41,35 @@ Widget _widget({
   final Widget bodyWidget = items[selectedIndex].builder(context);
 
   // Build bottom navigation bar items
-  final Iterable<BottomNavigationBarItem> itemsElements = visible
-      .take(dzMaxItemsMobile)
-      .map((ZenNavigationItem e) => BottomNavigationBarItem(
-            icon: navigationBadge(e, false),
-            label: e.label,
-          ));
+  final List<BottomNavigationBarItem> itemsElements = [];
+  for (int i = 0; i < visible.length; i++) {
+    final item = visible[i];
+    itemsElements.add(BottomNavigationBarItem(
+      icon: Semantics(
+        label: item.label,
+        button: true,
+        selected: i == selectedIndex,
+        child: navigationBadge(item, i == selectedIndex),
+      ),
+      label: item.label,
+    ));
+  }
 
   // Create the "more" item if there are overflow items
   final List<BottomNavigationBarItem> itemsMoreLabel = overflow.isNotEmpty
       ? <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: const Icon(
+            icon: Semantics(
+              label: moreLabel,
+              button: true,
+              selected: selectedIndex >= dzMaxItemsMobile,
+              child: const Icon(
                 dzIsIOS ? CupertinoIcons.ellipsis : Icons.more_horiz,
               ),
-              label: moreLabel),
+            ),
+            label: moreLabel,
+            tooltip: moreLabel,
+          ),
         ]
       : <BottomNavigationBarItem>[];
 
@@ -76,6 +91,7 @@ Widget _widget({
                   indexOffset: dzMaxItemsMobile,
                   onItemSelected: (int globalIndex) {
                     onItemSelected(globalIndex);
+                    onItemSelectedId?.call(items[globalIndex].id);
                     Navigator.of(context).pop();
                   },
                   labelMore: moreLabel,
@@ -88,6 +104,7 @@ Widget _widget({
                   indexOffset: dzMaxItemsMobile,
                   onItemSelected: (int globalIndex) {
                     onItemSelected(globalIndex);
+                    onItemSelectedId?.call(items[globalIndex].id);
                     Navigator.of(context).pop();
                   },
                   labelMore: moreLabel,
@@ -97,6 +114,7 @@ Widget _widget({
     } else {
       // Tapped on a regular item
       onItemSelected(index);
+      onItemSelectedId?.call(items[index].id);
     }
   }
 

@@ -16,21 +16,29 @@ Widget _widget({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 }) =>
     Row(
       children: [
         NavigationRail(
           selectedIndex: selectedIndex,
-          onDestinationSelected: onItemSelected,
+          onDestinationSelected: (int index) {
+            onItemSelected(index);
+            onItemSelectedId?.call(items[index].id);
+          },
           labelType: NavigationRailLabelType.all,
           destinations: [
-            ...items.map(
-              (e) => NavigationRailDestination(
-                icon: navigationBadge(e, false),
-                label: Text(e.label),
+            for (int i = 0; i < items.length; i++)
+              NavigationRailDestination(
+                icon: Semantics(
+                  label: items[i].label,
+                  button: true,
+                  selected: i == selectedIndex,
+                  child: navigationBadge(items[i], i == selectedIndex),
+                ),
+                label: Text(items[i].label),
               ),
-            ),
           ],
         ),
         const VerticalDivider(thickness: 1, width: 1),

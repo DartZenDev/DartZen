@@ -19,6 +19,7 @@ Widget _widget({
   required List<ZenNavigationItem> items,
   required ZenLocalizationService localization,
   required String language,
+  ValueChanged<String>? onItemSelectedId,
   String? labelMore,
 }) {
   if (dzIsMobile) {
@@ -26,6 +27,7 @@ Widget _widget({
       context: context,
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
+      onItemSelectedId: onItemSelectedId,
       items: items,
       localization: localization,
       language: language,
@@ -37,6 +39,7 @@ Widget _widget({
       context: context,
       selectedIndex: selectedIndex,
       onItemSelected: onItemSelected,
+      onItemSelectedId: onItemSelectedId,
       items: items,
       localization: localization,
       language: language,

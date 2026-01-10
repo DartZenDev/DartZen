@@ -1,3 +1,4 @@
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +11,7 @@ import '../widgets/identity_text_field.dart';
 /// Screen for user registration with email and password.
 class RegisterScreen extends ConsumerStatefulWidget {
   final VoidCallback? onRegisterSuccess;
+  final ValueChanged<Identity>? onRegisterSuccessWithIdentity;
   final VoidCallback? onLoginClick;
   final IdentityMessages messages;
 
@@ -17,6 +19,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
     super.key,
     required this.messages,
     this.onRegisterSuccess,
+    this.onRegisterSuccessWithIdentity,
     this.onLoginClick,
   });
 
@@ -52,6 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     result.fold(
       (identity) {
         widget.onRegisterSuccess?.call();
+        widget.onRegisterSuccessWithIdentity?.call(identity);
       },
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(

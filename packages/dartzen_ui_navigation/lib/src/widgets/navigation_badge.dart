@@ -7,16 +7,27 @@ import '../zen_navigation_item.dart';
 /// Platform-specific navigation badge builder for desktop platforms.
 /// Shows all navigation items in a NavigationRail.
 m.Widget navigationBadge(ZenNavigationItem item, bool selected) {
+  final icon = (dzIsIOS || dzIsMacOS) ? c.Icon(item.icon) : m.Icon(item.icon);
+
+  final m.Widget child;
   if (item.badgeCount != null && item.badgeCount! > 0) {
-    return (dzIsIOS || dzIsMacOS)
+    child = (dzIsIOS || dzIsMacOS)
         ? m.Badge(
             label: c.Text('${item.badgeCount}'),
-            child: c.Icon(item.icon),
+            child: icon,
           )
         : m.Badge(
             label: m.Text('${item.badgeCount}'),
-            child: m.Icon(item.icon),
+            child: icon,
           );
+  } else {
+    child = icon;
   }
-  return (dzIsIOS || dzIsMacOS) ? c.Icon(item.icon) : m.Icon(item.icon);
+
+  return m.Semantics(
+    label: item.label,
+    button: true,
+    selected: selected,
+    child: child,
+  );
 }

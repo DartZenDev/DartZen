@@ -81,6 +81,7 @@ class _RestorePasswordScreenState extends ConsumerState<RestorePasswordScreen> {
         leading: widget.onBackClick != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
+                tooltip: widget.messages.backButtonTooltip,
                 onPressed: widget.onBackClick,
               )
             : null,

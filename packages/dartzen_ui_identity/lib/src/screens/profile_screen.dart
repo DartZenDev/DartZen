@@ -1,4 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,11 +13,15 @@ import '../widgets/identity_status_chip.dart';
 class ProfileScreen extends ConsumerWidget {
   final IdentityMessages messages;
   final VoidCallback? onLogoutSuccess;
+  final ValueChanged<Identity>? onLogoutSuccessWithIdentity;
+  final VoidCallback? onBackClick;
 
   const ProfileScreen({
     super.key,
     required this.messages,
     this.onLogoutSuccess,
+    this.onLogoutSuccessWithIdentity,
+    this.onBackClick,
   });
 
   @override
@@ -36,9 +41,14 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: messages.logoutButton,
             onPressed: () async {
+              final identity = ref.read(identitySessionStoreProvider).value;
               await ref.read(identitySessionStoreProvider.notifier).logout();
               onLogoutSuccess?.call();
+              if (identity != null) {
+                onLogoutSuccessWithIdentity?.call(identity);
+              }
             },
           ),
         ],
@@ -53,12 +63,15 @@ class ProfileScreen extends ConsumerWidget {
           return ListView(
             padding: theme.containerPadding,
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: theme.brandColor.withValues(alpha: 0.1),
-                child: Text(
-                  subject.substring(0, 1).toUpperCase(),
-                  style: theme.titleStyle.copyWith(color: theme.brandColor),
+              Semantics(
+                label: messages.profileAvatarLabel,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: theme.brandColor.withValues(alpha: 0.1),
+                  child: Text(
+                    subject.substring(0, 1).toUpperCase(),
+                    style: theme.titleStyle.copyWith(color: theme.brandColor),
+                  ),
                 ),
               ),
               SizedBox(height: theme.spacing),
@@ -81,10 +94,14 @@ class ProfileScreen extends ConsumerWidget {
                 text: messages.logoutButton,
                 variant: IdentityButtonVariant.secondary,
                 onPressed: () async {
+                  final identity = ref.read(identitySessionStoreProvider).value;
                   await ref
                       .read(identitySessionStoreProvider.notifier)
                       .logout();
                   onLogoutSuccess?.call();
+                  if (identity != null) {
+                    onLogoutSuccessWithIdentity?.call(identity);
+                  }
                 },
               ),
             ],

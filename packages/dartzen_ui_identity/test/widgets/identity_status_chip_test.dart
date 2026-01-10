@@ -42,4 +42,17 @@ void main() {
     // If widget built without errors, test passes. (Color checks are covered by previous test.)
     expect(find.text('Good'), findsOneWidget);
   });
+
+  testWidgets('IdentityStatusChip has correct semantics', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: IdentityStatusChip(label: 'Admin Role')),
+      ),
+    );
+
+    final node = tester.getSemantics(find.text('Admin Role'));
+    expect(node.label, contains('Admin Role'));
+    semantics.dispose();
+  });
 }

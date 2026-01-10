@@ -1,3 +1,4 @@
+import 'package:dartzen_identity/dartzen_identity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +11,7 @@ import '../widgets/identity_text_field.dart';
 /// Screen for user login with email and password.
 class LoginScreen extends ConsumerStatefulWidget {
   final VoidCallback? onLoginSuccess;
+  final ValueChanged<Identity>? onLoginSuccessWithIdentity;
   final VoidCallback? onRegisterClick;
   final VoidCallback? onForgotPasswordClick;
   final IdentityMessages messages;
@@ -18,6 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
     super.key,
     required this.messages,
     this.onLoginSuccess,
+    this.onLoginSuccessWithIdentity,
     this.onRegisterClick,
     this.onForgotPasswordClick,
   });
@@ -57,6 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       (identity) {
         // Success
         widget.onLoginSuccess?.call();
+        widget.onLoginSuccessWithIdentity?.call(identity);
       },
       (failure) {
         // Error handling

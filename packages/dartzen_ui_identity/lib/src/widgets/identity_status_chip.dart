@@ -52,21 +52,24 @@ class IdentityStatusChip extends StatelessWidget {
         IdentityThemeExtension.fallback();
     final effectiveColor = color ?? theme.brandColor;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isOutline
-            ? Colors.transparent
-            : effectiveColor.withValues(alpha: 0.1),
-        border: Border.all(color: effectiveColor),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: effectiveColor,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
+    return Semantics(
+      label: label,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOutline
+              ? Colors.transparent
+              : effectiveColor.withValues(alpha: 0.1),
+          border: Border.all(color: effectiveColor),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: effectiveColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
         ),
       ),
     );
