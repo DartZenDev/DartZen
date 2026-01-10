@@ -15,6 +15,7 @@ library;
 
 export 'src/connection/firestore_config.dart';
 export 'src/connection/firestore_connection.dart';
+export 'src/connection/firestore_rest_client.dart';
 export 'src/converters/firestore_converters.dart';
 export 'src/errors/firestore_error_codes.dart';
 export 'src/errors/firestore_error_mapper.dart';
