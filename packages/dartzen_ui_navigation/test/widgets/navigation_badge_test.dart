@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('navigationBadge shows badge text when badgeCount present (Material)',
+  testWidgets(
+      'navigationBadge shows badge text when badgeCount present (Material)',
       (WidgetTester tester) async {
     if (dzIsIOS || dzIsMacOS) return;
 
@@ -28,7 +29,8 @@ void main() {
     expect(find.byIcon(Icons.home), findsWidgets);
   });
 
-  testWidgets('navigationBadge shows badge text when badgeCount present (Cupertino)',
+  testWidgets(
+      'navigationBadge shows badge text when badgeCount present (Cupertino)',
       (WidgetTester tester) async {
     if (!dzIsIOS && !dzIsMacOS) return;
 
@@ -40,7 +42,8 @@ void main() {
       builder: (c) => const SizedBox.shrink(),
     );
 
-    await tester.pumpWidget(CupertinoApp(home: Builder(builder: (c) => navigationBadge(item, false))));
+    await tester.pumpWidget(CupertinoApp(
+        home: Builder(builder: (c) => navigationBadge(item, false))));
 
     await tester.pumpAndSettle();
 
@@ -48,7 +51,8 @@ void main() {
     expect(find.byType(Icon), findsWidgets);
   });
 
-  testWidgets('navigationBadge without badgeCount shows icon only', (WidgetTester tester) async {
+  testWidgets('navigationBadge without badgeCount shows icon only',
+      (WidgetTester tester) async {
     final item = ZenNavigationItem(
       id: 'i',
       label: 'I',
@@ -56,7 +60,8 @@ void main() {
       builder: (c) => const SizedBox.shrink(),
     );
 
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: navigationBadge(item, false))));
+    await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: navigationBadge(item, false))));
     await tester.pumpAndSettle();
 
     expect(find.text('1'), findsNothing);
@@ -98,7 +103,8 @@ void main() {
     expect(find.byIcon(Icons.home), findsOneWidget);
   });
 
-  testWidgets('navigationBadge cupertino variant from target merged', (WidgetTester tester) async {
+  testWidgets('navigationBadge cupertino variant from target merged',
+      (WidgetTester tester) async {
     if (!dzIsIOS && !dzIsMacOS) return;
 
     final item = ZenNavigationItem(
@@ -109,7 +115,8 @@ void main() {
       badgeCount: 7,
     );
 
-    await tester.pumpWidget(CupertinoApp(home: CupertinoPageScaffold(child: navigationBadge(item, false))));
+    await tester.pumpWidget(CupertinoApp(
+        home: CupertinoPageScaffold(child: navigationBadge(item, false))));
 
     expect(find.text('7'), findsOneWidget);
     expect(find.byIcon(Icons.cake), findsOneWidget);

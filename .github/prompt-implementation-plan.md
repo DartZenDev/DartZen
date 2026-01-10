@@ -188,6 +188,8 @@ Coverage includes:
 
 # [PACKAGE INSTRUCTIONS](#package-instructions)
 
+========================================
+
 ## FINAL INSTRUCTION
 
 Do NOT:
