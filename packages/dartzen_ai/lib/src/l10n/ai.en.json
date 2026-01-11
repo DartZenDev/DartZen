@@ -1,0 +1,15 @@
+{
+  "ai.budget_exceeded": "AI budget limit exceeded",
+  "ai.budget_exceeded_method": "Budget limit exceeded for {method}",
+  "ai.budget_exceeded_global": "Global monthly budget limit exceeded",
+  "ai.quota_exceeded": "GCP quota exceeded",
+  "ai.invalid_request": "Invalid AI request",
+  "ai.service_unavailable": "AI service is currently unavailable",
+  "ai.authentication_failed": "AI authentication failed",
+  "ai.request_cancelled": "AI request was cancelled",
+  "ai.unknown_error": "Unknown AI error occurred",
+  "ai.retry_after": "Please retry after {seconds} seconds",
+  "ai.text_generation_success": "Text generation completed successfully",
+  "ai.embeddings_success": "Embeddings generation completed successfully",
+  "ai.classification_success": "Classification completed successfully"
+}
