@@ -23,7 +23,6 @@ void main() {
       expect(response.requestId, startsWith('echo_'));
       expect(response.usage?.inputTokens, 10);
       expect(response.usage?.outputTokens, 20);
-      expect(response.usage?.totalCost, 0.001);
       expect(response.metadata?['mode'], 'echo');
       expect(response.metadata?['model'], 'gemini-pro');
     });

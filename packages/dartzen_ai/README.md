@@ -5,6 +5,8 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
+> 🚧 NOT PRODUCTION READY — Authentication and credential rotation are incomplete.
+
 **GCP Vertex AI / Gemini integration for DartZen applications.**
 
 ---
@@ -21,17 +23,28 @@
 
 **Before using in production:**
 
-1. ✅ Set realistic monthly limits via `AIBudgetConfig.monthlyLimit`
-2. ✅ Monitor spending via Google Cloud Console
-3. ✅ Test thoroughly with **Echo service** in dev/staging
-4. ✅ Use **CancelToken** to abort expensive requests if needed
-5. ✅ Rotate GCP credentials regularly
+1. ⚠️ This package cannot perform real Vertex AI calls until authentication is implemented. See "Missing features" below.
+2. ✅ Set realistic monthly limits via `AIBudgetConfig.monthlyLimit`
+3. ✅ Monitor spending via Google Cloud Console
+4. ✅ Test thoroughly with **Echo service** in dev/staging
+5. ✅ Use **CancelToken** to abort expensive requests if needed
+6. ✅ Rotate GCP credentials regularly once auth is implemented
 
 **Default behavior:** Budget enforcer blocks requests when monthly limit is exceeded. This is your primary defense against runaway costs.
 
 ---
 
 This package provides AI capabilities through Google Cloud Platform's Vertex AI and Gemini services, with both server-side and client-side components, dev mode Echo service for local testing, and budget enforcement.
+
+## Missing features / Known limitations
+
+- Authentication: service-account-based access token retrieval is not yet implemented. The package currently uses a placeholder token in `VertexAIClient`.
+- Credential rotation: no automatic rotation for long-running services.
+- Production-grade retry/backoff: current retry is basic and lacks jitter and Retry-After handling.
+- Telemetry naming: event names must follow dot-notation alphanumeric rules.
+- Cost calculation: billing logic is currently in `AIUsage` (work planned to move into enforcer).
+
+Please refer to the TODOs in the repository for planned work and contribute if you can.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
@@ -87,7 +100,7 @@ textGeneration("Hello world")
 TextGenerationResponse(
   text: "Echo: Hello world",
   requestId: "echo_...",
-  usage: AIUsage(inputTokens: 10, outputTokens: 20, totalCost: 0.001),
+  usage: AIUsage(inputTokens: 10, outputTokens: 20),
   metadata: {"mode": "echo", "model": "gemini-pro"}
 )
 ```
@@ -302,7 +315,7 @@ result.when(
   success: (response) {
     print('Generated: ${response.text}');
     print('Tokens: ${response.usage?.totalTokens}');
-    print('Cost: \$${response.usage?.totalCost}');
+    print('Tokens: ${response.usage?.totalTokens}');
   },
   failure: (error) {
     if (error is AIBudgetExceededError) {

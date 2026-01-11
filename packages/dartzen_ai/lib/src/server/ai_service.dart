@@ -1,10 +1,34 @@
+import 'dart:math';
+
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 
+import '../errors/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import 'ai_budget_enforcer.dart';
 import 'vertex_ai_client.dart';
+
+// Ignore missing doc warnings for this file: short-lived internal API.
+// The public members are self-explanatory in context.
+// ignore_for_file: public_member_api_docs
+
+/// Retry policy configuration for transient failures.
+///
+/// - `baseDelayMs`: initial backoff in milliseconds.
+/// - `maxDelayMs`: maximum backoff cap in milliseconds.
+/// - `jitterFactor`: fraction used to apply +/- jitter (0.0..1.0).
+final class RetryPolicy {
+  const RetryPolicy({
+    this.baseDelayMs = 100,
+    this.maxDelayMs = 5000,
+    this.jitterFactor = 0.5,
+  });
+
+  final int baseDelayMs;
+  final int maxDelayMs;
+  final double jitterFactor;
+}
 
 /// Main AI service for server-side operations.
 ///
@@ -12,20 +36,35 @@ import 'vertex_ai_client.dart';
 /// budget enforcement, and telemetry integration.
 final class AIService {
   /// Creates an AI service.
-  const AIService({
+  AIService({
     required this.client,
     required this.budgetEnforcer,
     this.telemetryClient,
+    this.retryPolicy = const RetryPolicy(),
   });
 
   /// Vertex AI client.
+  ///
+  /// The client used to perform low-level calls to Vertex AI. Ownership is
+  /// external by default; callers may pass a client they manage.
   final VertexAIClient client;
 
   /// Budget enforcer.
+  ///
+  /// Responsible for validating and recording usage against configured
+  /// budget limits.
   final AIBudgetEnforcer budgetEnforcer;
 
   /// Optional telemetry client.
+  ///
+  /// When provided, usage and error telemetry events are emitted to this
+  /// client.
   final TelemetryClient? telemetryClient;
+
+  /// Retry policy used for transient failures.
+  ///
+  /// Configures backoff, cap and jitter for retry behavior.
+  final RetryPolicy retryPolicy;
 
   /// Generates text.
   Future<ZenResult<TextGenerationResponse>> textGeneration(
@@ -34,7 +73,7 @@ final class AIService {
     // Check budget
     final budgetCheck = budgetEnforcer.checkTextGenerationBudget();
     if (budgetCheck.isFailure) {
-      await _emitTelemetry('ai.text_generation.budget_exceeded', {
+      await _emitTelemetry('ai.textgeneration.budget.exceeded', {
         'model': request.model,
       });
       return ZenResult.err(budgetCheck.errorOrNull!);
@@ -49,20 +88,22 @@ final class AIService {
     // Record usage and emit telemetry
     return result.fold(
       (response) {
-        if (response.usage?.totalCost != null) {
-          budgetEnforcer.recordUsage(
-            'textGeneration',
-            response.usage!.totalCost!,
+        if (response.usage != null) {
+          final cost = budgetEnforcer.calculateCost(
+            AIMethod.textGeneration,
+            response.usage!,
+            model: request.model,
           );
+          budgetEnforcer.recordUsage(AIMethod.textGeneration, cost);
         }
-        _emitTelemetry('ai.text_generation.success', {
+        _emitTelemetry('ai.textgeneration.success', {
           'model': request.model,
           'tokens': response.usage?.totalTokens ?? 0,
         });
         return ZenResult.ok(response);
       },
       (error) {
-        _emitTelemetry('ai.text_generation.failure', {
+        _emitTelemetry('ai.textgeneration.failure', {
           'model': request.model,
           'error': error.message,
         });
@@ -78,7 +119,7 @@ final class AIService {
     // Check budget
     final budgetCheck = budgetEnforcer.checkEmbeddingsBudget();
     if (budgetCheck.isFailure) {
-      await _emitTelemetry('ai.embeddings.budget_exceeded', {
+      await _emitTelemetry('ai.embeddings.budget.exceeded', {
         'model': request.model,
       });
       return ZenResult.err(budgetCheck.errorOrNull!);
@@ -93,8 +134,13 @@ final class AIService {
     // Record usage and emit telemetry
     return result.fold(
       (response) {
-        if (response.usage?.totalCost != null) {
-          budgetEnforcer.recordUsage('embeddings', response.usage!.totalCost!);
+        if (response.usage != null) {
+          final cost = budgetEnforcer.calculateCost(
+            AIMethod.embeddings,
+            response.usage!,
+            model: request.model,
+          );
+          budgetEnforcer.recordUsage(AIMethod.embeddings, cost);
         }
         _emitTelemetry('ai.embeddings.success', {
           'model': request.model,
@@ -119,7 +165,7 @@ final class AIService {
     // Check budget
     final budgetCheck = budgetEnforcer.checkClassificationBudget();
     if (budgetCheck.isFailure) {
-      await _emitTelemetry('ai.classification.budget_exceeded', {
+      await _emitTelemetry('ai.classification.budget.exceeded', {
         'model': request.model,
       });
       return ZenResult.err(budgetCheck.errorOrNull!);
@@ -141,8 +187,13 @@ final class AIService {
     }
 
     final response = result.dataOrNull!;
-    if (response.usage?.totalCost != null) {
-      budgetEnforcer.recordUsage('classification', response.usage!.totalCost!);
+    if (response.usage != null) {
+      final cost = budgetEnforcer.calculateCost(
+        AIMethod.classification,
+        response.usage!,
+        model: request.model,
+      );
+      budgetEnforcer.recordUsage(AIMethod.classification, cost);
     }
     await _emitTelemetry('ai.classification.success', {
       'model': request.model,
@@ -155,24 +206,46 @@ final class AIService {
     Future<ZenResult<T>> Function() operation, {
     required int maxAttempts,
   }) async {
-    var attempt = 0;
-    while (attempt < maxAttempts) {
+    final random = Random();
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
       final result = await operation();
-      if (result.isSuccess) {
+      if (result.isSuccess) return result;
+
+      // Decide if error is retryable
+      final error = result.errorOrNull;
+      if (error is AIAuthenticationError ||
+          error is AIInvalidRequestError ||
+          error is AIBudgetExceededError) {
+        // Non-retryable errors
         return result;
       }
 
-      attempt++;
-      if (attempt < maxAttempts) {
-        // Exponential backoff
-        await Future<void>.delayed(
-          Duration(milliseconds: 100 * (1 << attempt)),
-        );
+      // If we've reached max attempts, return last result
+      if (attempt == maxAttempts - 1) return result;
+
+      // Honor explicit retry-after if provided by AIServiceUnavailableError
+      Duration delay;
+      if (error is AIServiceUnavailableError && error.retryAfter != null) {
+        delay = error.retryAfter!;
       } else {
-        return result;
+        // Exponential backoff with jitter using configured policy
+        final exp = retryPolicy.baseDelayMs * (1 << attempt);
+        final expCapped = exp.clamp(0, retryPolicy.maxDelayMs);
+        final lower = (expCapped * (1 - retryPolicy.jitterFactor)).toInt();
+        final upper = (expCapped * (1 + retryPolicy.jitterFactor)).toInt();
+        final span = (upper - lower).clamp(1, upper);
+        final ms = lower + random.nextInt(span);
+        delay = Duration(milliseconds: ms);
       }
+
+      await Future<void>.delayed(delay);
     }
-    throw StateError('Unreachable');
+
+    // Should be unreachable but return a sensible error
+    return const ZenResult.err(
+      AIServiceUnavailableError(retryAfter: Duration(seconds: 30)),
+    );
   }
 
   Future<void> _emitTelemetry(String name, Map<String, dynamic> payload) async {
@@ -187,5 +260,18 @@ final class AIService {
     );
 
     await telemetryClient!.emitEvent(event);
+  }
+
+  /// Closes owned resources used by this service.
+  ///
+  /// Note: this will close the underlying `VertexAIClient` if this service
+  /// was constructed to own it. Owners of injected clients should manage
+  /// their lifecycle themselves.
+  Future<void> close() async {
+    try {
+      client.close();
+    } catch (_) {
+      // ignore
+    }
   }
 }

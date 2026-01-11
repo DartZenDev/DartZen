@@ -7,7 +7,7 @@ Future<void> main() async {
   print('=== DartZen AI Server Example ===\n');
 
   // Dev mode configuration (no GCP credentials required)
-  const config = AIServiceConfig.dev(
+  final config = AIServiceConfig.dev(
     budgetConfig: AIBudgetConfig(monthlyLimit: 10.0, textGenerationLimit: 5.0),
   );
 
@@ -33,8 +33,7 @@ Future<void> main() async {
     final response = textResult.dataOrNull!;
     print('Generated Text: ${response.text}');
     print('Request ID: ${response.requestId}');
-    print('Tokens: ${response.usage?.totalTokens ?? 0}');
-    print('Cost: \$${response.usage?.totalCost ?? 0}\n');
+    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
   } else {
     print('Error: ${textResult.errorOrNull!.message}\n');
   }
@@ -52,7 +51,7 @@ Future<void> main() async {
     print('Generated ${response.embeddings.length} embeddings');
     print('Embedding dimensions: ${response.embeddings.first.length}');
     print('Request ID: ${response.requestId}');
-    print('Cost: \$${response.usage?.totalCost ?? 0}\n');
+    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
   } else {
     print('Error: ${embeddingsResult.errorOrNull!.message}\n');
   }
@@ -79,7 +78,7 @@ Future<void> main() async {
       });
     }
     print('Request ID: ${response.requestId}');
-    print('Cost: \$${response.usage?.totalCost ?? 0}\n');
+    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
   } else {
     print('Error: ${classificationResult.errorOrNull!.message}\n');
   }

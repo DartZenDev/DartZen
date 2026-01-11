@@ -41,7 +41,7 @@
 /// final client = VertexAIClient(config: config);
 /// final budgetEnforcer = AIBudgetEnforcer(
 ///   config: config.budgetConfig,
-///   usageTracker: InMemoryUsageTracker(),
+///   usageTracker: AIUsageTracker(),
 /// );
 /// final service = AIService(
 ///   client: client,

@@ -26,15 +26,15 @@ void main() {
   group('AIService telemetry event validation', () {
     test('telemetry event names pass dot-notation validation', () {
       final validNames = [
-        'ai.text_generation.success',
+        'ai.textgeneration.success',
         'ai.embeddings.success',
         'ai.classification.success',
-        'ai.text_generation.failure',
+        'ai.textgeneration.failure',
         'ai.embeddings.failure',
         'ai.classification.failure',
-        'ai.text_generation.budget_exceeded',
-        'ai.embeddings.budget_exceeded',
-        'ai.classification.budget_exceeded',
+        'ai.textgeneration.budget.exceeded',
+        'ai.embeddings.budget.exceeded',
+        'ai.classification.budget.exceeded',
       ];
 
       for (final name in validNames) {
@@ -55,7 +55,7 @@ void main() {
 
       await client.emitEvent(
         TelemetryEvent(
-          name: 'ai.text_generation.success',
+          name: 'ai.textgeneration.success',
           timestamp: DateTime.now().toUtc(),
           scope: 'ai',
           source: TelemetrySource.server,
@@ -85,22 +85,16 @@ void main() {
       expect(store.events.first.timestamp.isUtc, isTrue);
     });
 
-    test('AIUsage serialization preserves cost precision', () {
-      const usage = AIUsage(
-        inputTokens: 100,
-        outputTokens: 50,
-        totalCost: 0.0075,
-      );
+    test('AIUsage serialization preserves token counts', () {
+      const usage = AIUsage(inputTokens: 100, outputTokens: 50);
 
       final json = usage.toJson();
       expect(json['inputTokens'], equals(100));
       expect(json['outputTokens'], equals(50));
-      expect(json['totalCost'], equals(0.0075));
 
       final restored = AIUsage.fromJson(json);
       expect(restored.inputTokens, equals(100));
       expect(restored.outputTokens, equals(50));
-      expect(restored.totalCost, equals(0.0075));
     });
   });
 }

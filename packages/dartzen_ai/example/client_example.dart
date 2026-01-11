@@ -24,7 +24,6 @@ Future<void> main() async {
     print('Generated: ${response.text}');
     print('Request ID: ${response.requestId}');
     print('Tokens: ${response.usage?.totalTokens}');
-    print('Cost: \$${response.usage?.totalCost}\n');
   } else {
     print('Error: ${textResult.errorOrNull!.message}\n');
   }
@@ -41,7 +40,7 @@ Future<void> main() async {
     print('Generated ${response.embeddings.length} embeddings');
     print('Embedding dimensions: ${response.embeddings.first.length}');
     print('Request ID: ${response.requestId}');
-    print('Cost: \$${response.usage?.totalCost}\n');
+    print('Tokens: ${response.usage?.totalTokens}\n');
   } else {
     print('Error: ${embeddingResult.errorOrNull!.message}\n');
   }
@@ -65,7 +64,7 @@ Future<void> main() async {
       });
     }
     print('Request ID: ${response.requestId}');
-    print('Cost: \$${response.usage?.totalCost}\n');
+    print('Tokens: ${response.usage?.totalTokens}\n');
   } else {
     print('Error: ${classificationResult.errorOrNull!.message}\n');
   }

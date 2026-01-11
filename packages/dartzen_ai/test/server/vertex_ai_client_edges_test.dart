@@ -16,7 +16,7 @@ void main() {
       });
 
       final client = VertexAIClient(
-        config: const AIServiceConfig.dev(),
+        config: AIServiceConfig.dev(),
         httpClient: throwingClient,
       );
 
@@ -34,7 +34,7 @@ void main() {
         'confidence': 0.42,
         'requestId': 'r-1',
         'allScores': {'spam': 0.42, 'ham': 0.58},
-        'usage': {'inputTokens': 2, 'outputTokens': 0, 'totalCost': 0.01},
+        'usage': {'inputTokens': 2, 'outputTokens': 0},
       });
 
       final okClient = MockClient(
@@ -46,7 +46,7 @@ void main() {
       );
 
       final client = VertexAIClient(
-        config: const AIServiceConfig.dev(),
+        config: AIServiceConfig.dev(),
         httpClient: okClient,
       );
 

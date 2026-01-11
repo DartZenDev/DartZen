@@ -38,7 +38,6 @@ void main() {
                 'inputTokens': 10,
                 'outputTokens': 20,
                 'totalTokens': 30,
-                'totalCost': 0.001,
               },
             },
           ),

@@ -151,19 +151,12 @@ final class ClassificationResponse {
 @immutable
 final class AIUsage {
   /// Creates usage information.
-  const AIUsage({
-    required this.inputTokens,
-    required this.outputTokens,
-    this.totalCost,
-  });
+  const AIUsage({required this.inputTokens, required this.outputTokens});
 
   /// Creates from JSON map.
   factory AIUsage.fromJson(Map<String, dynamic> json) => AIUsage(
     inputTokens: json['inputTokens'] as int,
     outputTokens: json['outputTokens'] as int,
-    totalCost: json['totalCost'] != null
-        ? (json['totalCost'] as num).toDouble()
-        : null,
   );
 
   /// Number of input tokens.
@@ -172,8 +165,7 @@ final class AIUsage {
   /// Number of output tokens.
   final int outputTokens;
 
-  /// Total cost in USD (if available).
-  final double? totalCost;
+  /// No cost field here; cost is computed by the budget enforcer.
 
   /// Total tokens.
   int get totalTokens => inputTokens + outputTokens;
@@ -182,6 +174,5 @@ final class AIUsage {
   Map<String, dynamic> toJson() => {
     'inputTokens': inputTokens,
     'outputTokens': outputTokens,
-    if (totalCost != null) 'totalCost': totalCost,
   };
 }

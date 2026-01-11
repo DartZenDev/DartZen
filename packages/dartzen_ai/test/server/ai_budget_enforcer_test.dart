@@ -3,12 +3,12 @@ import 'package:test/test.dart';
 
 void main() {
   group('AIBudgetEnforcer', () {
-    late InMemoryUsageTracker tracker;
+    late AIUsageTracker tracker;
     late AIBudgetEnforcer enforcer;
 
     setUp(() {
-      tracker = InMemoryUsageTracker();
-      const config = AIBudgetConfig(
+      tracker = AIUsageTracker();
+      final config = AIBudgetConfig(
         monthlyLimit: 100.0,
         textGenerationLimit: 50.0,
         embeddingsLimit: 30.0,
@@ -49,8 +49,8 @@ void main() {
     });
 
     test('records usage correctly', () {
-      enforcer.recordUsage('textGeneration', 10.0);
-      enforcer.recordUsage('textGeneration', 5.0);
+      enforcer.recordUsage(AIMethod.textGeneration, 10.0);
+      enforcer.recordUsage(AIMethod.textGeneration, 5.0);
 
       expect(tracker.getMethodUsage('textGeneration'), 15.0);
       expect(tracker.getGlobalUsage(), 15.0);
@@ -90,11 +90,11 @@ void main() {
     });
   });
 
-  group('InMemoryUsageTracker', () {
-    late InMemoryUsageTracker tracker;
+  group('AIUsageTracker', () {
+    late AIUsageTracker tracker;
 
     setUp(() {
-      tracker = InMemoryUsageTracker();
+      tracker = AIUsageTracker();
     });
 
     test('starts with zero usage', () {

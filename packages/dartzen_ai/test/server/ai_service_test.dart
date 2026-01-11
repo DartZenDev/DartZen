@@ -92,12 +92,12 @@ class SequenceHttpClient implements http.Client {
 
 void main() {
   group('AIService', () {
-    late InMemoryUsageTracker usageTracker;
+    late AIUsageTracker usageTracker;
 
-    const config = AIServiceConfig.dev(projectId: 'p');
+    final config = AIServiceConfig.dev(projectId: 'p');
 
     setUp(() {
-      usageTracker = InMemoryUsageTracker();
+      usageTracker = AIUsageTracker();
     });
 
     test('textGeneration success records usage and emits telemetry', () async {
@@ -105,7 +105,7 @@ void main() {
         http.Response(
           jsonEncode({
             'text': 'Hello',
-            'usage': {'inputTokens': 5, 'outputTokens': 10, 'totalCost': 0.001},
+            'usage': {'inputTokens': 5, 'outputTokens': 10},
           }),
           200,
         ),
@@ -123,7 +123,7 @@ void main() {
       expect(result.isSuccess, true);
       expect(
         usageTracker.getMethodUsage('textGeneration'),
-        closeTo(0.001, 1e-9),
+        closeTo(0.00075, 1e-9),
       );
       // No telemetry client provided; verify usage only
     });
@@ -133,10 +133,9 @@ void main() {
         http.Response(jsonEncode({'text': 'Hello'}), 200),
       ]);
       final vertex = VertexAIClient(config: config, httpClient: httpClient);
-      final tracker = InMemoryUsageTracker()
-        ..recordUsage('textGeneration', 51.0);
+      final tracker = AIUsageTracker()..recordUsage('textGeneration', 51.0);
       final enforcer = AIBudgetEnforcer(
-        config: const AIBudgetConfig(
+        config: AIBudgetConfig(
           monthlyLimit: 100.0,
           textGenerationLimit: 50.0,
           embeddingsLimit: 30.0,
@@ -160,7 +159,7 @@ void main() {
             'embeddings': [
               [0.1, 0.2],
             ],
-            'usage': {'inputTokens': 2, 'outputTokens': 0, 'totalCost': 0.0005},
+            'usage': {'inputTokens': 2, 'outputTokens': 0},
           }),
           200,
         ),
@@ -202,7 +201,7 @@ void main() {
           jsonEncode({
             'label': 'positive',
             'confidence': 0.9,
-            'usage': {'inputTokens': 1, 'outputTokens': 1, 'totalCost': 0.0003},
+            'usage': {'inputTokens': 1, 'outputTokens': 1},
           }),
           200,
         ),
@@ -220,7 +219,7 @@ void main() {
       expect(result.isSuccess, true);
       expect(
         usageTracker.getMethodUsage('classification'),
-        closeTo(0.0003, 1e-9),
+        closeTo(0.00005, 1e-9),
       );
       // No telemetry client provided; verify usage only
     });

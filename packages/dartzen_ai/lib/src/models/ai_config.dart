@@ -7,19 +7,20 @@ import 'package:meta/meta.dart';
 @immutable
 final class AIServiceConfig {
   /// Creates an AI service configuration.
-  const AIServiceConfig({
+  AIServiceConfig({
     required this.projectId,
     required this.region,
     required this.credentialsJson,
-    this.budgetConfig = const AIBudgetConfig(),
-  });
+    AIBudgetConfig? budgetConfig,
+  }) : budgetConfig = budgetConfig ?? AIBudgetConfig();
 
   /// Creates a dev mode configuration (no credentials required).
-  const AIServiceConfig.dev({
+  AIServiceConfig.dev({
     this.projectId = 'dev-project',
     this.region = 'us-central1',
-    this.budgetConfig = const AIBudgetConfig.unlimited(),
-  }) : credentialsJson = null;
+    AIBudgetConfig? budgetConfig,
+  }) : credentialsJson = null,
+       budgetConfig = budgetConfig ?? const AIBudgetConfig.unlimited();
 
   /// GCP project ID.
   final String projectId;
@@ -41,12 +42,21 @@ final class AIServiceConfig {
 @immutable
 final class AIBudgetConfig {
   /// Creates a budget configuration.
-  const AIBudgetConfig({
-    this.monthlyLimit,
-    this.textGenerationLimit,
-    this.embeddingsLimit,
-    this.classificationLimit,
-  });
+  AIBudgetConfig({
+    double? monthlyLimit,
+    double? textGenerationLimit,
+    double? embeddingsLimit,
+    double? classificationLimit,
+  }) : monthlyLimit = _validateLimit(monthlyLimit, 'monthlyLimit'),
+       textGenerationLimit = _validateLimit(
+         textGenerationLimit,
+         'textGenerationLimit',
+       ),
+       embeddingsLimit = _validateLimit(embeddingsLimit, 'embeddingsLimit'),
+       classificationLimit = _validateLimit(
+         classificationLimit,
+         'classificationLimit',
+       );
 
   /// Creates an unlimited budget configuration.
   const AIBudgetConfig.unlimited()
@@ -66,6 +76,13 @@ final class AIBudgetConfig {
 
   /// Per-method budget limit for classification in USD.
   final double? classificationLimit;
+
+  static double? _validateLimit(double? value, String name) {
+    if (value != null && value <= 0) {
+      throw ArgumentError('$name must be positive, got: $value');
+    }
+    return value;
+  }
 
   /// Whether this configuration has any limits.
   bool get hasLimits =>

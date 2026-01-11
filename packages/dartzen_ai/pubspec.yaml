@@ -20,6 +20,7 @@ dependencies:
     path: ../dartzen_telemetry
   dartzen_transport:
     path: ../dartzen_transport
+  googleapis_auth: ^1.4.0
   http: ^1.2.2
   meta: ^1.15.0
 

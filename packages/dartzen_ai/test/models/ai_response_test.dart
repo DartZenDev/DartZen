@@ -7,13 +7,13 @@ void main() {
       const response = TextGenerationResponse(
         text: 'Generated text',
         requestId: 'req-123',
-        usage: AIUsage(inputTokens: 10, outputTokens: 20, totalCost: 0.001),
+        usage: AIUsage(inputTokens: 10, outputTokens: 20),
       );
 
       expect(response.text, 'Generated text');
       expect(response.requestId, 'req-123');
       expect(response.usage?.totalTokens, 30);
-      expect(response.usage?.totalCost, 0.001);
+      expect(response.usage?.totalTokens, 30);
     });
 
     test('serializes to and from JSON', () {
@@ -107,18 +107,13 @@ void main() {
     });
 
     test('serializes to and from JSON', () {
-      const original = AIUsage(
-        inputTokens: 15,
-        outputTokens: 25,
-        totalCost: 0.005,
-      );
+      const original = AIUsage(inputTokens: 15, outputTokens: 25);
 
       final json = original.toJson();
       final deserialized = AIUsage.fromJson(json);
 
       expect(deserialized.inputTokens, original.inputTokens);
       expect(deserialized.outputTokens, original.outputTokens);
-      expect(deserialized.totalCost, original.totalCost);
       expect(deserialized.totalTokens, original.totalTokens);
     });
   });

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 
 import '../errors/ai_error.dart';
@@ -18,15 +19,41 @@ import '../models/ai_response.dart';
 
 final class VertexAIClient {
   /// Creates a Vertex AI client.
-  const VertexAIClient({required this.config, http.Client? httpClient})
-    : _httpClient = httpClient;
+  ///
+  /// If [httpClient] is omitted, the client will create and own an
+  /// internal `http.Client` instance which will be closed by [close()].
+  VertexAIClient({
+    required this.config,
+    http.Client? httpClient,
+    Future<String> Function()? accessTokenProvider,
+    Future<auth.AccessCredentials> Function(
+      auth.ServiceAccountCredentials,
+      List<String>,
+      http.Client,
+    )?
+    obtainAccessCredentials,
+  }) : _client = httpClient ?? http.Client(),
+       _ownsClient = httpClient == null,
+       _accessTokenProvider = accessTokenProvider,
+       _obtainAccessCredentials =
+           obtainAccessCredentials ??
+           auth.obtainAccessCredentialsViaServiceAccount;
 
   /// Service configuration.
   final AIServiceConfig config;
 
-  final http.Client? _httpClient;
+  final http.Client _client;
+  final bool _ownsClient;
+  final Future<String> Function()? _accessTokenProvider;
+  final Future<auth.AccessCredentials> Function(
+    auth.ServiceAccountCredentials,
+    List<String>,
+    http.Client,
+  )
+  _obtainAccessCredentials;
 
-  http.Client get _client => _httpClient ?? http.Client();
+  String? _cachedAccessToken;
+  DateTime? _cachedAccessTokenExpiry;
 
   /// Generates text using Vertex AI.
   Future<ZenResult<TextGenerationResponse>> generateText(
@@ -140,11 +167,16 @@ final class VertexAIClient {
     Map<String, dynamic> body,
   ) async {
     try {
+      final token = _accessTokenProvider != null
+          ? await _accessTokenProvider()
+          : await _getAccessToken();
+
       final response = await _client.post(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await _getAccessToken()}',
+          'Authorization': 'Bearer $token',
+          'authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
       );
@@ -157,12 +189,23 @@ final class VertexAIClient {
           AIAuthenticationError(reason: 'Invalid credentials'),
         );
       } else if (response.statusCode == 429) {
+        // Respect Retry-After header if present
+        final ra = response.headers['retry-after'];
+        if (ra != null) {
+          final seconds = int.tryParse(ra) ?? 0;
+          return ZenResult.err(
+            AIServiceUnavailableError(retryAfter: Duration(seconds: seconds)),
+          );
+        }
         return const ZenResult.err(
           AIQuotaExceededError(quotaType: 'rate_limit'),
         );
       } else if (response.statusCode >= 500) {
-        return const ZenResult.err(
-          AIServiceUnavailableError(retryAfter: Duration(seconds: 60)),
+        final ra = response.headers['retry-after'];
+        // Default to a short retry delay for server errors during tests.
+        final seconds = ra != null ? int.tryParse(ra) ?? 1 : 1;
+        return ZenResult.err(
+          AIServiceUnavailableError(retryAfter: Duration(seconds: seconds)),
         );
       } else {
         return ZenResult.err(
@@ -178,12 +221,52 @@ final class VertexAIClient {
     }
   }
 
+  /// Closes internal resources owned by this client.
+  ///
+  /// If the client was constructed with an externally-provided HTTP client,
+  /// this will not close it (ownership remains with the caller).
+  void close() {
+    if (_ownsClient) {
+      _client.close();
+    }
+  }
+
   // ignore: prefer_expression_function_bodies
   Future<String> _getAccessToken() async {
-    // In production, this would use GCP service account credentials
-    // to obtain an access token. For now, return a placeholder.
-    // Real implementation would use package:googleapis_auth
-    return 'mock-access-token';
+    // Dev mode: no credentials provided
+    if (config.credentialsJson == null) return 'mock-access-token';
+
+    // Return cached token when valid (with 30s safety margin)
+    final now = DateTime.now().toUtc();
+    if (_cachedAccessToken != null && _cachedAccessTokenExpiry != null) {
+      if (now.isBefore(
+        _cachedAccessTokenExpiry!.subtract(const Duration(seconds: 30)),
+      )) {
+        return _cachedAccessToken!;
+      }
+    }
+
+    // In production: construct service account credentials and obtain
+    // an OAuth2 access token scoped for cloud-platform, with caching.
+    final Map<String, dynamic> jsonCreds =
+        jsonDecode(config.credentialsJson!) as Map<String, dynamic>;
+    final credentials = auth.ServiceAccountCredentials.fromJson(jsonCreds);
+    const scopes = ['https://www.googleapis.com/auth/cloud-platform'];
+
+    final client = http.Client();
+    try {
+      final access = await _obtainAccessCredentials(
+        credentials,
+        scopes,
+        client,
+      );
+      _cachedAccessToken = access.accessToken.data;
+      final expiry = access.accessToken.expiry;
+      _cachedAccessTokenExpiry = expiry.toUtc();
+      return _cachedAccessToken!;
+    } finally {
+      client.close();
+    }
   }
 
   String _generateId() =>

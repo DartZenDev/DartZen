@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('AIServiceConfig', () {
     test('creates production config', () {
-      const config = AIServiceConfig(
+      final config = AIServiceConfig(
         projectId: 'test-project',
         region: 'us-central1',
         credentialsJson: '{"key": "value"}',
@@ -19,7 +19,7 @@ void main() {
     });
 
     test('creates dev config', () {
-      const config = AIServiceConfig.dev();
+      final config = AIServiceConfig.dev();
 
       expect(config.projectId, 'dev-project');
       expect(config.region, 'us-central1');
@@ -31,7 +31,7 @@ void main() {
 
   group('AIBudgetConfig', () {
     test('creates config with limits', () {
-      const config = AIBudgetConfig(
+      final config = AIBudgetConfig(
         monthlyLimit: 100.0,
         textGenerationLimit: 50.0,
         embeddingsLimit: 30.0,

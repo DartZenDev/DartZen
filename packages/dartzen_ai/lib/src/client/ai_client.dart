@@ -13,11 +13,17 @@ import 'cancel_token.dart';
 /// Supports cancellable requests via [CancelToken].
 final class AIClient {
   /// Creates an AI client.
+  ///
+  /// If [zenClient] is omitted, the client will construct and own a
+  /// `ZenClient` instance which will be closed by [close()].
   AIClient({required String baseUrl, ZenClient? zenClient})
-    : zenClient = zenClient ?? ZenClient(baseUrl: baseUrl);
+    : zenClient = zenClient ?? ZenClient(baseUrl: baseUrl),
+      _ownsZenClient = zenClient == null;
 
   /// Transport client.
   final ZenClient zenClient;
+
+  final bool _ownsZenClient;
 
   /// Generates text.
   Future<ZenResult<TextGenerationResponse>> textGeneration({
@@ -148,6 +154,20 @@ final class AIClient {
       return const AIServiceUnavailableError(retryAfter: Duration(seconds: 30));
     } else {
       return AIInvalidRequestError(reason: message);
+    }
+  }
+
+  /// Closes owned resources (e.g. internal `ZenClient`).
+  ///
+  /// If the `ZenClient` was provided by the caller, ownership remains with
+  /// the caller and this method is a no-op.
+  void close() {
+    if (_ownsZenClient) {
+      try {
+        zenClient.close();
+      } catch (_) {
+        // ignore
+      }
     }
   }
 }

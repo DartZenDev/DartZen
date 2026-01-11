@@ -22,7 +22,7 @@ void main() {
 
     setUp(() {
       mockHttp = MockHttpClient();
-      config = const AIServiceConfig.dev(projectId: 'test-project');
+      config = AIServiceConfig.dev(projectId: 'test-project');
       client = VertexAIClient(config: config, httpClient: mockHttp);
     });
 
