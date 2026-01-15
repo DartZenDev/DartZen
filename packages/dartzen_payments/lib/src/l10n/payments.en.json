@@ -1,0 +1,9 @@
+{
+  "payments.error.declined": "Payment was declined by the card issuer",
+  "payments.error.insufficient_funds": "Insufficient funds available",
+  "payments.error.invalid_amount": "The payment amount is invalid",
+  "payments.error.not_found": "Payment not found",
+  "payments.error.state": "Invalid payment state for this operation",
+  "payments.error.provider": "Payment provider error occurred",
+  "payments.error.unknown": "An unknown error occurred during payment processing"
+}
