@@ -12,6 +12,9 @@
     }
   },
   "cSpell.words": [
+    "abgelehnt",
+    "adyen",
+    "Authorised",
     "Behaviour",
     "buildlog",
     "Cantarell",
@@ -55,12 +58,14 @@
     "setdoc",
     "SETEX",
     "simplecast",
+    "strapi",
     "strat",
     "subosito",
     "textembedding",
     "unawaited",
     "unrepresentable",
     "updoc",
-    "whitebox"
+    "whitebox",
+    "Zahlung"
   ]
 }

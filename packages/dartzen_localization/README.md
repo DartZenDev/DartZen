@@ -24,7 +24,7 @@ If you are working within the DartZen monorepo, add dependency to your `pubspec.
 ```yaml
 dependencies:
   dartzen_localization:
-    path: ../dartzen_localization # Or git/pub version
+    path: ../dartzen_localization
   flutter:
     sdk: flutter # Required for AssetBundle support
 ```
