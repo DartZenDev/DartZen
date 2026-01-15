@@ -52,6 +52,9 @@ dartzen/
 - **`dartzen_storage`**: Google Cloud Storage reader for the DartZen ecosystem.
 - **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
 - **`dartzen_ui_identity`**: Cross-platform, adaptive UI components and screens for DartZen Identity flows.
+- ** `dartzen_ai`**: AI integration package for DartZen — provides interfaces and implementations for GCP Vertex AI / Gemini integration.
+- **`dartzen_payments`**: Payments integration package for DartZen — provides interfaces and implementations Stripe and Adyen payment providers.
+- **`dartzen_jobs`**: A unified background and scheduled jobs system for DartZen applications.
 
 ### Example Applications
 
