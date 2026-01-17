@@ -1,13 +1,24 @@
 name: dartzen_telemetry
-description: >
-  Semantic telemetry event tracking for DartZen applications. Firestore-first
-  semantic events for user journeys, admin dashboards, and analytics.
+description: Semantic telemetry event tracking for DartZen applications. Firestore-first semantic events for user journeys, admin dashboards, and analytics.
 version: 0.0.1
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 resolution: workspace
 publish_to: none
 
 environment:
   sdk: ">=3.10.4 <4.0.0"
+
+topics:
+  - telemetry
+  - analytics
+  - events
+
+platforms:
+  linux:
+  macos:
+  windows:
 
 dependencies:
   dartzen_core:

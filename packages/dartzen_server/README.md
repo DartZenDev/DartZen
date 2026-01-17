@@ -13,34 +13,68 @@ The application runtime and orchestration layer for DartZen server applications.
 
 `dartzen_server` is the **application boundary** and **runtime entry point** for DartZen server applications running on Google Cloud Platform.
 
+It is an **execution orchestrator**, not an execution engine.
+
+The server runtime:
+
+- Hosts HTTP endpoints
+- Wires infrastructure and domain features
+- Delegates execution safely within a single event-loop runtime
+
 It wires together:
 
-- Domain features (e.g., `dartzen_identity`)
+- Domain features (e.g. `dartzen_identity`)
 - Infrastructure utilities (`dartzen_firestore`, `dartzen_cache`, `dartzen_storage`)
 - Transport layer (`dartzen_transport`)
 
-Its responsibilities are:
+Its responsibilities are strictly limited to:
 
-- **Process Lifecycle**: Server startup and graceful shutdown
+- **Process Lifecycle**: Startup and graceful shutdown
 - **Request Routing**: Mapping HTTP paths to handlers
-- **Domain Invocation**: Calling domain logic and receiving `ZenResult`
-- **Response Translation**: Converting `ZenResult` into HTTP responses via `dartzen_transport`
-- **Content Serving**: Providing opaque bytes/strings (content source is `dartzen_storage`)
+- **Execution Delegation**: Invoking domain logic in a non-blocking manner
+- **Response Translation**: Converting `ZenResult` into HTTP responses
+- **Content Serving**: Streaming opaque bytes and metadata from storage
 
 ## 🧘🏻 What This Package Is NOT
 
 `dartzen_server` does **not**:
 
-- Abstract over multiple server runtimes (it is Shelf-native)
-- Define or own transport formats (that's `dartzen_transport`)
-- Provide multi-cloud abstractions (it is GCP-native)
-- Embed storage or caching logic (those are in dedicated packages)
-- Auto-wire infrastructure (wiring is explicit)
-- Own domain logic or business rules
+- Execute CPU-heavy or blocking logic
+- Abstract over multiple server runtimes
+- Own domain or business logic
+- Perform synchronous I/O
+- Hide execution behavior behind magic abstractions
+- Act as a background worker system
+
+If something blocks the event loop, it does not belong here.
+
+## ⚙️ Execution Model
+
+DartZen servers operate in a **single event-loop runtime**.
+
+This has hard architectural consequences.
+
+- All HTTP requests share one execution thread
+- Blocking one request blocks all requests
+- Synchronous CPU work is a runtime defect
+
+Because of this:
+
+- The server **never assumes domain logic is safe to run inline**
+- Long-running or CPU-heavy work must be delegated
+- Non-blocking execution is a correctness requirement, not an optimization
+
+This package follows the DartZen execution model defined in:
+
+**`/docs/execution-model.md`**
+
+Any refactoring or extension of `dartzen_server` must remain compatible with that document.
 
 ## 🏗️ Architecture
 
 `dartzen_server` is built on **Shelf** and designed specifically for **Google Cloud Platform** deployment (Cloud Run, Cloud Run Jobs).
+
+Shelf is used as a **minimal HTTP kernel**, not as a framework.
 
 ### Explicit Wiring
 
@@ -49,25 +83,29 @@ Everything is wired explicitly in code:
 - No hidden dependency injection
 - No auto-discovery
 - No reflection-based behavior
-- No magic middleware chains
+- No implicit middleware chains
+
+If something happens, it happens because it is written.
 
 ### Application Boundary
 
-The server is an orchestration layer:
+The server is an **orchestration layer**, not a domain container.
 
 - Domain logic lives in feature packages
 - Infrastructure adapters live in utility packages
-- The server only connects them
+- The server coordinates and delegates execution
+
+The server does **not** own execution strategy. It enforces execution safety.
 
 ### Responsibility Boundaries
 
 Clear separation of concerns:
 
-- **`dartzen_storage`**: Fetches bytes and content type from GCS
-- **`dartzen_server`**: Produces HTTP responses with correct `Content-Type` headers
-- **`dartzen_transport`**: Handles API encoding/envelopes (not file serving)
+- **`dartzen_storage`**: Fetches bytes and content metadata
+- **`dartzen_server`**: Streams bytes into HTTP responses
+- **`dartzen_transport`**: Encodes API responses and envelopes
 
-The server does not detect, infer, or override content types—it passes through metadata from storage.
+The server does not infer, detect, or reinterpret content. It passes through bytes and metadata verbatim.
 
 ### GCP-Native Design
 
@@ -116,6 +154,16 @@ void main() async {
 }
 ```
 
+### Execution Safety Notice
+
+All request handlers **must be non-blocking**.
+
+- No synchronous I/O
+- No CPU-heavy computation
+- No blocking waits
+
+Violating these rules blocks the entire server.
+
 ### With Lifecycle Hooks
 
 ```dart
@@ -128,24 +176,23 @@ void main() async {
 
   // Register startup hook
   app.onStartup(() async {
-    print('🚀 Server starting...');
-    // Initialize resources (e.g., database connections)
+    // Initialize async resources only
   });
 
   // Register shutdown hook
   app.onShutdown(() async {
-    print('🛑 Server shutting down...');
     // Cleanup resources
   });
 
   await app.run();
-  print('✅ Server listening on http://localhost:8080');
 }
 ```
 
+Lifecycle hooks follow the same execution constraints as request handlers.
+
 ### Serving Content
 
-`dartzen_server` provides **content routing infrastructure only**—it does not ship any content, routes, or assumptions about what content exists.
+`dartzen_server` provides **content routing infrastructure only** — it does not ship any content, routes, or assumptions about what content exists.
 
 All content routing decisions belong to the **application layer**.
 
@@ -187,11 +234,12 @@ void main() async {
 #### Content Type Handling
 
 Content is served with correct `Content-Type` headers:
+
 - Content type comes from storage metadata (GCS via `dartzen_storage`)
 - No detection or inference logic in the server
 - Falls back to `application/octet-stream` if unknown
 
-The server is a **pure transport coordinator**—it moves bytes and metadata from storage to HTTP responses without semantic understanding.
+The server is a **pure transport coordinator** — it moves bytes and metadata from storage to HTTP responses without semantic understanding.
 
 #### Key Principles
 
@@ -199,11 +247,6 @@ The server is a **pure transport coordinator**—it moves bytes and metadata fro
 - **No hardcoded routes**: All HTTP path → content key mappings are defined by the application
 - **Opaque content keys**: The server does not interpret keys (they are not file paths)
 - **Storage-agnostic interface**: Content can come from GCS, filesystem, memory, or any `ZenContentProvider` implementation
-  address: '0.0.0.0',         // Bind address
-  port: 8080,                  // Port to listen on
-  contentProvider: myProvider, // Optional content provider
-);
-```
 
 ## 🐛 Error Handling
 

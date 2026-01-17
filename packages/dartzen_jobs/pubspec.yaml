@@ -1,13 +1,25 @@
 name: dartzen_jobs
-description: A unified background and scheduled jobs package for DartZen applications.
+description: Deterministic job runtime for DartZen. Provides endpoint, scheduled, and periodic background jobs with Cloud Run and Cloud Tasks integration.
 version: 0.0.1
-homepage: https://github.com/DartZenDev/DartZen
-repository: https://github.com/DartZenDev/DartZen/tree/main/packages/dartzen_jobs
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 publish_to: none
 resolution: workspace
 
 environment:
   sdk: '>=3.10.4 <4.0.0'
+
+topics:
+  - jobs
+  - background
+  - scheduler
+  - gcp
+
+platforms:
+  linux:
+  macos:
+  windows:
 
 dependencies:
   dartzen_core:

@@ -20,6 +20,17 @@ class MasterJobProcessingError extends ZenError {
 /// 1. Fetches all enabled periodic jobs from [JobStore].
 /// 2. Calculates which jobs are "due" based on their `interval` and `lastRun`.
 /// 3. Executes the due jobs sequentially via the provided `_executeJob` callback.
+///
+/// ## Execution Model Compliance
+///
+/// Master job orchestration is **non-blocking**:
+/// - Job fetching is async I/O (Firestore)
+/// - Date calculations are fast, deterministic logic
+/// - Job execution is delegated to the provided callback
+/// - Sequential execution prevents job fan-out and cost explosion
+///
+/// The master job itself does not perform CPU-intensive work.
+/// It only coordinates when other jobs should run.
 class MasterJob {
   final JobStore _store;
   final TelemetryClient _telemetry;

@@ -21,6 +21,7 @@ Before writing or changing anything, you **must read and follow** the rules and 
 - `docs/server_runtime.md`
 - `docs/development_workflow.md`
 - `docs/versioning_and_releases.md`
+- `docs/execution_model.md`
 
 Additionally, **before starting work**, read and respect:
 

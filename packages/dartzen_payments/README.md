@@ -5,37 +5,64 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Payment domain and provider implementations for DartZen (Strapi, Adyen).
+**Deterministic payments. Explicit lifecycle. Zero ambiguity.**
 
-> This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
+Payment domain and production-grade provider integrations for DartZen (Strapi, Adyen).
 
-## 🧘 What is dartzen_payments?
+> Part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
-`dartzen_payments` defines the payment domain (intent, payment, status, errors) and concrete
-provider integrations for Strapi and Adyen. It enforces deterministic payment lifecycle,
-idempotent operations, and telemetry hooks.
+## 🎯 What is `dartzen_payments`?
 
-## 🤔 Why does it exist?
+`dartzen_payments` is a **strict payment domain** with **real provider implementations**.
 
-DartZen needs a first-class payment capability that is:
+Not helpers. Not SDK wrappers. A payment system that treats money as a **state machine**, not a side effect.
 
-- Explicit about lifecycle and errors
-- Deterministic and idempotent by default (idempotency keys required)
-- Ready for production without mocks or stubs
-- Observable via structured telemetry
+## 💣 Why this package exists
+
+Most payment codebases fail in the same places:
+
+- unclear lifecycle
+- retry chaos
+- silent double-charges
+- provider-specific error soup
+- no observability
+
+`dartzen_payments` exists to **remove ambiguity**.
+
+You get:
+
+- Explicit payment lifecycle
+- Mandatory idempotency
+- Deterministic state transitions
+- Unified error model
+- Telemetry-first design
+
+No magic. No guessing.
+
+---
+
+## 🧠 Core principles
+
+- **Lifecycle is explicit**: Every payment has a well-defined state.
+- **Idempotency is mandatory**: No key → no payment.
+- **Providers are replaceable**: Domain first. Providers second.
+- **Errors are semantic**: One unified error hierarchy.
+- **Observability is built-in**: Payments emit events, not surprises.
 
 ## 🧩 How it fits into DartZen
 
-- Uses `dartzen_core` for results/errors and validation
-- Uses `dartzen_transport` for HTTP with consistent headers and codecs
-- Emits telemetry via `dartzen_telemetry` using package-local helpers
-- Localizes user-facing strings via `dartzen_localization` messages layer
+- `dartzen_core`: Results, errors, validation
+- `dartzen_transport`: HTTP with consistent headers and codecs
+- `dartzen_telemetry`: Structured payment events
+- `dartzen_localization`: User-facing messages
+
+No hidden dependencies. No global state.
 
 ## 📦 Installation
 
 ### In a Melos Workspace
 
-If you are working within the DartZen monorepo, add dependency to your `pubspec.yaml`:
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -43,7 +70,7 @@ dependencies:
     path: ../dartzen_payments
 ```
 
-### External Usage
+### External usage
 
 Add this to your `pubspec.yaml`:
 
@@ -52,7 +79,7 @@ dependencies:
   dartzen_payments: ^latest_version
 ```
 
-## 🚀 Minimal usage example
+## 🚀 Minimal usage
 
 ```dart
 import 'package:dartzen_payments/dartzen_payments.dart';
@@ -79,17 +106,39 @@ Future<void> main() async {
 
   final result = await service.createPayment(intent);
   result.fold(
-    (payment) => print('Payment created: ${payment.id} status=${payment.status}'),
-    (error) => print('Payment failed: ${error.message}'),
+    (payment) =>
+      print('Payment ${payment.id} → ${payment.status}'),
+    (error) =>
+      print('Payment failed: ${error.message}'),
   );
 }
 ```
 
-## ⚠️ Error handling philosophy
+## 🧱 Payment lifecycle (simplified)
 
-- All provider failures map into the unified `PaymentError` sealed hierarchy
-- Provider-specific details live only in `PaymentProviderError.internalData`
-- Validation errors use `ZenValidationError` through `PaymentIntent.create`
+- `intent_created`
+- `payment_created`
+- `completed` | `failed`
+
+No hidden transitions. No implicit retries.
+
+## ⚠️ Error model
+
+- All failures map to **`PaymentError`**
+- Provider details are isolated in: `PaymentProviderError.internalData`
+- Validation errors are caught **before** provider calls
+
+Your business logic never depends on provider-specific enums.
+
+## 🔁 Idempotency
+
+Idempotency is **required**, not optional.
+
+- `PaymentIntent.idempotencyKey` must be provided
+- Providers rely on it for safe retries
+- Package never retries business logic implicitly
+
+If a request is retried, the outcome is deterministic.
 
 ## 📡 Telemetry
 
@@ -99,14 +148,7 @@ Use the package-local helpers in `payment_events.dart` to emit:
 - `payment.completed`
 - `payment.failed`
 
-Payload fields: `paymentId`, `intentId`, `status`, `provider`, `amountMinor`, `currency`.
-
-## 🔒 Idempotency
-
-`PaymentIntent.idempotencyKey` is required and must be provided by callers. Providers rely on it to
-ensure safe retries; no automatic business-level retries happen inside the package.
-
-## 🚫 Out of scope for v0.0.1
+## 🚫 Explicitly out of scope (v0.0.1)
 
 - Subscriptions
 - Recurring payments
@@ -115,11 +157,13 @@ ensure safe retries; no automatic business-level retries happen inside the packa
 - Partial captures
 - Webhooks
 
-## 🛡️ Stability guarantees
+## 🛡 Stability guarantees
 
 - Version: `0.0.1`
 - Deterministic behavior across environments
-- No global state; explicit configuration only
+- No singletons
+- No global mutable state
+- Explicit configuration only
 
 ## 📄 License
 

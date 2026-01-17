@@ -34,6 +34,17 @@ final class RetryPolicy {
 ///
 /// Handles all Vertex AI / Gemini API calls with retry logic,
 /// budget enforcement, and telemetry integration.
+///
+/// ## Execution Model Compliance
+///
+/// This service is **fully non-blocking** and event-loop safe:
+/// - All network calls are async and yield control
+/// - Retry backoff uses `Future.delayed()` which is non-blocking
+/// - No CPU-intensive synchronous work
+/// - Budget checks are fast, in-memory operations
+///
+/// Retry delays do not block the event loop; they schedule
+/// continuation on the event loop after the delay expires.
 final class AIService {
   /// Creates an AI service.
   AIService({
@@ -202,6 +213,16 @@ final class AIService {
     return ZenResult.ok(response);
   }
 
+  /// Executes an operation with exponential backoff retry logic.
+  ///
+  /// ## Non-Blocking Guarantee
+  ///
+  /// Retry delays use `Future.delayed()`, which is async and non-blocking.
+  /// The delay schedules continuation on the event loop without blocking
+  /// other requests or operations.
+  ///
+  /// Retries only occur for transient failures. Non-retryable errors
+  /// (authentication, invalid request, budget exceeded) return immediately.
   Future<ZenResult<T>> _withRetry<T>(
     Future<ZenResult<T>> Function() operation, {
     required int maxAttempts,

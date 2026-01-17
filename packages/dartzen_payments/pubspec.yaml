@@ -1,11 +1,24 @@
 name: dartzen_payments
 version: 0.0.1
-description: Payment domain and provider implementations for DartZen (Strapi, Adyen).
+description: Payment processing utilities for DartZen. Provides Stripe and Adyen integration for transaction handling and subscription management.
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 resolution: workspace
 publish_to: none
 
 environment:
   sdk: ">=3.10.4 <4.0.0"
+
+topics:
+  - payments
+  - stripe
+  - adyen
+
+platforms:
+  linux:
+  macos:
+  windows:
 
 dependencies:
   dartzen_core:
