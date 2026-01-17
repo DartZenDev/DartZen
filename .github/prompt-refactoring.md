@@ -22,6 +22,7 @@ You must strictly follow repository-level instructions defined in:
 - `docs/development_workflow.md`
 - `docs/versioning_and_releases.md`
 - `docs/coverage_model.md`
+- `docs/execution_model.md`
 
 ---
 

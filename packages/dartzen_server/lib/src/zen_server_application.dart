@@ -21,6 +21,19 @@ import 'zen_server_router.dart';
 /// - Middleware pipeline configuration
 ///
 /// This is a Shelf-native, GCP-native runtime designed for Cloud Run deployment.
+///
+/// ## Execution Model
+///
+/// The server operates in a **single event-loop runtime**:
+/// - All requests share one execution thread
+/// - No CPU-intensive work in request handlers
+/// - No synchronous I/O operations
+/// - All long-running work must be delegated to jobs
+///
+/// Request handlers MUST be non-blocking. Blocking operations
+/// will freeze the entire server, affecting all active requests.
+///
+/// See `/docs/execution_model.md` for detailed constraints.
 class ZenServerApplication {
   /// Creates a [ZenServerApplication] with the given [config].
   ZenServerApplication({required this.config});

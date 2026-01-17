@@ -5,7 +5,9 @@ Your task is to review the implementation of a DartZen package to ensure it **st
 
 PROVIDE THE CODE REVIEW FOR THIS PACKAGE:
 
-{{PACKAGE_NAME}}
+dartzen_executor
+
+put review results in Markdown file
 
 ---
 
@@ -19,6 +21,7 @@ You MUST follow documents in this strict order of priority:
    - docs/gcp_native.md
    - docs/packages_overview.md
    - docs/server_runtime.md
+   - docs/execution_model.md
 3. Root README.md (monorepo intent and scope)
 4. Development & Process Documents:
 

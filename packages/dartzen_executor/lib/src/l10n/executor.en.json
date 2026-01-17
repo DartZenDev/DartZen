@@ -1,0 +1,8 @@
+{
+  "executor.error.task_execution_failed": "Task execution failed: {taskType}",
+  "executor.error.heavy_task_required": "Heavy tasks must use jobs system",
+  "executor.error.invalid_envelope": "Invalid job envelope structure",
+  "executor.info.routed_to_isolate": "Task routed to local isolate",
+  "executor.info.heavy_task_dispatched": "Heavy task dispatched to jobs system: {taskId}",
+  "executor.error.medium_task_timeout": "Medium task execution exceeded timeout. Task may be misclassified; consider marking as heavy."
+}

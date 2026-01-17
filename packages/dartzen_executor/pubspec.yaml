@@ -1,5 +1,5 @@
-name: dartzen_server
-description: GCP-native application runtime for DartZen servers. Provides lifecycle management, routing, and non-blocking request orchestration on Shelf.
+name: dartzen_executor
+description: Explicit task execution runtime for DartZen. Routes light, medium, and heavy tasks with deterministic ownership and no implicit magic.
 version: 0.0.1
 homepage: https://dartzen.dev
 repository: https://github.com/DartZenDev/DartZen
@@ -9,13 +9,13 @@ publish_to: none
 resolution: workspace
 
 environment:
-  sdk: ">=3.10.2 <4.0.0"
+  sdk: ">=3.10.3 <4.0.0"
 
 topics:
-  - server
+  - executor
+  - tasks
   - runtime
   - gcp
-  - shelf
 
 platforms:
   linux:
@@ -25,17 +25,12 @@ platforms:
 dependencies:
   dartzen_core:
     path: ../dartzen_core
+  dartzen_jobs:
+    path: ../dartzen_jobs
   dartzen_localization:
     path: ../dartzen_localization
-  dartzen_storage:
-    path: ../dartzen_storage
-  dartzen_transport:
-    path: ../dartzen_transport
   meta: ^1.15.0
-  shelf: ^1.4.1
-  shelf_router: ^1.1.4
 
 dev_dependencies:
-  http: ^1.1.0
   lints: ^6.0.0
   test: ^1.25.0
