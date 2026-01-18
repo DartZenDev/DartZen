@@ -13,9 +13,19 @@
 /// - **Ownership model**: Destination configuration is fixed at executor creation;
 ///   per-call overrides are explicit and optional.
 /// - **Fixed schema**: Job payloads use a versioned envelope `{taskType, metadata, payload}`.
+/// - **Descriptor-only**: Every task MUST implement a `descriptor` getter.
 ///
 /// Example:
 /// ```dart
+/// class ComputeTask extends ZenTask<int> {
+///   @override
+///   ZenTaskDescriptor get descriptor =>
+///       const ZenTaskDescriptor(weight: TaskWeight.medium);
+///
+///   @override
+///   Future<int> execute() async => 42;
+/// }
+///
 /// final executor = ZenExecutor(
 ///   config: ZenExecutorConfig(
 ///     queueId: 'my-task-queue',
@@ -23,7 +33,7 @@
 ///   ),
 /// );
 ///
-/// final result = await executor.execute(myTask);
+/// final result = await executor.execute(ComputeTask());
 /// ```
 library;
 

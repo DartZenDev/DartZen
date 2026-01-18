@@ -1,8 +1,12 @@
 import 'dart:convert';
 
+// Avoid adding a dependency on `http_parser`; try ISO-8601 parsing as a
+// best-effort fallback for Retry-After HTTP-date values.
+
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 
 import '../errors/ai_error.dart';
 import '../models/ai_config.dart';
@@ -13,10 +17,13 @@ import '../models/ai_response.dart';
 ///
 /// Handles direct API calls to Google's Vertex AI service for text generation,
 /// embeddings, and classification.
-/// Low-level Vertex AI REST API client.
 ///
-/// Handles authentication, request construction, and response parsing.
-
+/// ## Internal API
+///
+/// This client is marked `@internal` and must NOT be used directly.
+/// All AI operations must be executed via ZenTask subclasses routed
+/// through ZenExecutor.
+@internal
 final class VertexAIClient {
   /// Creates a Vertex AI client.
   ///
@@ -176,7 +183,6 @@ final class VertexAIClient {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
-          'authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
       );
@@ -189,24 +195,21 @@ final class VertexAIClient {
           AIAuthenticationError(reason: 'Invalid credentials'),
         );
       } else if (response.statusCode == 429) {
-        // Respect Retry-After header if present
+        // Respect Retry-After header if present (seconds or HTTP-date).
         final ra = response.headers['retry-after'];
-        if (ra != null) {
-          final seconds = int.tryParse(ra) ?? 0;
-          return ZenResult.err(
-            AIServiceUnavailableError(retryAfter: Duration(seconds: seconds)),
-          );
+        final parsed = _parseRetryAfter(ra);
+        if (parsed != null) {
+          return ZenResult.err(AIServiceUnavailableError(retryAfter: parsed));
         }
         return const ZenResult.err(
           AIQuotaExceededError(quotaType: 'rate_limit'),
         );
       } else if (response.statusCode >= 500) {
+        // Server errors may include Retry-After; otherwise use a sensible
+        // default to avoid immediate aggressive retries.
         final ra = response.headers['retry-after'];
-        // Default to a short retry delay for server errors during tests.
-        final seconds = ra != null ? int.tryParse(ra) ?? 1 : 1;
-        return ZenResult.err(
-          AIServiceUnavailableError(retryAfter: Duration(seconds: seconds)),
-        );
+        final parsed = _parseRetryAfter(ra) ?? const Duration(seconds: 2);
+        return ZenResult.err(AIServiceUnavailableError(retryAfter: parsed));
       } else {
         return ZenResult.err(
           AIInvalidRequestError(
@@ -271,4 +274,31 @@ final class VertexAIClient {
 
   String _generateId() =>
       'req_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecond}';
+
+  /// Parse a `Retry-After` header value.
+  ///
+  /// Supports both a number of seconds (e.g. "120") and an HTTP-date
+  /// (e.g. "Wed, 21 Oct 2015 07:28:00 GMT"). Returns `null` when parsing
+  /// fails.
+  Duration? _parseRetryAfter(String? header) {
+    if (header == null) return null;
+
+    // Numeric seconds value
+    final seconds = int.tryParse(header);
+    if (seconds != null) return Duration(seconds: seconds);
+
+    // Try HTTP-date parsing (RFC 7231)
+    // Try ISO-8601 / RFC3339 parsing as a best-effort fallback. Many servers
+    // use a numeric value; HTTP-date (RFC7231) parsing is not attempted to
+    // avoid adding a dependency on `http_parser`.
+    final parsedDate = DateTime.tryParse(header);
+    if (parsedDate != null) {
+      final now = DateTime.now().toUtc();
+      final diff = parsedDate.toUtc().difference(now);
+      if (diff.isNegative) return Duration.zero;
+      return diff;
+    }
+
+    return null;
+  }
 }

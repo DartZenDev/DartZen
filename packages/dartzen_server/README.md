@@ -70,6 +70,14 @@ This package follows the DartZen execution model defined in:
 
 Any refactoring or extension of `dartzen_server` must remain compatible with that document.
 
+### Interop with Executor/Jobs
+
+Execution strategy is delegated to `dartzen_executor` and `dartzen_jobs`.
+Tasks declare a `descriptor` getter (descriptor-only contract). The descriptor
+is the sole source of truth for routing and behavior; `metadata` is derived
+automatically. This keeps server request handling non-blocking and job
+envelopes deterministic.
+
 ## 🏗️ Architecture
 
 `dartzen_server` is built on **Shelf** and designed specifically for **Google Cloud Platform** deployment (Cloud Run, Cloud Run Jobs).

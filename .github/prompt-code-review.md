@@ -5,9 +5,7 @@ Your task is to review the implementation of a DartZen package to ensure it **st
 
 PROVIDE THE CODE REVIEW FOR THIS PACKAGE:
 
-dartzen_executor
-
-put review results in Markdown file
+{{PACKAGE_NAME}}
 
 ---
 

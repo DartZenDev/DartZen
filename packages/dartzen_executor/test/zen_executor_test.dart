@@ -31,29 +31,28 @@ class MockJobDispatcher implements JobDispatcher {
 }
 
 // Test task implementations
-@ZenTaskDescriptor(weight: TaskWeight.light, latency: Latency.fast)
 class LightTask extends ZenTask<String> {
   LightTask(this.value);
 
   final String value;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.light, id: 'light_task_$value');
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor();
 
   @override
   Future<String> execute() async => 'Light result: $value';
 }
 
-@ZenTaskDescriptor(weight: TaskWeight.medium, latency: Latency.medium)
 class MediumTask extends ZenTask<int> {
   MediumTask(this.n);
 
   final int n;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.medium, id: 'medium_task_$n');
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+    weight: TaskWeight.medium,
+    latency: Latency.medium,
+  );
 
   @override
   Future<int> execute() async {
@@ -66,13 +65,12 @@ class MediumTask extends ZenTask<int> {
   }
 }
 
-@ZenTaskDescriptor(weight: TaskWeight.medium, latency: Latency.slow)
 class SlowMediumTask extends ZenTask<int> {
   SlowMediumTask();
 
   @override
-  TaskMetadata get metadata =>
-      const TaskMetadata(weight: TaskWeight.medium, id: 'slow_medium_task');
+  ZenTaskDescriptor get descriptor =>
+      const ZenTaskDescriptor(weight: TaskWeight.medium, latency: Latency.slow);
 
   @override
   Future<int> execute() async {
@@ -82,15 +80,14 @@ class SlowMediumTask extends ZenTask<int> {
   }
 }
 
-@ZenTaskDescriptor(weight: TaskWeight.heavy, latency: Latency.slow)
 class HeavyTask extends ZenTask<void> {
   HeavyTask(this.jobId);
 
   final String jobId;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.heavy, id: 'heavy_task_$jobId');
+  ZenTaskDescriptor get descriptor =>
+      const ZenTaskDescriptor(weight: TaskWeight.heavy, latency: Latency.slow);
 
   @override
   Future<void> execute() async {
@@ -190,7 +187,8 @@ void main() {
       final envelope = JobEnvelope.fromTask(task);
 
       expect(envelope.taskType, 'HeavyTask');
-      expect(envelope.metadata['id'], 'heavy_task_test-job-123');
+      // ID is auto-generated from task type and payload hash
+      expect(envelope.metadata['id'], startsWith('HeavyTask_'));
       expect(envelope.metadata['weight'], 'heavy');
       expect(envelope.metadata['schemaVersion'], 1);
       expect(envelope.payload['jobId'], 'test-job-123');
@@ -317,7 +315,8 @@ void main() {
 
       expect(dispatcher.dispatchedJobs, isNotEmpty);
       final dispatchedJob = dispatcher.dispatchedJobs.first;
-      expect(dispatchedJob['jobId'], 'heavy_task_test-job-123');
+      // ID is auto-generated from task type and payload hash
+      expect(dispatchedJob['jobId'], startsWith('HeavyTask_'));
       expect(dispatchedJob['queueId'], 'default-queue');
       expect(dispatchedJob['serviceUrl'], 'https://default.run.app');
     });

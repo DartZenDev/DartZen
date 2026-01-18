@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
+import 'package:meta/meta.dart';
 
 import '../errors/ai_error.dart';
 import '../models/ai_request.dart';
@@ -45,6 +46,13 @@ final class RetryPolicy {
 ///
 /// Retry delays do not block the event loop; they schedule
 /// continuation on the event loop after the delay expires.
+///
+/// ## Internal API
+///
+/// This service is marked `@internal` and must NOT be used directly.
+/// All AI operations must be executed via ZenTask subclasses routed
+/// through ZenExecutor.
+@internal
 final class AIService {
   /// Creates an AI service.
   AIService({

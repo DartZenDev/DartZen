@@ -1,5 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
+import 'package:meta/meta.dart';
 
 import '../errors/ai_error.dart';
 import '../models/ai_config.dart';
@@ -11,6 +12,14 @@ import 'cancel_token.dart';
 ///
 /// Communicates with server via dartzen_transport.
 /// Supports cancellable requests via [CancelToken].
+///
+/// ## Internal API
+///
+/// This client is marked `@internal` and must NOT be used directly.
+/// Client-side code cannot execute AI operations directly; all AI work
+/// must be executed server-side via ZenTask subclasses routed through
+/// ZenExecutor.
+@internal
 final class AIClient {
   /// Creates an AI client.
   ///
@@ -139,9 +148,47 @@ final class AIClient {
     final errorCode = response.error ?? 'unknown';
     final data = response.data as Map<String, dynamic>?;
     final message = data?['message'] as String? ?? errorCode;
-
     if (errorCode.contains('budget_exceeded') || errorCode.contains('budget')) {
-      return const AIBudgetExceededError(limit: 0, current: 0);
+      // Try to parse structured budget details from the response payload.
+      double parseDouble(Object? v) {
+        if (v is int) return v.toDouble();
+        if (v is double) return v;
+        if (v is String) return double.tryParse(v) ?? 0.0;
+        return 0.0;
+      }
+
+      double limit = 0.0;
+      double current = 0.0;
+      String? method;
+
+      if (data != null) {
+        // common top-level keys
+        limit = parseDouble(data['limit']);
+        current = parseDouble(data['current']);
+        method = data['method'] as String?;
+
+        // nested detail shapes (e.g., {'details': {'limit': .., 'current': ..}})
+        final details = data['details'];
+        if ((limit == 0.0 || current == 0.0) &&
+            details is Map<String, dynamic>) {
+          limit = limit == 0.0 ? parseDouble(details['limit']) : limit;
+          current = current == 0.0 ? parseDouble(details['current']) : current;
+        }
+
+        // vendor-specific nested shapes (e.g., data['budget'])
+        final budget = data['budget'];
+        if ((limit == 0.0 || current == 0.0) &&
+            budget is Map<String, dynamic>) {
+          limit = limit == 0.0 ? parseDouble(budget['limit']) : limit;
+          current = current == 0.0 ? parseDouble(budget['current']) : current;
+        }
+      }
+
+      return AIBudgetExceededError(
+        limit: limit,
+        current: current,
+        method: method,
+      );
     } else if (errorCode.contains('quota')) {
       return const AIQuotaExceededError(quotaType: 'unknown');
     } else if (errorCode.contains('invalid') || response.status == 400) {

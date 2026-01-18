@@ -84,6 +84,13 @@ CPU-heavy work must be handled explicitly by one of these strategies:
 
 `dartzen_jobs` makes CPU-heavy work **a conscious architectural choice**, not an accident.
 
+## 🔐 Descriptor-only Contract (interop)
+
+When `dartzen_executor` dispatches heavy tasks to `dartzen_jobs`, tasks declare a
+`descriptor` getter (not annotations). The descriptor is the sole source of truth
+for routing (`light`/`medium`/`heavy`) and behavior, while `metadata` is auto-derived.
+This keeps job envelopes deterministic and verifiable.
+
 ## 📦 Installation
 
 ### In a Melos Workspace

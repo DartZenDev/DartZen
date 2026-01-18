@@ -16,8 +16,12 @@ final class AIBudgetEnforcer {
   /// Budget configuration.
   final AIBudgetConfig config;
 
-  /// Usage tracker.
-  final AIUsageTracker usageTracker;
+  /// Usage tracker (abstract store).
+  ///
+  /// Allows swapping the underlying storage for production adapters while
+  /// keeping the existing in-memory `AIUsageTracker` for tests and simple
+  /// deployments.
+  final AIUsageStore usageTracker;
 
   /// Checks if a text generation request is within budget.
   ZenResult<void> checkTextGenerationBudget() =>
@@ -114,30 +118,46 @@ enum AIMethod {
   classification,
 }
 
+/// Abstraction for usage storage so the enforcer can be backed by an
+/// in-memory store (for tests) or a persistent production store (Redis/DB).
+abstract class AIUsageStore {
+  /// Returns the current global usage (USD) across all methods.
+  double getGlobalUsage();
+
+  /// Returns the current usage (USD) for a specific method.
+  double getMethodUsage(String method);
+
+  /// Records `cost` (USD) against `method` and updates global usage.
+  void recordUsage(String method, double cost);
+
+  /// Resets all tracked usage. Useful for tests or monthly resets.
+  void reset();
+}
+
 /// In-memory usage tracker used by the budget enforcer.
 ///
-/// This implementation intentionally avoids an abstract interface since
-/// the only supported storage is in-memory for tests and simple deployments.
-final class AIUsageTracker {
+/// This adapter implements `AIUsageStore` and remains the default simple
+/// storage option for tests and single-process deployments.
+final class AIUsageTracker implements AIUsageStore {
   /// Creates an in-memory usage tracker.
   AIUsageTracker();
 
   final Map<String, double> _methodUsage = {};
   double _globalUsage = 0.0;
 
-  /// Returns the current global usage (USD) across all methods.
+  @override
   double getGlobalUsage() => _globalUsage;
 
-  /// Returns the current usage (USD) for a specific method.
+  @override
   double getMethodUsage(String method) => _methodUsage[method] ?? 0.0;
 
-  /// Records `cost` (USD) against `method` and updates global usage.
+  @override
   void recordUsage(String method, double cost) {
     _methodUsage[method] = (_methodUsage[method] ?? 0.0) + cost;
     _globalUsage += cost;
   }
 
-  /// Resets all tracked usage. Useful for tests or monthly resets.
+  @override
   void reset() {
     _methodUsage.clear();
     _globalUsage = 0.0;

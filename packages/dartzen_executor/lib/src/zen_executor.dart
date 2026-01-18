@@ -71,6 +71,11 @@ class ZenExecutor {
 
   /// Executes a task according to its weight classification with strict enforcement.
   ///
+  /// **Descriptor Requirement**:
+  /// - Every [ZenTask] must implement a `descriptor` getter.
+  /// - Missing `descriptor` ⇒ compile-time error (abstract member not implemented).
+  /// - Empty descriptor ⇒ hard defaults applied ([DefaultTaskDescriptors]).
+  ///
   /// **Routing** (execution invariant):
   /// - [TaskWeight.light]: Inline async execution in event loop.
   /// - [TaskWeight.medium]: Local isolate execution with enforced timeout.

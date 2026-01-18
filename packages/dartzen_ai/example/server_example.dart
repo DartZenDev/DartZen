@@ -1,87 +1,76 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, unnecessary_library_name
 
-import 'package:dartzen_ai/dartzen_ai.dart';
+/// Example demonstrating task-based AI execution via ZenExecutor.
+library dartzen_ai_server_example;
 
-/// Server-side example demonstrating AI service usage.
-Future<void> main() async {
-  print('=== DartZen AI Server Example ===\n');
+///
+/// This example shows how to properly structure AI tasks for executor-only
+/// execution on the server side. All AI work MUST go through ZenExecutor.
+///
+/// ## Pattern
+///
+/// 1. Create task instances with required parameters
+/// 2. Pass tasks to ZenExecutor.execute(task)
+/// 3. Executor handles routing based on task weight
 
-  // Dev mode configuration (no GCP credentials required)
-  final config = AIServiceConfig.dev(
-    budgetConfig: AIBudgetConfig(monthlyLimit: 10.0, textGenerationLimit: 5.0),
+/// 4. Results come back as typed responses
+///
+/// ## Enforcement
+///
+/// - ✅ Tasks are declared as `weight: heavy`
+/// - ✅ Routing is automatic (to jobs system)
+/// - ✅ Budget enforcement at execution time
+/// - ✅ Direct service calls forbidden (@internal)
+void main() {
+  print('=== Executor-Only AI Task Execution ===\n');
+
+  print('Task Pattern Examples:\n');
+
+  print('1. TextGenerationAiTask');
+  print('   final task = TextGenerationAiTask(');
+  print('     prompt: "Your prompt here",');
+  print('     model: "gemini-1.5-pro",');
+  print('   );');
+  print('   // Do NOT pass runtime services into task payloads. The executor');
+  print(
+    '   // will inject the AI service into the execution Zone at runtime.\n',
   );
 
-  print('Configuration:');
-  print('  Project: ${config.projectId}');
-  print('  Region: ${config.region}');
-  print('  Mode: ${config.isDev ? "DEV (Echo)" : "PRODUCTION"}');
-  print('  Monthly Budget: \$${config.budgetConfig.monthlyLimit}\n');
+  print('2. EmbeddingsAiTask');
+  print('   final task = EmbeddingsAiTask(');
+  print('     texts: ["text1", "text2"],');
+  print('     model: "text-embedding-004",');
+  print('   );\n');
 
-  // Create Echo service for dev mode
-  const echoService = EchoAIService();
+  print('3. ClassificationAiTask');
+  print('   final task = ClassificationAiTask(');
+  print('     text: "Your text here",');
+  print('     labels: ["positive", "negative"],');
+  print('     model: "gemini-1.5-pro",');
+  print('   );\n');
 
-  // Example 1: Text Generation
-  print('--- Text Generation ---');
-  const textRequest = TextGenerationRequest(
-    prompt: 'Write a short haiku about coding',
-    model: 'gemini-pro',
-    config: AIModelConfig(maxTokens: 100),
-  );
+  print('Execution Pattern:\n');
 
-  final textResult = await echoService.textGeneration(textRequest);
-  if (textResult.isSuccess) {
-    final response = textResult.dataOrNull!;
-    print('Generated Text: ${response.text}');
-    print('Request ID: ${response.requestId}');
-    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
-  } else {
-    print('Error: ${textResult.errorOrNull!.message}\n');
-  }
+  print('   final executor = ZenExecutor(config: executorConfig);');
+  print('   final result = await executor.execute(task);');
+  print('   // Executor routes based on weight → jobs system\n');
 
-  // Example 2: Embeddings
-  print('--- Embeddings Generation ---');
-  const embeddingsRequest = EmbeddingsRequest(
-    texts: ['Hello world', 'Goodbye world', 'DartZen is awesome'],
-    model: 'textembedding-gecko',
-  );
+  print('Cache-backed usage store wiring:\n');
+  print('  // Create a cache client via CacheFactory (e.g. memorystore)');
+  print('  // final cache = await CacheFactory.create(cacheConfig);');
+  print('  // final store = await CacheAIUsageStore.connect(cacheConfig);');
+  print('  // final enforcer = AIBudgetEnforcer(usageStore: store);\n');
 
-  final embeddingsResult = await echoService.embeddings(embeddingsRequest);
-  if (embeddingsResult.isSuccess) {
-    final response = embeddingsResult.dataOrNull!;
-    print('Generated ${response.embeddings.length} embeddings');
-    print('Embedding dimensions: ${response.embeddings.first.length}');
-    print('Request ID: ${response.requestId}');
-    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
-  } else {
-    print('Error: ${embeddingsResult.errorOrNull!.message}\n');
-  }
+  print('All tasks declare:');
+  print('  • weight: heavy');
+  print('  • latency: slow');
+  print('  • retryable: true\n');
 
-  // Example 3: Classification
-  print('--- Text Classification ---');
-  const classificationRequest = ClassificationRequest(
-    text: 'This is an amazing product! I love it!',
-    model: 'gemini-pro',
-    labels: ['positive', 'negative', 'neutral'],
-  );
+  print('This ensures:');
+  print('  ✓ Event loop never blocks');
+  print('  ✓ Automatic cost routing');
+  print('  ✓ Distributed execution');
+  print('  ✓ Built-in retry support\n');
 
-  final classificationResult = await echoService.classification(
-    classificationRequest,
-  );
-  if (classificationResult.isSuccess) {
-    final response = classificationResult.dataOrNull!;
-    print('Predicted Label: ${response.label}');
-    print('Confidence: ${(response.confidence * 100).toStringAsFixed(1)}%');
-    if (response.allScores != null) {
-      print('All Scores:');
-      response.allScores!.forEach((label, score) {
-        print('  $label: ${(score * 100).toStringAsFixed(1)}%');
-      });
-    }
-    print('Request ID: ${response.requestId}');
-    print('Tokens: ${response.usage?.totalTokens ?? 0}\n');
-  } else {
-    print('Error: ${classificationResult.errorOrNull!.message}\n');
-  }
-
-  print('=== Example Complete ===');
+  print('=== See README.md for full documentation ===');
 }

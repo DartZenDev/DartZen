@@ -3,16 +3,14 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_executor/dartzen_executor.dart';
 
-// Example light task: simple async operation
-@ZenTaskDescriptor(weight: TaskWeight.light, latency: Latency.fast)
+// Example 1: Light task with explicit descriptor
 class FetchDataTask extends ZenTask<String> {
   FetchDataTask(this.url);
 
   final String url;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.light, id: 'fetch_$url');
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor();
 
   @override
   Future<String> execute() async {
@@ -22,16 +20,32 @@ class FetchDataTask extends ZenTask<String> {
   }
 }
 
-// Example medium task: CPU-bound computation
-@ZenTaskDescriptor(weight: TaskWeight.medium, latency: Latency.medium)
+// Example 2: Simple task with empty descriptor
+// (applies hard defaults: light, fast, non-retryable)
+class SimpleTask extends ZenTask<String> {
+  SimpleTask(this.value);
+
+  final String value;
+
+  @override
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor();
+
+  @override
+  Future<String> execute() async => 'Result: $value';
+}
+
+// Example 3: Medium task with explicit descriptor
 class ComputePrimeTask extends ZenTask<int> {
   ComputePrimeTask(this.n);
 
   final int n;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.medium, id: 'compute_prime_$n');
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+    weight: TaskWeight.medium,
+    latency: Latency.medium,
+    retryable: true,
+  );
 
   @override
   Future<int> execute() async => _computeNthPrime(n);
@@ -60,16 +74,18 @@ class ComputePrimeTask extends ZenTask<int> {
   }
 }
 
-// Example heavy task: long-running job
-@ZenTaskDescriptor(weight: TaskWeight.heavy, latency: Latency.slow)
+// Example 4: Heavy task with explicit descriptor
 class ProcessLargeDatasetTask extends ZenTask<void> {
   ProcessLargeDatasetTask(this.datasetId);
 
   final String datasetId;
 
   @override
-  TaskMetadata get metadata =>
-      TaskMetadata(weight: TaskWeight.heavy, id: 'process_dataset_$datasetId');
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+    weight: TaskWeight.heavy,
+    latency: Latency.slow,
+    retryable: true,
+  );
 
   @override
   Future<void> execute() async {
@@ -103,7 +119,7 @@ class ExampleJobDispatcher implements JobDispatcher {
 }
 
 void main() async {
-  print('=== DartZen Executor Example ===\n');
+  print('=== DartZen Executor Example (Descriptor-First) ===\n');
 
   // 1. Create executor with EXPLICIT DI (required dependencies)
   final dispatcher = ExampleJobDispatcher();
@@ -121,8 +137,8 @@ void main() async {
   print('  - dispatcher: ${dispatcher.runtimeType.toString()}');
   print('  - mediumPolicy timeout: 1s\n');
 
-  // 2. Execute light task (inline, non-blocking)
-  print('--- Light Task ---');
+  // 2. Execute light task with explicit descriptor
+  print('--- Light Task (Explicit Descriptor) ---');
   final lightTask = FetchDataTask('https://api.example.com/data');
   final lightResult = await executor.execute(lightTask);
 
@@ -131,8 +147,21 @@ void main() async {
     (error) => print('✗ Light task error: ${error.message}'),
   );
 
-  // 3. Execute medium task (local isolate)
-  print('\n--- Medium Task ---');
+  // 3. Execute simple task with empty descriptor (uses defaults)
+  print('\n--- Simple Task (Empty Descriptor → Defaults) ---');
+  final simpleTask = SimpleTask('hello');
+  final simpleResult = await executor.execute(simpleTask);
+
+  simpleResult.fold(
+    (data) => print(
+      '✓ Simple task result: $data\n'
+      '  (Used defaults: light, fast, non-retryable)',
+    ),
+    (error) => print('✗ Simple task error: ${error.message}'),
+  );
+
+  // 4. Execute medium task (local isolate)
+  print('\n--- Medium Task (Explicit Descriptor) ---');
   final mediumTask = ComputePrimeTask(1000);
   final mediumResult = await executor.execute(mediumTask);
 
@@ -141,7 +170,7 @@ void main() async {
     (error) => print('✗ Medium task error: ${error.message}'),
   );
 
-  // 4. Dispatch heavy task via injected dispatcher
+  // 5. Dispatch heavy task via injected dispatcher
   print('\n--- Heavy Task (Dispatch via Injected Dispatcher) ---');
   final heavyTask = ProcessLargeDatasetTask('dataset-42');
   final heavyResult = await executor.execute(heavyTask);
@@ -154,7 +183,7 @@ void main() async {
     (error) => print('✗ Heavy task dispatch error: ${error.message}'),
   );
 
-  // 5. Demonstrate explicit override
+  // 6. Demonstrate explicit override
   print('\n--- Heavy Task with Per-Call Override ---');
   final overriddenTask = ProcessLargeDatasetTask('dataset-99');
   const overrides = ExecutionOverrides(
@@ -176,18 +205,26 @@ void main() async {
   );
 
   print('\n=== Key Principles Demonstrated ===');
-  print('1. [DI Pattern] JobDispatcher injected, not magically resolved');
+  print('1. [REQUIRED] Every task declares descriptor getter');
   print(
-    '2. [No Implicit Defaults] queueId, serviceUrl explicit at construction',
+    '2. [DEFAULTS] Empty descriptor applies hard defaults '
+    '(light, fast, non-retryable)',
+  );
+  print('3. [DI Pattern] JobDispatcher injected, not magically resolved');
+  print(
+    '4. [No Implicit] queueId, serviceUrl explicit at construction '
+    '(no env lookup)',
   );
   print(
-    '3. [Strict Routing] Task weight enforces execution path (no fallback)',
+    '5. [Strict Routing] Task weight enforces execution path '
+    '(no fallback)',
   );
   print(
-    '4. [Fail-Fast] Medium timeout is enforced; exceeding it is hard error',
+    '6. [Fail-Fast] Medium timeout is enforced; '
+    'exceeding it is hard error',
   );
-  print('5. [Pure Router] Executor routes only; dispatch logic in dispatcher');
-  print('6. [Schema Contract] Job envelope is fixed, validated structure');
+  print('7. [Pure Router] Executor routes only; dispatch in dispatcher');
+  print('8. [Schema Contract] Job envelope is fixed, validated structure');
 
   print('\n=== Example Complete ===');
 }

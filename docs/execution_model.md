@@ -30,15 +30,7 @@ Without an explicit execution model:
 - AI / ML calls
 - Complex aggregation logic
 
-can silently block the event loop and degrade the entire server under load.
-
-## Core Guarantee
-
 **DartZen guarantees that long-running or CPU-heavy operations never block the main HTTP execution path.**
-
-This is achieved by **explicit task classification and execution routing**, not by wishful async/await usage.
-
-HTTP transport is treated as a **coordination layer**, not a place where heavy work happens.
 
 ## Execution Architecture Overview
 
@@ -55,6 +47,26 @@ Together, these form a deterministic execution pipeline where **work is routed b
 ## Task Classification
 
 Every executable operation is classified by expected cost.
+
+### Executor Zone Keys & Service Injection
+
+To support durable, serializable heavy tasks the executor provides a
+small, well-known runtime contract via Dart `Zone` values. Heavy task
+implementations must not capture runtime-only objects (for example
+instances of `AIService` or HTTP clients) inside their payload. Instead,
+the executor will inject runtime services when executing a task.
+
+Contract:
+
+- `Zone.current['dartzen.executor'] == true` — marks code running inside the executor.
+- `Zone.current['dartzen.ai.service']` — when present it holds the `AIService`
+  instance that tasks may use at execution time.
+
+This design ensures that task payloads remain pure and serializable, and
+that executor-workers (local isolates or Cloud Run instances) provide the
+runtime dependencies just-in-time. Task authors should implement `toPayload()`
+and `fromPayload()` for job rehydration and must fetch runtime services from
+the Zone (or via executor-provided hooks) when executing.
 
 ### Light Tasks
 
@@ -124,12 +136,17 @@ Medium tasks are allowed to run locally **only if they are expected to complete 
 `ZenExecutor` is the **single entry point for execution decisions**.
 
 Application code does not decide _how_ something runs.
-It declares _what_ needs to be done.
+It declares _what_ needs to be done via a **descriptor getter**.
 
 ```dart
-final result = await zen.execute(
-  ParseJsonTask(payload),
-);
+class ParseJsonTask extends ZenTask<ParseResult> {
+  @override
+  ZenTaskDescriptor get descriptor =>
+      const ZenTaskDescriptor(weight: TaskWeight.medium);
+  // ... task definition
+}
+
+final result = await zen.execute(ParseJsonTask(payload));
 ```
 
 The executor decides deterministically and explicitly:
@@ -137,6 +154,12 @@ The executor decides deterministically and explicitly:
 - main event loop (light)
 - local isolate with enforced timeout (medium)
 - cloud job dispatch via injected dispatcher (heavy)
+
+**Descriptor-first enforcement**:
+
+- Every `ZenTask` MUST implement a `descriptor` getter.
+- Missing `descriptor` ⇒ compile-time error (abstract method not implemented).
+- Empty descriptor ⇒ hard defaults applied (light, fast, non-retryable).
 
 Heavy tasks produce a fixed, validated job envelope:
 
@@ -155,26 +178,22 @@ Per-call destination overrides for heavy tasks are explicit via
 `ZenExecutor.execute(task)` only. The executor invokes tasks internally to
 honor this boundary while preserving determinism.
 
-## ZenTask and Descriptor Annotation
+## ZenTask and Descriptor
 
-Custom tasks are defined as `ZenTask<T>` and may declare a **descriptor
-annotation** for clarity and documentation.
+Every `ZenTask<T>` subclass must implement a `descriptor` getter.
+The getter is the **ONLY source of truth** for execution cost.
 
 ```dart
-@ZenTaskDescriptor(
-  weight: TaskWeight.medium,
-  latency: Latency.slow,
-  retryable: true,
-)
 class ParseJsonTask extends ZenTask<ParseResult> {
   final String payload;
   ParseJsonTask(this.payload);
 
   @override
-  TaskMetadata get metadata => TaskMetadata(
-    weight: TaskWeight.medium,
-    id: 'parse_json_${payload.hashCode}',
-  );
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+        weight: TaskWeight.medium,
+        latency: Latency.slow,
+        retryable: true,
+      );
 
   @override
   Future<ParseResult> execute() async {
@@ -184,25 +203,82 @@ class ParseJsonTask extends ZenTask<ParseResult> {
   @override
   Map<String, dynamic> toPayload() => {'payload': payload};
 }
+
+// Empty descriptor applies hard defaults (light, fast, non-retryable)
+class SimpleTask extends ZenTask<String> {
+  @override
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor();
+
+  @override
+  Future<String> execute() async => 'done';
+}
 ```
+
+**Note**: The `metadata` property is automatically computed by the base class.
+Users never override `metadata` - it's derived from `descriptor` automatically.
 
 ### Descriptor semantics
 
-- `weight`: `light` | `medium` | `heavy`. Determines execution routing.
-- `latency`: `fast` | `medium` | `slow`. Used for monitoring and documentation.
+- `weight`: `light` | `medium` | `heavy`. Determines executor routing. **Authoritative and non-negotiable**.
+- `latency`: `fast` | `medium` | `slow`. Documents expected duration; used for monitoring/telemetry.
 - `retryable`: Indicates whether failures are safe to retry.
 
-The descriptor is for documentation and tooling; the **authoritative routing
-contract** is the `TaskMetadata` returned by the task.
+### Metadata Derivation
+
+`TaskMetadata` is **automatically computed** by the `ZenTask` base class:
+
+```dart
+class MyTask extends ZenTask<int> {
+  @override
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+        weight: TaskWeight.medium,
+      );
+
+  @override
+  Future<int> execute() async => 42;
+
+  // metadata is automatic - never override!
+}
+```
+
+**Auto-derivation details**:
+
+- `weight`: Taken from `descriptor.weight`
+- `id`: Auto-generated from task type name + payload hash
+  - Format: `{TaskType}_{hash}` (e.g., `MyTask_123456789`)
+  - Deterministic: same task with same payload produces same id
+- `schemaVersion`: Always 1
+
+**What Users Write**:
+
+1. `descriptor` getter (REQUIRED - sole source of truth)
+2. `execute()` method (REQUIRED - business logic)
+3. Optional: `toPayload()` for heavy tasks
+
+**What's Automatic**:
+
+- `metadata` property (computed by base class, never override)
+- ID generation (deterministic hash)
+- Weight extraction (from descriptor)
+
+**Enforcement contract**:
+
+- `descriptor` getter is REQUIRED (sole source of truth).
+- Weight is authoritative (executor enforces routing strictly).
+- Metadata is **automatically computed** by base class (users never override it).
+- ID generation is automatic (no manual specification).
+- Empty descriptor applies hard defaults centrally defined in `DefaultTaskDescriptors`.
 
 ## Built-in vs User Tasks
 
-- **DartZen packages**: Tasks are pre-classified and safe by default.
-- **User-defined tasks**: The platform provides tools; responsibility is explicit.
+- **DartZen packages**: Tasks declare descriptor getters.
+- **User-defined tasks**: Must provide a descriptor getter (source of truth).
+- **Metadata is automatic**: Computed by base class; users never override it.
 
-This is intentional.
+If a user misclassifies task weight in the descriptor, they affect their own server only.
+The platform enforces routing based on the descriptor value.
 
-If a user lies about task cost, they can break their own server. They cannot silently break the platform.
+**Enforcement**: Missing `descriptor` getter fails to compile (abstract method).
 
 ## Cloud Run Reality
 
@@ -234,10 +310,15 @@ Cost scales only when heavy work exists. Idle servers remain cheap. This is not 
 The execution model is enforced through:
 
 - Architecture
+- Annotation requirements
+- Runtime validation
 - Package boundaries
 - Explicit APIs
 
 There is no automatic safety net. Violations are design errors.
+
+**Descriptor requirement is non-negotiable**: Every task must declare its execution contract.
+Missing descriptor fails immediately with clear error message. This prevents silent misrouting.
 
 If something feels inconvenient to implement under this model,
 that discomfort is the signal.

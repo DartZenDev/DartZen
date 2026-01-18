@@ -1,93 +1,111 @@
+// ignore_for_file: unnecessary_library_name
+
 /// DartZen AI - GCP Vertex AI / Gemini integration for DartZen applications.
 ///
 /// This package provides AI capabilities through Google Cloud Platform's
-/// Vertex AI and Gemini services. It includes both server-side and client-side
-/// components with dev mode Echo service for local testing.
+/// Vertex AI and Gemini services. All AI operations MUST be executed via
+/// ZenExecutor using task-based execution.
+///
+/// ## ❌ Forbidden Usage
+///
+/// Do NOT instantiate AI services directly:
+/// ```dart
+/// // ❌ WRONG - This will fail with analyzer error
+/// final ai = AIService(...);
+/// final response = await ai.textGeneration(...);
+/// ```
+///
+/// Do NOT call client directly:
+/// ```dart
+/// // ❌ WRONG - This will fail with analyzer error
+/// final client = AIClient(...);
+/// final response = await client.textGeneration(...);
+/// ```
+///
+/// Do NOT use low-level HTTP client:
+/// ```dart
+/// // ❌ WRONG - This will fail with analyzer error
+/// final vertexAI = VertexAIClient(...);
+/// final response = await vertexAI.generateText(...);
+/// ```
+///
+/// ## ✅ Correct Usage
+///
+/// All AI operations MUST be executed via ZenExecutor:
+///
+/// ```dart
+/// import 'package:dartzen_ai/dartzen_ai.dart';
+/// import 'package:dartzen_executor/dartzen_executor.dart';
+///
+/// // Create AI service (server-side, internal use)
+/// final aiService = AIService(
+///   client: vertexAIClient,
+///   budgetEnforcer: budgetEnforcer,
+/// );
+///
+/// // Create task with injected service
+/// final task = TextGenerationAiTask(
+///   prompt: 'Write a haiku about coding',
+///   model: 'gemini-pro',
+///   aiService: aiService,
+/// );
+///
+/// // Execute via ZenExecutor (ONLY valid path)
+/// final result = await zenExecutor.execute(task);
+/// ```
+///
+/// ## 🧠 Rationale
+///
+/// AI calls are **inherently expensive**:
+/// - Network-bound (GCP Vertex AI)
+/// - Latency-heavy (model inference)
+/// - Potentially long-running
+/// - Billable (per token)
+///
+/// Direct execution can block the event loop and degrade server performance.
+/// The executor guarantees:
+/// - Isolation (jobs system routing)
+/// - Cost control (explicit weight classification)
+/// - Cloud Run safety (non-blocking execution)
+///
+/// This restriction is **intentional and non-negotiable** for DartZen servers.
 ///
 /// ## Features
 ///
-/// - **Server-side AI Service**: Handles all Vertex AI / Gemini API calls
-/// - **Dev Mode Echo Service**: Mock responses for local development
+/// - **Task-based Execution**: AI tasks extend ZenTask with heavy weight
 /// - **Budget Enforcement**: Per-method and global monthly limits
-/// - **Flutter Client**: Cancellable requests with offline support
+/// - **Dev Mode Echo Service**: Mock responses for local development
 /// - **Telemetry Integration**: Usage tracking and analytics
-/// - **Extensible**: Add custom methods by wrapping client calls
 ///
 /// ## Optionality
 ///
 /// This package is **fully optional**. The DartZen system functions completely
-/// without `dartzen_ai`. Package activation is controlled by configuration.
+/// without dartzen_ai. Package activation is controlled by configuration.
 ///
 /// ## Security
 ///
-/// GCP credentials are stored and used **server-side only**. The Flutter client
-/// never has direct access to API keys or credentials.
-///
-/// ## Usage
-///
-/// ### Server-side
-///
-/// ```dart
-/// import 'package:dartzen_ai/dartzen_ai.dart';
-///
-/// // Production configuration
-/// final config = AIServiceConfig(
-///   projectId: 'my-project',
-///   region: 'us-central1',
-///   credentialsJson: await loadCredentials(),
-///   budgetConfig: AIBudgetConfig(monthlyLimit: 100.0),
-/// );
-///
-/// final client = VertexAIClient(config: config);
-/// final budgetEnforcer = AIBudgetEnforcer(
-///   config: config.budgetConfig,
-///   usageTracker: AIUsageTracker(),
-/// );
-/// final service = AIService(
-///   client: client,
-///   budgetEnforcer: budgetEnforcer,
-/// );
-///
-/// final request = TextGenerationRequest(
-///   prompt: 'Write a haiku',
-///   model: 'gemini-pro',
-/// );
-///
-/// final result = await service.textGeneration(request);
-/// ```
-///
-/// ### Client-side
-///
-/// ```dart
-/// import 'package:dartzen_ai/dartzen_ai.dart';
-///
-/// final aiClient = AIClient(zenClient: myZenClient);
-///
-/// final result = await aiClient.textGeneration(
-///   prompt: 'Write a haiku',
-///   model: 'gemini-pro',
-/// );
-/// ```
-///
-/// ### Dev Mode
-///
-/// ```dart
-/// // Dev mode configuration (no credentials required)
-/// final config = AIServiceConfig.dev();
-/// final echoService = EchoAIService();
-///
-/// final result = await echoService.textGeneration(request);
-/// // Returns: TextGenerationResponse(text: 'Echo: Write a haiku', ...)
-/// ```
-library;
+/// GCP credentials are stored and used **server-side only**. Clients
+/// never have direct access to API keys or credentials.
+library dartzen_ai;
 
-export 'src/client/ai_client.dart';
+// Utilities (public API)
 export 'src/client/cancel_token.dart';
+// Error types (public API)
 export 'src/errors/ai_error.dart';
+// Localization (public API)
 export 'src/l10n/ai_messages.dart';
+// Request/Response DTOs (public API)
 export 'src/models/ai_config.dart';
 export 'src/models/ai_request.dart';
 export 'src/models/ai_response.dart';
-export 'src/server/ai_budget_enforcer.dart';
-export 'src/server/ai_service.dart';
-export 'src/server/echo_ai_service.dart';
+// Task classes (public API - executor-only execution)
+export 'src/tasks/classification_ai_task.dart';
+export 'src/tasks/embeddings_ai_task.dart';
+export 'src/tasks/text_generation_ai_task.dart';
+
+// Internal services (NOT exported - marked @internal)
+// - AIService (use via tasks only)
+// - AIClient (use via tasks only)
+// - VertexAIClient (use via tasks only)
+// - EchoAIService (use via tasks only)
+// - AIBudgetEnforcer (internal implementation detail)
