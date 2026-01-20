@@ -12,10 +12,9 @@ A unified background and scheduled jobs system for DartZen applications, designe
 > IMPORTANT: `dartzen_jobs` is a low-level runtime/registry package and is
 > not intended for direct use by application code. Do not call job handlers,
 > runtime adapters, or executor internals directly from your application.
-> Instead, instantiate and use an `Executor` (for example `TestExecutor`,
-> `LocalExecutor`, or a cloud executor) which owns lifecycle, persistence,
-> retries, and HTTP/adapters. This ensures correct semantics and prevents
-> accidental resource misuse.
+> Instead, use the single public entry point `ZenJobsExecutor` with an
+> explicit mode (`development` or `production`). Internal executors remain
+> under `src/internal` for framework and test use only.
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
@@ -140,7 +139,9 @@ void main() async {
   ZenJobs.instance = ZenJobs();
 
   // Register descriptors (metadata only).
-  ZenJobs.instance.register(JobDescriptor(id: 'send_welcome_email', type: JobType.endpoint));
+  ZenJobs.instance.register(
+    JobDescriptor(id: 'send_welcome_email', type: JobType.endpoint),
+  );
 
   // Register handlers separately.
   HandlerRegistry.register('send_welcome_email', (ctx) async {
@@ -148,8 +149,9 @@ void main() async {
     print('Sending welcome email to $userId');
   });
 
-  // Create and start an Executor for runtime responsibilities.
-  // In development use `TestExecutor`; in production use `LocalExecutor` or a Cloud executor.
+  // Create and start a runtime executor explicitly.
+  final jobs = ZenJobsExecutor.development();
+  await jobs.start();
 }
 ```
 
@@ -173,32 +175,35 @@ final myCleanup = JobDescriptor(
 
 Handlers are registered separately via `HandlerRegistry.register`.
 
-### 3. Running and Scheduling (via Executor)
+### 3. Running and Scheduling (via `ZenJobsExecutor`)
 
-Do not call `ZenJobs.trigger` or `ZenJobs.handleRequest` directly — these operations are forbidden on the registry. Instead, instantiate an `Executor` and use it to schedule or expose webhooks.
+Do not call `ZenJobs.trigger` or `ZenJobs.handleRequest` directly — these operations are forbidden on the registry. Instead, instantiate `ZenJobsExecutor` with an explicit mode and use it to schedule or expose webhooks.
 
-Example using `TestExecutor` (development):
+Development (in-memory, uses internal `TestExecutor`):
 
 ```dart
-final executor = TestExecutor();
-await executor.start();
-await executor.schedule(myEmail, payload: {'userId': 'u123'});
-await executor.shutdown();
+final jobs = ZenJobsExecutor.development();
+await jobs.start();
+await jobs.schedule(myEmail, payload: {'userId': 'u123'});
+await jobs.shutdown();
 ```
 
-Example using `LocalExecutor` (persistence + Firestore-backed `JobStore`):
+Production (Firestore persistence via internal `LocalExecutor`):
 
 ```dart
 final store = JobStore(); // Firestore-backed client
 final telemetry = TelemetryClient(...);
-final executor = LocalExecutor(store: store, telemetry: telemetry);
-await executor.start();
-await executor.schedule(myCleanup);
-await executor.shutdown();
+final jobs = ZenJobsExecutor.production(
+  store: store,
+  telemetry: telemetry,
+);
+await jobs.start();
+await jobs.schedule(myCleanup);
+await jobs.shutdown();
 ```
 
 Executors own web adapters and the HTTP handling surface — they are responsible
-for translating incoming Cloud Tasks webhooks into calls to `JobRunner`.
+for translating incoming Cloud Tasks webhooks into calls to `JobRunner`. Internal executors live under `package:dartzen_jobs/src/internal/...` and are intended for tests and framework wiring only.
 
 ### 4. Handling Web Requests (Executor owned)
 
@@ -207,9 +212,10 @@ map incoming requests to `JobRunner` executions. The public registry (`ZenJobs`)
 does not implement HTTP handling directly; this separation prevents accidental
 runtime behavior in library consumers.
 
-If you need a simple local server in development, use the `TestExecutor` or
-wrap `LocalExecutor` with a small HTTP handler that parses the request and
-calls `executor.schedule(...)` or `JobRunner.execute(...)` as appropriate.
+If you need a simple local server in development, use the development-mode
+executor or wrap the internal `LocalExecutor` with a small HTTP handler that
+parses the request and calls `executor.schedule(...)` or
+`JobRunner.execute(...)` as appropriate.
 
 ## 🧠 Core Concepts
 

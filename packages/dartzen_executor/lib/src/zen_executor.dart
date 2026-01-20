@@ -145,6 +145,7 @@ class ZenExecutor {
   /// Executes a light task inline in the event loop.
   ///
   /// **Non-Blocking Guarantee**: Uses async/await without CPU-bound work.
+  /// Internal helper method; called only by [execute].
   Future<ZenResult<T>> _executeLight<T>(ZenTask<T> task) async {
     ZenLogger.instance.debug(
       'Executing light task inline: ${task.metadata.id}',
@@ -166,6 +167,7 @@ class ZenExecutor {
   ///
   /// **Async Execution Model**: Task execution must complete within the isolate.
   /// The isolate awaits the Future internally to enforce the isolation boundary.
+  /// Internal helper method; called only by [execute].
   Future<ZenResult<T>> _executeMedium<T>(ZenTask<T> task) async {
     ZenLogger.instance.debug(
       'Executing medium task in isolate (timeout: ${mediumPolicy.timeout}): '
@@ -234,6 +236,7 @@ class ZenExecutor {
   /// ```
   ///
   /// Returns immediately after successful dispatch (does not wait for job completion).
+  /// Internal helper method; called only by [execute].
   Future<ZenResult<HeavyDispatchResult>> _executeHeavy<T>(
     ZenTask<T> task,
     ExecutionOverrides? overrides,

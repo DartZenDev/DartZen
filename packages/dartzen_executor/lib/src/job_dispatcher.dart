@@ -1,5 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
+import 'package:meta/meta.dart';
 
 /// Dispatcher interface for heavy task execution.
 ///
@@ -8,6 +9,10 @@ import 'package:dartzen_jobs/dartzen_jobs.dart';
 ///
 /// **Responsibility**: Dispatch validated job envelopes to the jobs system.
 /// **What it does NOT do**: Decide routing, validate payload, manage lifecycle.
+///
+/// **Internal API**: This interface is for internal use by ZenExecutor only.
+/// Application code must use ZenExecutor.execute instead.
+@internal
 abstract class JobDispatcher {
   /// Dispatches a validated job envelope to the jobs system.
   ///
@@ -29,6 +34,10 @@ abstract class JobDispatcher {
 ///
 /// This implementation delegates to [ZenJobs.instance] and handles
 /// the mapping from executor parameters to Cloud Tasks API.
+///
+/// **Internal API**: This class is for internal use by ZenExecutor only.
+/// Application code must use ZenExecutor.execute instead.
+@internal
 class CloudJobDispatcher implements JobDispatcher {
   /// Creates a cloud job dispatcher.
   ///

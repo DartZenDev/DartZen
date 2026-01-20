@@ -1,8 +1,8 @@
-import 'models/job_definition.dart';
+import '../models/job_definition.dart';
 
-/// Minimal public `Executor` contract.
+/// Minimal internal executor contract.
 ///
-/// `Executor` implementations own runtime responsibilities that are
+/// Executor implementations own runtime responsibilities that are
 /// deliberately excluded from the public `ZenJobs` registry: scheduling,
 /// adapter integration, lifecycle, and state persistence.
 abstract class Executor {

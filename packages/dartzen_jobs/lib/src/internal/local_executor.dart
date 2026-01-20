@@ -1,15 +1,14 @@
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 
-import 'errors.dart';
+import '../errors.dart';
+import '../job_runner.dart';
+import '../job_store.dart';
+import '../models/job_definition.dart';
+import '../zen_jobs.dart';
 import 'executor.dart';
-import 'job_runner.dart';
-import 'job_store.dart';
-import 'models/job_definition.dart';
-import 'zen_jobs.dart';
 
-/// An executor that runs jobs locally while updating persistent state
-/// through [JobStore]. This is suitable for running on a single-host
-/// environment (e.g., a VM or a long-running container) where Firestore
+/// Internal executor that runs jobs locally while updating persistent state
+/// through [JobStore]. Suitable for single-host environments where Firestore
 /// stores job configuration and runtime state.
 class LocalExecutor implements Executor {
   final JobStore _store;

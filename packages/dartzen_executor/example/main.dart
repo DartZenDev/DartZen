@@ -2,6 +2,10 @@
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_executor/dartzen_executor.dart';
+// This example imports internal classes for demonstration purposes only.
+// Application code must NOT import from lib/src.
+// ignore: depend_on_referenced_packages
+import 'package:dartzen_executor/src/job_dispatcher.dart';
 
 // Example 1: Light task with explicit descriptor
 class FetchDataTask extends ZenTask<String> {

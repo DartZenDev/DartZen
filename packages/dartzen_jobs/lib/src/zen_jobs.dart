@@ -1,6 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
 
-import '../dartzen_jobs.dart' show JobType;
 import 'cloud_tasks_adapter.dart' show CloudTasksAdapter, JobDispatcher;
 import 'errors.dart';
 import 'job_runner.dart' show JobRunner;

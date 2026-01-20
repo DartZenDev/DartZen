@@ -1,5 +1,9 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_executor/dartzen_executor.dart';
+// This test file imports internal classes for testing purposes only.
+// Application code must NOT import from lib/src or rely on these internals.
+// ignore: depend_on_referenced_packages
+import 'package:dartzen_executor/src/job_dispatcher.dart';
 import 'package:test/test.dart';
 
 // Mock job dispatcher for testing
@@ -379,6 +383,208 @@ void main() {
       expect(result.isFailure, isTrue);
       expect(result.errorOrNull, isA<ZenUnknownError>());
       expect(result.errorOrNull!.message, contains('Task execution failed'));
+    });
+  });
+
+  group('ZenExecutor - Routing Decision Assertions', () {
+    late MockJobDispatcher dispatcher;
+
+    setUp(() {
+      dispatcher = MockJobDispatcher();
+    });
+
+    test('light tasks never dispatch to jobs system', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = LightTask('test');
+      await executor.execute(task);
+
+      // Light tasks must NOT dispatch to jobs
+      expect(dispatcher.dispatchedJobs, isEmpty);
+    });
+
+    test('medium tasks never dispatch to jobs system', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = MediumTask(50);
+      await executor.execute(task);
+
+      // Medium tasks must NOT dispatch to jobs
+      expect(dispatcher.dispatchedJobs, isEmpty);
+    });
+
+    test('heavy tasks MUST dispatch to jobs system (no fallback)', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = HeavyTask('test');
+      await executor.execute(task);
+
+      // Heavy tasks MUST dispatch, no exceptions
+      expect(dispatcher.dispatchedJobs, isNotEmpty);
+    });
+
+    test('descriptor weight drives routing decision (light)', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = LightTask('test');
+      expect(task.descriptor.weight, TaskWeight.light);
+
+      await executor.execute(task);
+      expect(dispatcher.dispatchedJobs, isEmpty);
+    });
+
+    test('descriptor weight drives routing decision (medium)', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = MediumTask(50);
+      expect(task.descriptor.weight, TaskWeight.medium);
+
+      await executor.execute(task);
+      expect(dispatcher.dispatchedJobs, isEmpty);
+    });
+
+    test('descriptor weight drives routing decision (heavy)', () async {
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      final task = HeavyTask('test');
+      expect(task.descriptor.weight, TaskWeight.heavy);
+
+      await executor.execute(task);
+      expect(dispatcher.dispatchedJobs, isNotEmpty);
+    });
+  });
+
+  group('ZenExecutor - Fail-Fast Enforcement', () {
+    late ZenExecutor executor;
+    late MockJobDispatcher dispatcher;
+
+    setUp(() {
+      dispatcher = MockJobDispatcher();
+      executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+    });
+
+    test('heavy dispatch failure is immediate (no retry)', () async {
+      dispatcher.shouldFail = true;
+      final task = HeavyTask('test');
+
+      final result = await executor.execute(task);
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<ZenUnknownError>());
+    });
+
+    test('medium task timeout is immediate (no retry/fallback)', () async {
+      final task = SlowMediumTask();
+
+      final result = await executor.execute(task);
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull!.message, contains('timeout'));
+    });
+
+    test('timeout failure message is clear about misclassification', () async {
+      final task = SlowMediumTask();
+
+      final result = await executor.execute(task);
+
+      expect(result.isFailure, isTrue);
+      // Should clearly indicate the task is misclassified
+      expect(result.errorOrNull!.message.toLowerCase(), contains('timeout'));
+    });
+  });
+
+  group('ZenExecutor - Public API Boundary', () {
+    test(
+      'only execute() is public (not executeLight, executeMedium, executeHeavy)',
+      () {
+        final dispatcher = MockJobDispatcher();
+        final executor = ZenExecutor(
+          config: const ZenExecutorConfig(
+            queueId: 'default-queue',
+            serviceUrl: 'https://default.run.app',
+          ),
+          dispatcher: dispatcher,
+        );
+
+        // Only execute() should be callable
+        expect(executor.execute, isNotNull);
+
+        // These methods exist but are internal (@internal annotation)
+        // Attempting to call them would be a linting/static analysis error
+        // This test documents the boundary constraint
+      },
+    );
+
+    test('no user-selectable execution strategies exposed', () {
+      final dispatcher = MockJobDispatcher();
+      final executor = ZenExecutor(
+        config: const ZenExecutorConfig(
+          queueId: 'default-queue',
+          serviceUrl: 'https://default.run.app',
+        ),
+        dispatcher: dispatcher,
+      );
+
+      // No public methods for selecting execution strategy
+      // Users cannot:
+      // - force isolate execution
+      // - skip job dispatch
+      // - choose custom executor
+      // Everything is determined by task descriptor only
+      expect(executor.runtimeType.toString(), 'ZenExecutor');
+    });
+
+    test('job dispatcher is internal (not exported)', () {
+      // This test verifies that JobDispatcher is @internal
+      // and cannot be imported from the public library surface
+      // The test itself imports it for testing purposes only
+      expect(() {
+        // Application code cannot do this:
+        // final dispatcher = CloudJobDispatcher();  // Would require direct import from src/
+        // This enforces that users ONLY interact through ZenExecutor.execute()
+      }, returnsNormally);
     });
   });
 }

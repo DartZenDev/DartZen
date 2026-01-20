@@ -1,10 +1,10 @@
-import 'errors.dart';
+import '../errors.dart';
+import '../handler_registry.dart';
+import '../models/job_context.dart';
+import '../models/job_definition.dart';
 import 'executor.dart';
-import 'handler_registry.dart';
-import 'models/job_context.dart';
-import 'models/job_definition.dart';
 
-/// A minimal executor intended for local testing and examples.
+/// Internal executor intended for local testing and examples.
 ///
 /// `TestExecutor` invokes registered handlers synchronously and does not
 /// perform persistence or retry logic. It is useful for examples and tests

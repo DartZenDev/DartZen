@@ -1,5 +1,5 @@
 // Simple example showing descriptor registration, handler registration,
-// and executing a job via `TestExecutor` for local development.
+// and executing a job via the single public `ZenJobsExecutor` entry point.
 
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 
@@ -12,29 +12,31 @@ Future<void> main() async {
   const emailDesc =
       JobDescriptor(id: 'send_welcome_email', type: JobType.endpoint);
   const cleanupDesc = JobDescriptor(
-      id: 'cleanup_temp_files',
-      type: JobType.periodic,
-      defaultInterval: Duration(hours: 1));
+    id: 'cleanup_temp_files',
+    type: JobType.periodic,
+    defaultInterval: Duration(hours: 1),
+  );
 
-  ZenJobs.instance.register(emailDesc);
-  ZenJobs.instance.register(cleanupDesc);
+  final jobs = ZenJobsExecutor.development();
+  jobs.register(emailDesc);
+  jobs.register(cleanupDesc);
 
   // Register handlers separately
-  HandlerRegistry.register(emailDesc.id, (ctx) async {
+  jobs.registerHandler(emailDesc.id, (ctx) async {
     print(
-        'Sending welcome email to ${ctx.payload?['email']} (attempt=${ctx.attempt})');
+      'Sending welcome email to ${ctx.payload?['email']} '
+      '(attempt=${ctx.attempt})',
+    );
   });
 
-  HandlerRegistry.register(cleanupDesc.id, (ctx) async {
+  jobs.registerHandler(cleanupDesc.id, (ctx) async {
     print('Running periodic cleanup (attempt=${ctx.attempt})');
   });
 
-  // Use TestExecutor for local simulation
-  final executor = TestExecutor();
-  await executor.start();
+  await jobs.start();
 
-  print('Scheduling email job via TestExecutor');
-  await executor.schedule(emailDesc, payload: {'email': 'user@example.com'});
+  print('Scheduling email job via development executor');
+  await jobs.schedule(emailDesc, payload: {'email': 'user@example.com'});
 
-  await executor.shutdown();
+  await jobs.shutdown();
 }

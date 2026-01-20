@@ -1,5 +1,6 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
+import 'package:dartzen_jobs/src/internal/local_executor.dart';
 import 'package:dartzen_jobs/src/job_store.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 import 'package:test/test.dart';

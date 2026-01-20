@@ -1,5 +1,8 @@
+// This test file imports internal classes for testing purposes only.
+// Application code must NOT import from lib/src or rely on these internals.
+// ignore: depend_on_referenced_packages
 import 'package:dartzen_core/dartzen_core.dart';
-import 'package:dartzen_executor/dartzen_executor.dart';
+import 'package:dartzen_executor/src/job_dispatcher.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 import 'package:test/test.dart';
 
@@ -37,9 +40,10 @@ class FakeZenJobs implements ZenJobs {
 void main() {
   group('CloudJobDispatcher', () {
     late FakeZenJobs fakeJobs;
-    const dispatcher = CloudJobDispatcher();
+    late CloudJobDispatcher dispatcher;
 
     setUp(() {
+      dispatcher = const CloudJobDispatcher();
       fakeJobs = FakeZenJobs(result: const ZenResult.ok(null));
       ZenJobs.instance = fakeJobs;
     });
