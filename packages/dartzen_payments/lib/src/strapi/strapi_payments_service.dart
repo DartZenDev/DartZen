@@ -1,6 +1,7 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
+import 'package:meta/meta.dart';
 
 import '../payment.dart';
 import '../payment_error.dart';
@@ -11,6 +12,9 @@ import '../provider_error_mapper.dart';
 import 'strapi_mapper.dart';
 import 'strapi_models.dart';
 
+/// Internal: provider adapter (Strapi). Not part of the public API.
+/// Do not import `package:dartzen_payments/src/...` from outside this package.
+///
 /// Configuration for Strapi payments integration.
 class StrapiPaymentsConfig {
   /// Strapi API base URL.
@@ -24,6 +28,7 @@ class StrapiPaymentsConfig {
 }
 
 /// Strapi implementation of [PaymentsService].
+@internal
 final class StrapiPaymentsService implements PaymentsService {
   /// Creates a Strapi payments service.
   StrapiPaymentsService(
@@ -166,6 +171,7 @@ final class StrapiPaymentsService implements PaymentsService {
   }
 
   /// Closes the owned transport client when created internally.
+  @override
   void close() {
     if (_ownsClient) {
       _client.close();

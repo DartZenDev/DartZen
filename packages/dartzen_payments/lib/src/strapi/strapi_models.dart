@@ -1,6 +1,9 @@
+import 'package:meta/meta.dart';
+
 import '../payment_status.dart';
 
-/// Raw Strapi payment payload.
+/// Internal: Strapi model types. Not part of public API.
+@internal
 class StrapiPaymentModel {
   /// Provider-issued payment identifier.
   final String id;

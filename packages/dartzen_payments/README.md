@@ -79,38 +79,42 @@ dependencies:
   dartzen_payments: ^latest_version
 ```
 
-## 🚀 Minimal usage
+## 🚀 Minimal usage (Executor-first)
+
+Important: Direct provider access is forbidden. Provider adapters (Adyen,
+Strapi, etc.) are internal and not part of the public API. Use an
+`Executor` implementation to run `PaymentDescriptor`s. Attempting to call
+provider SDKs or import `package:dartzen_payments/src/...` from other packages
+is a violation and will be prevented by CI checks.
 
 ```dart
 import 'package:dartzen_payments/dartzen_payments.dart';
-import 'package:dartzen_payments/src/strapi/strapi_payments_service.dart';
-import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 
 Future<void> main() async {
-  final telemetry = TelemetryClient(store: /* your store */);
-  final service = StrapiPaymentsService(
-    const StrapiPaymentsConfig(
-      baseUrl: 'https://payments.example.com',
-      apiToken: 'strapi_token',
-    ),
-    telemetry: telemetry,
+  // 1) Register descriptors (app startup)
+  final charge = const PaymentDescriptor(
+    id: 'charge_order',
+    operation: PaymentOperation.charge,
   );
 
-  final intent = PaymentIntent.create(
-    id: 'intent-1',
-    amountMinor: 1999,
-    currency: 'EUR',
-    idempotencyKey: 'idem-123',
-    description: 'Order #123',
-  ).dataOrNull!;
+  // 2) Acquire an executor (TestExecutor shown for local/dev)
+  final executor = TestExecutor();
+  await executor.start();
 
-  final result = await service.createPayment(intent);
-  result.fold(
-    (payment) =>
-      print('Payment ${payment.id} → ${payment.status}'),
-    (error) =>
-      print('Payment failed: ${error.message}'),
-  );
+  // 3) Execute with a payload and idempotency key
+  final result = await executor.execute(charge, payload: {
+    'amountMinor': 1999,
+    'currency': 'EUR',
+    'orderId': 'order-123',
+  }, idempotencyKey: 'idem-123');
+
+  if (result.status == PaymentResultStatus.success) {
+    print('Payment succeeded: ${result.providerReference}');
+  } else {
+    print('Payment failed: ${result.error?.message}');
+  }
+
+  await executor.shutdown();
 }
 ```
 

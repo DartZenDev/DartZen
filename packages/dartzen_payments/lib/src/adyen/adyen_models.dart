@@ -1,6 +1,9 @@
+import 'package:meta/meta.dart';
+
 import '../payment_status.dart';
 
-/// Raw Adyen payment payload.
+/// Internal: Adyen model types. Not part of public API.
+@internal
 class AdyenPaymentModel {
   /// Provider-issued payment identifier.
   final String paymentId;
