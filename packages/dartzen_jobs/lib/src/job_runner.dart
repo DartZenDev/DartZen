@@ -36,7 +36,7 @@ class JobExecutionError extends ZenError {
 /// handler implementation, not in this runner.
 class JobRunner {
   final JobStore _store;
-  final Map<String, JobDefinition> _registry;
+  final Map<String, JobDescriptor> _registry;
   final TelemetryClient _telemetry;
 
   /// Creates a [JobRunner] with a data store and telemetry client.
@@ -57,9 +57,8 @@ class JobRunner {
   }) async {
     final def = _registry[jobId];
     if (def == null) {
-      ZenLogger.instance.error('Job definition not found for id: $jobId');
-      return ZenResult.err(
-        ZenNotFoundError('Job definition not found for id: $jobId'),
+      throw MissingDescriptorException(
+        'Job descriptor not found for id: $jobId',
       );
     }
 
@@ -123,7 +122,14 @@ class JobRunner {
     await _emit(jobId, 'start', timestamp: now, payload: {'attempt': attempt});
 
     try {
-      await def.handler(context);
+      final handler = HandlerRegistry.get(jobId);
+      if (handler == null) {
+        throw MissingDescriptorException(
+          'No handler registered for job: $jobId',
+        );
+      }
+
+      await handler(context);
 
       await _store.updateJobState(
         jobId,

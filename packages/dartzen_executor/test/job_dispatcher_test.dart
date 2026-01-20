@@ -25,10 +25,13 @@ class FakeZenJobs implements ZenJobs {
   }
 
   @override
-  void register(JobDefinition definition) {}
+  void register(JobDescriptor definition) {}
 
   @override
   Future<int> handleRequest(dynamic request) async => 200;
+
+  @override
+  Map<String, JobDescriptor> get descriptors => const {};
 }
 
 void main() {

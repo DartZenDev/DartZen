@@ -114,85 +114,94 @@ dependencies:
 
 ## 🚀 Usage
 
-### 1. Initialization
+### 1. Initialization (Registry-only)
 
-Initialize `ZenJobs` with your Cloud Tasks configuration. In development (`dzIsPrd = false`), this uses a simulation mode.
+Architecture notes:
+
+- Direct execution is forbidden: runtime job execution, retries, scheduling, persistence, and adapter invocation are the sole responsibility of an `Executor` implementation. Do not call job handlers, dispatchers, or cloud adapters directly from your application code.
+- Executor-only architecture: `ZenJobs` is a descriptor registry only. To run jobs, use a pluggable `Executor` (local/cloud/test) which owns lifecycle, error classification, retry/backoff, scheduling semantics, and persistence.
+- Smart Detection / Auto Descriptor inference: NOT implemented. This feature is intentionally deferred to avoid accidental side-effects and is planned for a future release.
+
+First, create the registry and register `JobDescriptor`s. Handlers are registered separately via `HandlerRegistry`.
 
 ```dart
-import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 
-void main() {
-  ZenJobs.instance = ZenJobs(
-    projectId: 'my-project',
-    locationId: 'us-central1',
-    queueId: 'default',
-    serviceUrl: 'https://my-service-url.run.app',
-  );
+void main() async {
+  // Registry-only: no runtime dependencies are provided here.
+  ZenJobs.instance = ZenJobs();
 
-  // Register jobs
-  ZenJobs.instance.register(myEmailJob);
-  ZenJobs.instance.register(myCleanupJob);
+  // Register descriptors (metadata only).
+  ZenJobs.instance.register(JobDescriptor(id: 'send_welcome_email', type: JobType.endpoint));
+
+  // Register handlers separately.
+  HandlerRegistry.register('send_welcome_email', (ctx) async {
+    final userId = ctx.payload?['userId'];
+    print('Sending welcome email to $userId');
+  });
+
+  // Create and start an Executor for runtime responsibilities.
+  // In development use `TestExecutor`; in production use `LocalExecutor` or a Cloud executor.
 }
 ```
 
 ### 2. Defining Jobs
 
-Create `JobDefinition`s for your tasks.
+Create `JobDescriptor`s (metadata-only). Prefer `JobDescriptor` for new code; `JobDefinition` remains as a compatibility wrapper.
 
 ```dart
-final myEmailJob = JobDefinition(
+final myEmail = JobDescriptor(
   id: 'send_welcome_email',
   type: JobType.endpoint,
-  handler: (context) async {
-    final userId = context.payload?['userId'];
-    print('Sending email to $userId');
-    // Implement logic...
-  },
+  defaultMaxRetries: 3,
 );
 
-final myCleanupJob = JobDefinition(
+final myCleanup = JobDescriptor(
   id: 'cleanup_temp_files',
   type: JobType.periodic,
   defaultInterval: Duration(hours: 1),
-  handler: (context) async {
-    print('Cleaning up temp files...');
-  },
 );
 ```
 
-### 3. Triggering Jobs
+Handlers are registered separately via `HandlerRegistry.register`.
 
-Trigger endpoint jobs anywhere in your code.
+### 3. Running and Scheduling (via Executor)
 
-```dart
-// Helper method often used in domain logic
-Future<void> registerUser(String userId) async {
-  // ... create user ...
+Do not call `ZenJobs.trigger` or `ZenJobs.handleRequest` directly — these operations are forbidden on the registry. Instead, instantiate an `Executor` and use it to schedule or expose webhooks.
 
-  // Trigger background job
-  await ZenJobs.instance.trigger(
-    'send_welcome_email',
-    payload: {'userId': userId},
-  );
-}
-```
-
-No background magic. No hidden retries.
-
-### 4. Handling Requests
-
-In your server entry point (e.g., Shelf handler), route requests to `ZenJobs`.
+Example using `TestExecutor` (development):
 
 ```dart
-// In your server request handler
-Future<Response> handleJobRequest(Request request) async {
-  final body = await request.readAsString();
-  final status = await ZenJobs.instance.handleRequest(body);
-
-  return Response(status);
-}
+final executor = TestExecutor();
+await executor.start();
+await executor.schedule(myEmail, payload: {'userId': 'u123'});
+await executor.shutdown();
 ```
+
+Example using `LocalExecutor` (persistence + Firestore-backed `JobStore`):
+
+```dart
+final store = JobStore(); // Firestore-backed client
+final telemetry = TelemetryClient(...);
+final executor = LocalExecutor(store: store, telemetry: telemetry);
+await executor.start();
+await executor.schedule(myCleanup);
+await executor.shutdown();
+```
+
+Executors own web adapters and the HTTP handling surface — they are responsible
+for translating incoming Cloud Tasks webhooks into calls to `JobRunner`.
+
+### 4. Handling Web Requests (Executor owned)
+
+Executors decide how to expose webhook endpoints (HTTP handlers) and how to
+map incoming requests to `JobRunner` executions. The public registry (`ZenJobs`)
+does not implement HTTP handling directly; this separation prevents accidental
+runtime behavior in library consumers.
+
+If you need a simple local server in development, use the `TestExecutor` or
+wrap `LocalExecutor` with a small HTTP handler that parses the request and
+calls `executor.schedule(...)` or `JobRunner.execute(...)` as appropriate.
 
 ## 🧠 Core Concepts
 

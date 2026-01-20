@@ -1,58 +1,50 @@
+// Suppress doc and unused-constructor-parameter lint noise for this small
+// compatibility-focused model file.
+// ignore_for_file: public_member_api_docs, avoid_unused_constructor_parameters
+
 import 'job_context.dart';
+import 'job_policy.dart';
 import 'job_type.dart';
 
-/// Function signature for job execution logic.
+/// Function signature for job execution logic. Kept for compatibility.
 typedef JobHandler = Future<void> Function(JobContext context);
 
-/// Definition of a job registered in the application code.
+/// Metadata-only descriptor for a job.
 ///
-/// This class represents the immutable definition of a job, including its internal logic
-/// ([handler]), architectural type ([type]), and default fallback configuration.
-///
-/// **Note**: Runtime configuration (like `enabled` status or modified intervals) is managed
-/// via `JobConfig` in Firestore and overrides these defaults.
-class JobDefinition {
-  /// Unique identifier of the job.
-  ///
-  /// This ID must be unique across the entire application and is used for
-  /// registration, triggering, and Firestore configuration lookups.
+/// This class is deliberately free of executable logic. Handlers must be
+/// registered separately via `HandlerRegistry`. Descriptors declare identity
+/// and policy metadata only.
+class JobDescriptor {
   final String id;
-
-  /// The execution pattern for this job.
   final JobType type;
-
-  /// The async function that executes the job logic.
-  ///
-  /// This function receives a [JobContext] containing metadata about the run.
-  final JobHandler handler;
-
-  /// Default cron schedule (for [JobType.scheduled] jobs).
-  ///
-  /// Used to populate Firestore configuration if no override exists.
-  /// Example: '0 9 * * *' (Every day at 9 AM).
   final String? defaultCron;
-
-  /// Default interval (for [JobType.periodic] jobs).
-  ///
-  /// Defines how often the job should run when using the `MasterJob` batching.
   final Duration? defaultInterval;
-
-  /// Default execution priority.
-  ///
-  /// Higher values indicate higher priority.
   final int? defaultPriority;
-
-  /// Default maximum number of retry attempts.
   final int? defaultMaxRetries;
+  final JobPolicy policy;
 
-  /// Creates a [JobDefinition].
-  const JobDefinition({
+  const JobDescriptor({
     required this.id,
     required this.type,
-    required this.handler,
     this.defaultCron,
     this.defaultInterval,
     this.defaultPriority,
     this.defaultMaxRetries,
+    this.policy = const JobPolicy(),
+  });
+}
+
+/// Backwards-compatible wrapper that accepts an optional handler parameter
+/// but delegates to `JobDescriptor` semantics. Use `JobDescriptor` instead.
+class JobDefinition extends JobDescriptor {
+  const JobDefinition({
+    required super.id,
+    required super.type,
+    JobHandler? handler,
+    super.defaultCron,
+    super.defaultInterval,
+    super.defaultPriority,
+    super.defaultMaxRetries,
+    super.policy,
   });
 }

@@ -2,7 +2,8 @@
 
 import 'dart:async';
 
-import 'package:dartzen_ai/ai_budget_enforcer.dart';
+import 'package:dartzen_ai/src/models/ai_config.dart';
+import 'package:dartzen_ai/src/server/ai_budget_enforcer.dart';
 import 'package:dartzen_ai/src/server/ai_usage_store_cache.dart';
 import 'package:dartzen_cache/dartzen_cache.dart';
 
@@ -19,12 +20,15 @@ Future<void> main() async {
   );
 
   // Wire into the budget enforcer.
-  final enforcer = AIBudgetEnforcer(usageStore: store);
+  final enforcer = AIBudgetEnforcer(
+    config: AIBudgetConfig(),
+    usageTracker: store,
+  );
 
   print('Initial global usage: ${store.getGlobalUsage()}');
 
   // Record some usage and let the flush persist it.
-  enforcer.recordUsage('textGeneration', 2.0);
+  enforcer.recordUsage(AIMethod.textGeneration, 2.0);
   print('Recorded 2.0 cost to textGeneration (in-memory surface).');
 
   await Future<void>.delayed(const Duration(milliseconds: 350));

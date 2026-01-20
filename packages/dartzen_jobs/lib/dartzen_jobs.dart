@@ -16,10 +16,15 @@
 /// - **Magic Triggers**: All triggers are explicit via `ZenJobs.trigger` or webhooks.
 library;
 
-export 'src/cloud_tasks_adapter.dart' show JobSubmission, CloudTaskRequest;
+export 'src/errors.dart';
+export 'src/executor.dart';
+export 'src/handler_registry.dart';
+export 'src/local_executor.dart';
 export 'src/models/job_config.dart';
 export 'src/models/job_context.dart';
 export 'src/models/job_definition.dart';
+export 'src/models/job_policy.dart';
 export 'src/models/job_status.dart';
 export 'src/models/job_type.dart';
+export 'src/test_executor.dart';
 export 'src/zen_jobs.dart';
