@@ -1,1 +1,6 @@
 include: ../dartzen_core/analysis_options.yaml
+analyzer:
+  errors:
+    # framework_internal.dart intentionally re-exports @internal members
+    # for framework packages only. This warning is acceptable.
+    invalid_export_of_internal_element: ignore

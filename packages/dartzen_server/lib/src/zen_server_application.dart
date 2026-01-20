@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 
+import 'middleware/transport_middleware.dart';
 import 'zen_server_config.dart';
 import 'zen_server_router.dart';
 
@@ -63,7 +63,7 @@ class ZenServerApplication {
     // 2. Configure the pipeline
     final pipeline = const Pipeline()
         .addMiddleware(logRequests())
-        .addMiddleware(transportMiddleware())
+        .addMiddleware(zenServerTransportMiddleware())
         .addHandler(
           ZenServerRouter(
             config.contentProvider,

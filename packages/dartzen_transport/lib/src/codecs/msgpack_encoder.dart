@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
+
 /// Encodes a Dart value to MessagePack format.
+@internal
 Uint8List encodeValue(dynamic value) {
   final buffer = BytesBuilder(copy: false);
   _encode(value, buffer);

@@ -1,15 +1,14 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_payments/dartzen_payments.dart';
 import 'package:dartzen_payments/src/adyen/adyen_mapper.dart';
 import 'package:dartzen_payments/src/adyen/adyen_models.dart';
 import 'package:dartzen_payments/src/adyen/adyen_payments_service.dart';
+import 'package:dartzen_payments/src/http_client.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockZenClient extends Mock implements ZenClient {}
+class MockPaymentsHttpClient extends Mock implements PaymentsHttpClient {}
 
 class MockTelemetryClient extends Mock implements TelemetryClient {}
 
@@ -17,7 +16,7 @@ class FakeTelemetryEvent extends Fake implements TelemetryEvent {}
 
 void main() {
   group('AdyenPaymentsService', () {
-    late MockZenClient mockClient;
+    late MockPaymentsHttpClient mockClient;
     late MockTelemetryClient mockTelemetry;
     late AdyenPaymentsService service;
 
@@ -32,7 +31,7 @@ void main() {
     });
 
     setUp(() {
-      mockClient = MockZenClient();
+      mockClient = MockPaymentsHttpClient();
       mockTelemetry = MockTelemetryClient();
       service = AdyenPaymentsService(
         config,

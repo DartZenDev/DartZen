@@ -1,5 +1,17 @@
 /// Unified background and scheduled jobs system for DartZen.
 ///
+/// IMPORTANT: This package provides the low-level job registry and executor
+/// primitives used by the DartZen job runtime. It is not intended to be used
+/// directly by application code. Applications should not call handlers,
+/// web adapters, or executor internals directly — instead, instantiate an
+/// appropriate `Executor` (for example `TestExecutor`, `LocalExecutor`, or a
+/// cloud executor) and interact with jobs via the executor surface.
+///
+/// Treat this package as a runtime/internal library: public application code
+/// should prefer higher-level, opinionated entrypoints (for example packages
+/// that provide hosted executors or your application's own orchestration
+/// component).
+///
 /// This package provides a robust, Zen-compliant job execution framework:
 /// - **Unified API**: Single way to define Endpoint, Scheduled, and Periodic jobs.
 /// - **Serverless Native**: Designed for Cloud Run, Cloud Tasks, and Cloud Scheduler.

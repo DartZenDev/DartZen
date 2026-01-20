@@ -1,5 +1,3 @@
-// ignore_for_file: directives_ordering
-
 import 'errors.dart';
 import 'executor.dart';
 import 'handler_registry.dart';

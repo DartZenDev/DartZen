@@ -1,7 +1,7 @@
-// ignore_for_file: avoid_print, unnecessary_library_name
+// ignore_for_file: avoid_print
 
 /// Example demonstrating task-based AI execution via ZenExecutor.
-library dartzen_ai_server_example;
+library;
 
 ///
 /// This example shows how to properly structure AI tasks for executor-only

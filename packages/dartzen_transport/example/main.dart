@@ -113,35 +113,43 @@ void requestResponseExample() {
 }
 
 void websocketExample() {
-  ZenLogger.instance.info('--- WebSocket Example (Conceptual) ---');
-  ZenLogger.instance.info('To use WebSocket, you need a running server.\n');
+  ZenLogger.instance.info('--- WebSocket & HTTP Transport ---');
+  ZenLogger.instance.info(
+    'IMPORTANT: All transport operations must execute via ZenExecutor.\n',
+  );
 
-  ZenLogger.instance.info('Example code:');
+  ZenLogger.instance.info(
+    'This package provides protocol abstractions (ZenRequest/ZenResponse)',
+  );
+  ZenLogger.instance.info(
+    'and serialization utilities (ZenEncoder/ZenDecoder).',
+  );
+  ZenLogger.instance.info('');
+
+  ZenLogger.instance.info('Direct HTTP or WebSocket usage is NOT supported:');
+  ZenLogger.instance.info('  ❌ ZenClient direct instantiation');
+  ZenLogger.instance.info('  ❌ ZenWebSocket outside of tasks');
+  ZenLogger.instance.info('  ❌ Server middleware without framework\n');
+
+  ZenLogger.instance.info('All network operations must be performed in');
+  ZenLogger.instance.info('ZenTask subclasses executed via ZenExecutor:');
   ZenLogger.instance.info('''
-  // Connect to WebSocket server
-  final ws = ZenWebSocket(
-    Uri.parse('ws://localhost:8080'),
-    format: ZenTransportFormat.msgpack, // Optional: override default
-  );
+  class FetchUserTask extends ZenTask<User> {
+    FetchUserTask(this.userId);
+    final String userId;
 
-  // Listen for responses
-  ws.responses.listen((response) {
-    print('Received: \${response.data}');
-  });
+    @override
+    Future<User> execute() async {
+      // Framework provides HTTP client
+      // WebSocket channel managed by framework
+      // All I/O happens here safely
+    }
+  }
 
-  // Send a request
-  final request = ZenRequest(
-    id: 'ws-001',
-    path: '/subscribe',
-    data: {'channel': 'updates'},
-  );
-  ws.send(request);
-
-  // Close when done
-  await ws.close();
+  final user = await zen.execute(FetchUserTask('123'));
   ''');
 
-  ZenLogger.instance.info('\nCodec selection:');
+  ZenLogger.instance.info('\nCodec selection (automatic):');
   ZenLogger.instance.info('- DEV mode: JSON everywhere');
   ZenLogger.instance.info('- PRD mode (web): JSON');
   ZenLogger.instance.info('- PRD mode (native): MessagePack');

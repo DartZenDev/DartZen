@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_expression_function_bodies
-
 import 'dart:async';
 
 import 'package:dartzen_executor/dartzen_executor.dart';
@@ -47,16 +45,15 @@ final class ClassificationAiTask extends ZenTask<ClassificationResponse> {
   };
 
   /// Reconstructs a task from a job payload.
-  static ClassificationAiTask fromPayload(Map<String, dynamic> payload) {
-    return ClassificationAiTask(
-      text: payload['text'] as String? ?? '',
-      model: payload['model'] as String? ?? '',
-      labels: (payload['labels'] as List<dynamic>?)?.cast<String>(),
-      config: payload['config'] != null
-          ? AIModelConfig.fromJson(payload['config'] as Map<String, dynamic>)
-          : const AIModelConfig(),
-    );
-  }
+  static ClassificationAiTask fromPayload(Map<String, dynamic> payload) =>
+      ClassificationAiTask(
+        text: payload['text'] as String? ?? '',
+        model: payload['model'] as String? ?? '',
+        labels: (payload['labels'] as List<dynamic>?)?.cast<String>(),
+        config: payload['config'] != null
+            ? AIModelConfig.fromJson(payload['config'] as Map<String, dynamic>)
+            : const AIModelConfig(),
+      );
 
   @override
   ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(

@@ -1,8 +1,8 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:meta/meta.dart';
 
+import '../http_client.dart';
 import '../payment.dart';
 import '../payment_error.dart';
 import '../payment_events.dart';
@@ -40,16 +40,16 @@ final class AdyenPaymentsService implements PaymentsService {
   /// Creates an Adyen payments service.
   AdyenPaymentsService(
     this._config, {
-    ZenClient? client,
+    PaymentsHttpClient? client,
     TelemetryClient? telemetry,
     AdyenPaymentMapper mapper = const AdyenPaymentMapper(),
-  }) : _client = client ?? ZenClient(baseUrl: _config.baseUrl),
+  }) : _client = client ?? DefaultPaymentsHttpClient(baseUrl: _config.baseUrl),
        _ownsClient = client == null,
        _telemetry = telemetry,
        _mapper = mapper;
 
   final AdyenPaymentsConfig _config;
-  final ZenClient _client;
+  final PaymentsHttpClient _client;
   final TelemetryClient? _telemetry;
   final AdyenPaymentMapper _mapper;
   final bool _ownsClient;

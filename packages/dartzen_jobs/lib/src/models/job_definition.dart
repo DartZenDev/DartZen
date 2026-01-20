@@ -1,7 +1,5 @@
-// Suppress doc and unused-constructor-parameter lint noise for this small
-// compatibility-focused model file.
-// ignore_for_file: public_member_api_docs, avoid_unused_constructor_parameters
-
+import '../../dartzen_jobs.dart' show HandlerRegistry;
+import '../handler_registry.dart' show HandlerRegistry;
 import 'job_context.dart';
 import 'job_policy.dart';
 import 'job_type.dart';
@@ -12,17 +10,31 @@ typedef JobHandler = Future<void> Function(JobContext context);
 /// Metadata-only descriptor for a job.
 ///
 /// This class is deliberately free of executable logic. Handlers must be
-/// registered separately via `HandlerRegistry`. Descriptors declare identity
+/// registered separately via [HandlerRegistry]. Descriptors declare identity
 /// and policy metadata only.
 class JobDescriptor {
+  /// [id] is the unique identifier for the job.
   final String id;
+
+  /// [type] specifies the job type (one-off, recurring, etc).
   final JobType type;
+
+  /// [defaultCron] is the default cron expression for scheduling (if applicable).
   final String? defaultCron;
+
+  /// [defaultInterval] is the default interval duration for scheduling (if applicable).
   final Duration? defaultInterval;
+
+  /// [defaultPriority] is the default priority for the job.
   final int? defaultPriority;
+
+  /// [defaultMaxRetries] is the default maximum number of retries for the job.
   final int? defaultMaxRetries;
+
+  /// [policy] defines the job's execution policy.
   final JobPolicy policy;
 
+  /// Creates a new [JobDescriptor].
   const JobDescriptor({
     required this.id,
     required this.type,
@@ -31,20 +43,5 @@ class JobDescriptor {
     this.defaultPriority,
     this.defaultMaxRetries,
     this.policy = const JobPolicy(),
-  });
-}
-
-/// Backwards-compatible wrapper that accepts an optional handler parameter
-/// but delegates to `JobDescriptor` semantics. Use `JobDescriptor` instead.
-class JobDefinition extends JobDescriptor {
-  const JobDefinition({
-    required super.id,
-    required super.type,
-    JobHandler? handler,
-    super.defaultCron,
-    super.defaultInterval,
-    super.defaultPriority,
-    super.defaultMaxRetries,
-    super.policy,
   });
 }

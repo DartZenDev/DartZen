@@ -1,4 +1,11 @@
-// ignore_for_file: avoid_print, comment_references
+// ignore_for_file: avoid_print
+import 'package:dartzen_ai/dartzen_ai.dart' show TextGenerationAiTask;
+import 'package:dartzen_ai/src/client/ai_client.dart' show AIClient;
+import 'package:dartzen_ai/src/tasks/text_generation_ai_task.dart'
+    show TextGenerationAiTask;
+import 'package:dartzen_executor/dartzen_executor.dart'
+    show ZenTask, ZenExecutor;
+
 /// Flutter client example explaining executor-only execution model.
 ///
 /// ## ❌ IMPORTANT: Client-side AI execution is NOT POSSIBLE
@@ -16,7 +23,7 @@
 ///
 /// ## ✅ Correct Client-Server Flow
 ///
-/// 1. **Client**: Sends request to DartZen server via [ZenClient]
+/// 1. **Client**: Sends request to DartZen server via HTTP
 /// 2. **Server**: Receives request via HTTP endpoint
 /// 3. **Server**: Creates AI task (e.g., [TextGenerationAiTask])
 /// 4. **Server**: Executes task via [ZenExecutor]
@@ -27,14 +34,13 @@
 ///
 /// ```dart
 /// // Client sends HTTP request to server endpoint
-/// final zenClient = ZenClient(baseUrl: 'https://myapp.run.app');
-///
-/// final response = await zenClient.post(
-///   '/api/ai/generate-text',
-///   body: {
+/// final response = await http.post(
+///   Uri.parse('https://myapp.run.app/api/ai/generate-text'),
+///   headers: {'content-type': 'application/json'},
+///   body: jsonEncode({
 ///     'prompt': 'Write a haiku',
 ///     'model': 'gemini-pro',
-///   },
+///   }),
 /// );
 /// ```
 ///

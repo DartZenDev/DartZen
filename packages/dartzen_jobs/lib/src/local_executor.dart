@@ -1,5 +1,3 @@
-// ignore_for_file: directives_ordering
-
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 
 import 'errors.dart';

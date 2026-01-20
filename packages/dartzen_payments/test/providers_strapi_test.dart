@@ -1,6 +1,5 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_payments/dartzen_payments.dart';
+import 'package:dartzen_payments/src/http_client.dart';
 import 'package:dartzen_payments/src/strapi/strapi_mapper.dart';
 import 'package:dartzen_payments/src/strapi/strapi_models.dart';
 import 'package:dartzen_payments/src/strapi/strapi_payments_service.dart';
@@ -9,7 +8,7 @@ import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockZenClient extends Mock implements ZenClient {}
+class MockPaymentsHttpClient extends Mock implements PaymentsHttpClient {}
 
 class MockTelemetryClient extends Mock implements TelemetryClient {}
 
@@ -17,7 +16,7 @@ class FakeTelemetryEvent extends Fake implements TelemetryEvent {}
 
 void main() {
   group('StrapiPaymentsService', () {
-    late MockZenClient mockClient;
+    late MockPaymentsHttpClient mockClient;
     late MockTelemetryClient mockTelemetry;
     late StrapiPaymentsService service;
 
@@ -31,7 +30,7 @@ void main() {
     });
 
     setUp(() {
-      mockClient = MockZenClient();
+      mockClient = MockPaymentsHttpClient();
       mockTelemetry = MockTelemetryClient();
       service = StrapiPaymentsService(
         config,

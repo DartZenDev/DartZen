@@ -4,17 +4,22 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'zen_codec_selector.dart';
-import 'zen_request.dart';
-import 'zen_response.dart';
-import 'zen_transport_header.dart';
+import '../../zen_codec_selector.dart';
+import '../../zen_request.dart';
+import '../../zen_response.dart';
+import '../../zen_transport_header.dart';
 
 /// A minimal WebSocket helper for DartZen transport.
+///
+/// **INTERNAL USE ONLY:** This class must only be used within ZenTask execution
+/// via ZenExecutor. Direct instantiation and use outside of tasks is not
+/// supported and violates the package's architecture.
 ///
 /// Provides basic WebSocket connectivity with automatic codec selection
 /// for sending [ZenRequest] and receiving [ZenResponse] messages.
 ///
 /// This is a simple utility without reconnection or streaming logic.
+@internal
 class ZenWebSocket {
   /// Creates a WebSocket connection to the given [uri].
   ///

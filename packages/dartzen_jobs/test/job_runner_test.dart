@@ -1,4 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:dartzen_jobs/src/handler_registry.dart';
 import 'package:dartzen_jobs/src/job_runner.dart';
 import 'package:dartzen_jobs/src/models/job_config.dart';
 import 'package:dartzen_jobs/src/models/job_definition.dart';
@@ -14,13 +15,15 @@ void main() {
   late JobRunner runner;
   late MockJobStore store;
   late MockTelemetryClient telemetry;
-  final registry = <String, JobDefinition>{};
+  final registry = <String, JobDescriptor>{};
 
   setUp(() {
     store = MockJobStore();
     telemetry = MockTelemetryClient();
     runner = JobRunner(store, registry, telemetry);
     registry.clear();
+    // Ensure handler registry is clean for each test
+    HandlerRegistry.clear();
     registerFallbackValue(
       TelemetryEvent(
         name: 'test',
@@ -35,15 +38,15 @@ void main() {
   });
 
   test('executes job when enabled and dates valid', () async {
-    bool executed = false;
-    final job = JobDefinition(
-      id: 'test_job',
-      type: JobType.endpoint,
-      handler: (ctx) async {
-        executed = true;
-      },
-    );
+    var executed = false;
+    const job = JobDescriptor(id: 'test_job', type: JobType.endpoint);
     registry['test_job'] = job;
+
+    // Register a handler that marks execution
+    HandlerRegistry.register('test_job', (ctx) async {
+      executed = true;
+      return;
+    });
 
     when(() => store.getJobConfig('test_job')).thenAnswer(
       (_) async => const ZenResult.ok(JobConfig(id: 'test_job', enabled: true)),
@@ -73,15 +76,13 @@ void main() {
   });
 
   test('skips job when disabled', () async {
-    bool executed = false;
-    final job = JobDefinition(
-      id: 'test_job',
-      type: JobType.endpoint,
-      handler: (ctx) async {
-        executed = true;
-      },
-    );
+    var executed = false;
+    const job = JobDescriptor(id: 'test_job', type: JobType.endpoint);
     registry['test_job'] = job;
+    HandlerRegistry.register('test_job', (ctx) async {
+      executed = true;
+      return;
+    });
 
     when(() => store.getJobConfig('test_job')).thenAnswer(
       (_) async =>
@@ -104,12 +105,9 @@ void main() {
   });
 
   test('skips job when ended', () async {
-    final job = JobDefinition(
-      id: 'test_job',
-      type: JobType.endpoint,
-      handler: (ctx) async {},
-    );
+    const job = JobDescriptor(id: 'test_job', type: JobType.endpoint);
     registry['test_job'] = job;
+    HandlerRegistry.register('test_job', (ctx) async {});
 
     when(() => store.getJobConfig('test_job')).thenAnswer(
       (_) async => ZenResult.ok(
@@ -134,12 +132,9 @@ void main() {
   });
 
   test('respects dependencies', () async {
-    final job = JobDefinition(
-      id: 'downstream',
-      type: JobType.endpoint,
-      handler: (ctx) async {},
-    );
+    const job = JobDescriptor(id: 'downstream', type: JobType.endpoint);
     registry['downstream'] = job;
+    HandlerRegistry.register('downstream', (ctx) async {});
 
     when(() => store.getJobConfig('downstream')).thenAnswer(
       (_) async => const ZenResult.ok(
@@ -171,14 +166,12 @@ void main() {
   });
 
   test('increments retries on failure', () async {
-    final job = JobDefinition(
-      id: 'fail_job',
-      type: JobType.endpoint,
-      handler: (ctx) async {
-        throw Exception('Boom');
-      },
-    );
+    const job = JobDescriptor(id: 'fail_job', type: JobType.endpoint);
     registry['fail_job'] = job;
+
+    HandlerRegistry.register('fail_job', (ctx) async {
+      throw Exception('Boom');
+    });
 
     when(() => store.getJobConfig('fail_job')).thenAnswer(
       (_) async => const ZenResult.ok(JobConfig(id: 'fail_job', enabled: true)),

@@ -1,5 +1,3 @@
-// ignore_for_file: unnecessary_library_name
-
 /// DartZen AI - GCP Vertex AI / Gemini integration for DartZen applications.
 ///
 /// This package provides AI capabilities through Google Cloud Platform's
@@ -86,7 +84,7 @@
 ///
 /// GCP credentials are stored and used **server-side only**. Clients
 /// never have direct access to API keys or credentials.
-library dartzen_ai;
+library;
 
 // Utilities (public API)
 export 'src/client/cancel_token.dart';

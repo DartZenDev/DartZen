@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
+
 /// Decodes MessagePack binary data to a Dart value.
+@internal
 dynamic decodeValue(Uint8List data) {
   final reader = _Reader(data);
   return _decode(reader);

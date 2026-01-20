@@ -47,7 +47,7 @@ class JobRunner {
   /// This method performs validation against the job's current [JobConfig]
   /// before invoking the registered handler.
   ///
-  /// [jobId] must correspond to a registered [JobDefinition].
+  /// [jobId] must correspond to a registered [JobDescriptor].
   /// [payload] is optional input data for the job.
   /// [currentTime] allows deterministic execution for testing (defaults to now).
   Future<ZenResult<void>> execute(

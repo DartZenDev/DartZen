@@ -1,7 +1,7 @@
-// ignore_for_file: avoid_print, unnecessary_library_name
+// ignore_for_file: avoid_print
 
 /// End-to-end guide for executor-only AI task execution.
-library dartzen_ai_task_based_example;
+library;
 
 ///
 /// This demonstrates all 3 AI task types and the executor-only pattern.

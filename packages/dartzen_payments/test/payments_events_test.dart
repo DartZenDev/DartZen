@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_payments/src/payment_events.dart';
 import 'package:dartzen_payments/src/payment_status.dart';
 import 'package:test/test.dart';
@@ -12,7 +10,7 @@ void main() {
       provider: 'strapi',
       amountMinor: 100,
       currency: 'USD',
-      timestamp: DateTime.utc(2024, 1, 1),
+      timestamp: DateTime.utc(2024),
     );
 
     expect(event.name, 'payment.initiated');
@@ -29,7 +27,7 @@ void main() {
       amountMinor: 200,
       currency: 'EUR',
       reason: 'declined',
-      timestamp: DateTime.utc(2024, 1, 1),
+      timestamp: DateTime.utc(2024),
     );
 
     expect(event.payload?['reason'], 'declined');

@@ -9,6 +9,14 @@
 
 A unified background and scheduled jobs system for DartZen applications, designed for Cloud Run without blocking, surprises, or hidden concurrency.
 
+> IMPORTANT: `dartzen_jobs` is a low-level runtime/registry package and is
+> not intended for direct use by application code. Do not call job handlers,
+> runtime adapters, or executor internals directly from your application.
+> Instead, instantiate and use an `Executor` (for example `TestExecutor`,
+> `LocalExecutor`, or a cloud executor) which owns lifecycle, persistence,
+> retries, and HTTP/adapters. This ensures correct semantics and prevents
+> accidental resource misuse.
+
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
 ## 🎯 Purpose
@@ -147,7 +155,7 @@ void main() async {
 
 ### 2. Defining Jobs
 
-Create `JobDescriptor`s (metadata-only). Prefer `JobDescriptor` for new code; `JobDefinition` remains as a compatibility wrapper.
+Create `JobDescriptor`s to define your jobs:
 
 ```dart
 final myEmail = JobDescriptor(

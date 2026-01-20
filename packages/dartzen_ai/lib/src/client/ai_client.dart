@@ -7,6 +7,7 @@ import '../models/ai_config.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import 'cancel_token.dart';
+import 'http_transport.dart';
 
 /// Flutter client for AI operations.
 ///
@@ -23,16 +24,16 @@ import 'cancel_token.dart';
 final class AIClient {
   /// Creates an AI client.
   ///
-  /// If [zenClient] is omitted, the client will construct and own a
-  /// `ZenClient` instance which will be closed by [close()].
-  AIClient({required String baseUrl, ZenClient? zenClient})
-    : zenClient = zenClient ?? ZenClient(baseUrl: baseUrl),
-      _ownsZenClient = zenClient == null;
+  /// If [httpClient] is omitted, the client will construct and own a
+  /// [DefaultAIHttpClient] instance which will be closed by [close()].
+  AIClient({required String baseUrl, AIHttpClient? httpClient})
+    : _client = httpClient ?? DefaultAIHttpClient(baseUrl: baseUrl),
+      _ownsClient = httpClient == null;
 
   /// Transport client.
-  final ZenClient zenClient;
+  final AIHttpClient _client;
 
-  final bool _ownsZenClient;
+  final bool _ownsClient;
 
   /// Generates text.
   Future<ZenResult<TextGenerationResponse>> textGeneration({
@@ -115,7 +116,7 @@ final class AIClient {
     }
 
     try {
-      final response = await zenClient.post(endpoint, body);
+      final response = await _client.post(endpoint, body);
 
       // Check cancellation after request
       if (cancelToken?.isCancelled ?? false) {
@@ -204,17 +205,13 @@ final class AIClient {
     }
   }
 
-  /// Closes owned resources (e.g. internal `ZenClient`).
+  /// Closes owned resources (e.g. internal HTTP client).
   ///
-  /// If the `ZenClient` was provided by the caller, ownership remains with
+  /// If the transport was provided by the caller, ownership remains with
   /// the caller and this method is a no-op.
   void close() {
-    if (_ownsZenClient) {
-      try {
-        zenClient.close();
-      } catch (_) {
-        // ignore
-      }
+    if (_ownsClient) {
+      _client.close();
     }
   }
 }

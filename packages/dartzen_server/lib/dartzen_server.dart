@@ -5,8 +5,8 @@
 /// - Process lifecycle (startup and graceful shutdown)
 /// - Request routing
 /// - Domain invocation (calling domain logic)
-/// - Response translation (`ZenResult` → HTTP via `dartzen_transport`)
-/// - Content serving (opaque bytes/strings from `dartzen_storage`)
+/// - Response translation (ZenResult → HTTP via dartzen_transport)
+/// - Content serving (opaque bytes/strings from dartzen_storage)
 ///
 /// ## What This Package Is
 ///

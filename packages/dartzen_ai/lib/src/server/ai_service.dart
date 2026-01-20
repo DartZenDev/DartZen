@@ -10,24 +10,27 @@ import '../models/ai_response.dart';
 import 'ai_budget_enforcer.dart';
 import 'vertex_ai_client.dart';
 
-// Ignore missing doc warnings for this file: short-lived internal API.
-// The public members are self-explanatory in context.
-// ignore_for_file: public_member_api_docs
-
 /// Retry policy configuration for transient failures.
 ///
 /// - `baseDelayMs`: initial backoff in milliseconds.
 /// - `maxDelayMs`: maximum backoff cap in milliseconds.
 /// - `jitterFactor`: fraction used to apply +/- jitter (0.0..1.0).
 final class RetryPolicy {
+  /// Creates a retry policy. Defaults to 100ms base delay, 5000ms max delay,
+  /// and 0.5 jitter factor.
   const RetryPolicy({
     this.baseDelayMs = 100,
     this.maxDelayMs = 5000,
     this.jitterFactor = 0.5,
   });
 
+  /// Base delay in milliseconds.
   final int baseDelayMs;
+
+  /// Maximum delay in milliseconds.
   final int maxDelayMs;
+
+  /// Jitter factor (0.0 to 1.0).
   final double jitterFactor;
 }
 

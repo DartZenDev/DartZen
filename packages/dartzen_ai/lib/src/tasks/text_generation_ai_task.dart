@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_expression_function_bodies
-
 import 'dart:async';
 
 import 'package:dartzen_executor/dartzen_executor.dart';
