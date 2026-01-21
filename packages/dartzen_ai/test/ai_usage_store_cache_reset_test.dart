@@ -5,40 +5,43 @@ import 'package:dartzen_cache/dartzen_cache.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('CacheAIUsageStore reset behavior', () {
-    test(
-      'reset clears in-memory surface and persists zeros to cache',
-      () async {
-        // Use explicit in-memory cache for deterministic tests.
-        final cache = InMemoryCache();
+  group('CacheAIUsageStore reset', () {
+    test('reset clears in-memory counters and writes zeros to cache', () async {
+      final cache = InMemoryCache();
 
-        final store = CacheAIUsageStore.withClient(
-          cache,
-          flushInterval: const Duration(milliseconds: 100),
-        );
+      final store = CacheAIUsageStore.withClient(
+        cache,
+        flushInterval: const Duration(milliseconds: 50),
+      );
 
-        store.recordUsage('textGeneration', 3.25);
-        expect(store.getMethodUsage('textGeneration'), closeTo(3.25, 1e-9));
+      // Record usage to populate in-memory state and trigger a flush.
+      store.recordUsage('textGeneration', 3.5);
+      expect(store.getMethodUsage('textGeneration'), equals(3.5));
+      expect(store.getGlobalUsage(), equals(3.5));
 
-        // Allow flush to persist initial value
-        await Future<void>.delayed(const Duration(milliseconds: 250));
+      // Now reset and verify in-memory values are cleared immediately.
+      store.reset();
+      expect(store.getMethodUsage('textGeneration'), equals(0.0));
+      expect(store.getGlobalUsage(), equals(0.0));
 
-        // Now reset and allow persistence of zeros
-        store.reset();
-        expect(store.getMethodUsage('textGeneration'), equals(0.0));
+      // Wait for the reset to persist into cache.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
-        await Future<void>.delayed(const Duration(milliseconds: 250));
+      final now = DateTime.now().toUtc();
+      final suffix = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      final globalKey = 'dartzen:ai:usage:global:$suffix';
+      final methodKey = 'dartzen:ai:usage:textGeneration:$suffix';
 
-        final now = DateTime.now().toUtc();
-        final suffix = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-        final key = 'dartzen:ai:usage:textGeneration:$suffix';
+      final persistedGlobal = await cache.get<double>(globalKey);
+      final persistedMethod = await cache.get<double>(methodKey);
 
-        final persisted = await cache.get<double>(key);
-        expect(persisted, isNotNull);
-        expect(persisted, closeTo(0.0, 1e-9));
+      expect(persistedGlobal, isNotNull);
+      expect(persistedGlobal, closeTo(0.0, 1e-9));
+      expect(persistedMethod, isNotNull);
+      expect(persistedMethod, closeTo(0.0, 1e-9));
 
-        await store.close();
-      },
-    );
+      await store.close();
+    });
   });
 }
+

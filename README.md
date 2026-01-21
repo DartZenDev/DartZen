@@ -42,19 +42,21 @@ dartzen/
 
 ### Packages
 
-- **`dartzen_core`**: Core primitives, shared contracts, result types, and domain value objects — the foundation for all other packages. Does **not** include infrastructure concerns.
-- **`dartzen_localization`**: Foundational localization package for the DartZen ecosystem.
-- **`dartzen_firestore`**: Firestore operations and converters for the DartZen ecosystem.
+- **`dartzen_core`**: Core primitives, shared contracts, result types, and domain value objects — the foundation for all other packages. Does **not** include infrastructure, IO, framework, or platform-specific code.
+- **`dartzen_localization`**: Foundational runtime-aware localization package for the DartZen ecosystem.
+- **`dartzen_firestore`**: Firestore operations, typed access, and converters for the DartZen ecosystem.
 - **`dartzen_ui_navigation`**: Unified, adaptive navigation layer for DartZen applications with platform-specific optimizations.
-- **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, WebSocket communication, HTTP client, and Shelf middleware.
+- **`dartzen_transport`**: DartZen transport layer for serialization, codec selection, WebSocket communication, HTTP client, and server/client middleware.
 - **`dartzen_cache`**: Simple, explicit, and predictable caching for the DartZen ecosystem with in-memory and GCP Memorystore backends.
 - **`dartzen_server`**: DartZen server application framework — defines application lifecycle, middleware, routing, and configuration.
 - **`dartzen_storage`**: Google Cloud Storage reader for the DartZen ecosystem.
 - **`dartzen_identity`**: Identity service for DartZen — provides a unified interface for identity management, including authentication, authorization, and user management.
 - **`dartzen_ui_identity`**: Cross-platform, adaptive UI components and screens for DartZen Identity flows.
-- ** `dartzen_ai`**: AI integration package for DartZen — provides interfaces and implementations for GCP Vertex AI / Gemini integration.
-- **`dartzen_payments`**: Payments integration package for DartZen — provides interfaces and implementations Stripe and Adyen payment providers.
+- **`dartzen_ai`**: AI integration package for DartZen — provides interfaces and implementations for GCP Vertex AI / Gemini integration.
+- **`dartzen_payments`**: Payments integration package for DartZen — provides interfaces and implementations for Stripe and Adyen payment providers.
 - **`dartzen_jobs`**: A unified background and scheduled jobs system for DartZen applications.
+- **`dartzen_telemetry`**: Telemetry and monitoring package for DartZen — provides interfaces and implementations for logging, metrics, and tracing using GCP Cloud Logging and Cloud Monitoring.
+- **`dartzen_executor`**: A unified task executor for DartZen applications, supporting concurrent and sequential task execution with error handling, retries, and policies.
 
 ### Example Applications
 

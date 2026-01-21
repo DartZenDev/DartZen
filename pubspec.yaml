@@ -167,3 +167,40 @@ melos:
             melos exec --scope="$DART_SCOPE" -- "dart --define=DZ_ENV=$e --define=DZ_PLATFORM=$p test --coverage=coverage/coverage_${e}_${p}_dart"
           done
         done
+
+    test:matrix:emulator:
+      run: |
+        set -e
+        echo "Starting Firebase emulators (apps/ZenDemo/docker-compose.yml)..."
+        (cd apps/ZenDemo && docker compose up -d)
+
+        # Wait for emulator UI + Firestore to be ready
+        MAX_ATTEMPTS=30
+        ATTEMPT=0
+        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          if curl -s http://localhost:4000 >/dev/null 2>&1 && curl -s http://localhost:9088 >/dev/null 2>&1; then
+            echo "✓ Emulators are ready"
+            break
+          fi
+          ATTEMPT=$((ATTEMPT + 1))
+          echo "  Waiting for emulators... ($ATTEMPT/$MAX_ATTEMPTS)"
+          sleep 2
+        done
+
+        if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+          echo "✗ Emulators failed to start; dumping logs"
+          (cd apps/ZenDemo && docker compose logs --no-color)
+          (cd apps/ZenDemo && docker compose down) || true
+          exit 1
+        fi
+
+        # Run the existing matrix script and preserve its exit code
+        set +e
+        melos run test:matrix
+        EXIT_CODE=$?
+        set -e
+
+        echo "Stopping Firebase emulators..."
+        (cd apps/ZenDemo && docker compose down)
+
+        exit $EXIT_CODE

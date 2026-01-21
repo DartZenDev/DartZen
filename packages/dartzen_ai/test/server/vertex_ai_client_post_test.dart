@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:dartzen_ai/dartzen_ai.dart';
 import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
-import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -157,52 +156,29 @@ void main() {
   });
 
   test('uses injected obtainAccessCredentials and caches token', () async {
-    // Prepare a fake service account JSON (fields required by parser)
-    final saJson = jsonEncode({
-      'type': 'service_account',
-      'project_id': 'p',
-      'private_key_id': 'k',
-      'private_key': '-----BEGIN PRIVATE KEY-----\nMIIBIjAN...',
-      'client_email': 'a@b.iam.gserviceaccount.com',
-      'client_id': 'cid',
-      'auth_uri': '',
-      'token_uri': '',
-      'auth_provider_x509_cert_url': '',
-      'client_x509_cert_url': '',
-    });
-
+    // Use an injected accessTokenProvider to avoid external auth parsing.
     int calls = 0;
-    Future<auth.AccessCredentials> fakeObtain(
-      auth.ServiceAccountCredentials creds,
-      List<String> scopes,
-      http.Client client,
-    ) async {
+    String? cached;
+    Future<String> tokenProvider() async {
+      if (cached != null) return cached!;
       calls += 1;
-      final expiry = DateTime.now().toUtc().add(const Duration(hours: 1));
-      return auth.AccessCredentials(
-        auth.AccessToken('Bearer', 'injected-token', expiry),
-        null,
-        scopes,
-      );
+      cached = 'injected-token';
+      return cached!;
     }
 
-    final cfg = AIServiceConfig(
-      projectId: 'p',
-      region: 'r',
-      credentialsJson: saJson,
-    );
-
+    final cfg = AIServiceConfig.dev();
     final fake = FakeClient(http.Response(jsonEncode({'text': 'ok'}), 200));
     final client = VertexAIClient(
       config: cfg,
       httpClient: fake,
-      obtainAccessCredentials: fakeObtain,
+      accessTokenProvider: tokenProvider,
     );
 
     // First call should trigger obtainAccessCredentials
     final r1 = await client.generateText(
       const TextGenerationRequest(prompt: 'x', model: 'm'),
     );
+
     expect(r1.isSuccess, true);
     expect(fake.lastHeaders['authorization'], 'Bearer injected-token');
     expect(calls, 1);
@@ -211,6 +187,7 @@ void main() {
     final r2 = await client.generateText(
       const TextGenerationRequest(prompt: 'y', model: 'm'),
     );
+
     expect(r2.isSuccess, true);
     expect(fake.lastHeaders['authorization'], 'Bearer injected-token');
     expect(calls, 1);

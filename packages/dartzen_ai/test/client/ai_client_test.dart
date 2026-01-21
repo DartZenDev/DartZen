@@ -468,8 +468,9 @@ void main() {
         ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_20',
-            status: 500,
-            error: 'internal_error',
+            status: 400,
+            error: 'budget_exceeded',
+            data: {'limit': 100, 'current': 50, 'method': 'vendor'},
           ),
         );
 
@@ -479,7 +480,13 @@ void main() {
         );
 
         expect(result.isFailure, true);
-        expect(result.errorOrNull, isA<AIBudgetExceededError>());
+        final err = result.errorOrNull;
+        expect(err, isA<AIBudgetExceededError>());
+        if (err is AIBudgetExceededError) {
+          expect(err.limit, 100);
+          expect(err.current, 50);
+          expect(err.message.contains('vendor'), isTrue);
+        }
       });
 
       test('maps error with "quota" in code', () async {
