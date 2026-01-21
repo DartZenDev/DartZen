@@ -26,12 +26,14 @@ This package provides:
 - ✅ Task-safe protocol abstractions (ZenRequest, ZenResponse)
 - ✅ Serialization utilities (ZenEncoder, ZenDecoder)
 - ✅ Error handling and exceptions
+- ✅ **One public handle:** `ZenTransport` facade (no executor choice)
 
 This package does NOT allow:
 
 - ❌ Direct HTTP calls using `ZenClient`
 - ❌ WebSocket connections outside of tasks
 - ❌ Server setup without framework integration
+- ❌ Selecting executors manually (local/test/prod are internal)
 
 ### Why This Architecture?
 
@@ -44,25 +46,25 @@ The executor-only pattern ensures:
 
 ### Correct Usage Pattern
 
-Define transport operations as `ZenTask` subclasses:
+Use the single public handle `ZenTransport` to execute transport descriptors.
+Executor selection (local/test/prod) is internal and environment-driven.
 
 ```dart
-class FetchUserTask extends ZenTask<User> {
-  FetchUserTask(this.userId);
-  final String userId;
+import 'package:dartzen_transport/dartzen_transport.dart';
 
-  @override
-  Future<User> execute() async {
-    // HTTP client provided by framework
-    // WebSocket channel managed by framework
-    // All I/O happens here safely
-    final response = await client.get('/api/users/$userId');
-    return User.fromJson(response.data);
-  }
-}
+final transport = ZenTransport.instance; // uses ZenTransportConfig.fromEnv()
 
-// Execute via ZenExecutor
-final user = await zen.execute(FetchUserTask('123'));
+const webhookDescriptor = TransportDescriptor(
+  id: 'user-webhook',
+  channel: TransportChannel.webhook,
+  reliability: TransportReliability.atLeastOnce,
+  timeout: Duration(seconds: 10),
+);
+
+await transport.send(
+  webhookDescriptor,
+  payload: {'event': 'user.created'},
+);
 ```
 
 ### Incorrect Usage (Not Supported)
@@ -149,26 +151,41 @@ if (response.isSuccess) {
 
 ### Transport via ZenExecutor (Recommended)
 
-For HTTP or WebSocket communication, use `ZenTask`:
+Frameworks should inject or reuse the singleton `ZenTransport` inside
+executor-managed tasks. Consumers never choose executors themselves.
 
 ```dart
-import 'package:dartzen_executor/dartzen_executor.dart';
-import 'package:dartzen_transport/dartzen_transport.dart';
-
 class FetchUserTask extends ZenTask<User> {
-  FetchUserTask(this.userId);
+  FetchUserTask(this.userId, {required this.transport});
   final String userId;
+  final ZenTransport transport;
 
   @override
   Future<User> execute() async {
-    // Framework manages HTTP client internally
-    final response = await client.get('/api/users/$userId');
-    return User.fromJson(response.data);
+    final descriptor = TransportDescriptor(
+      id: 'user-http',
+      channel: TransportChannel.http,
+      reliability: TransportReliability.atLeastOnce,
+    );
+
+    final result = await transport.send(
+      descriptor,
+      payload: {'userId': userId},
+    );
+
+    if (!result.success || result.data == null) {
+      throw Exception(result.error ?? 'Transport failed');
+    }
+
+    return User.fromJson(result.data as Map<String, dynamic>);
   }
 }
 
-// Execute safely
-final user = await executor.execute(FetchUserTask('123'));
+// Executor wires transport once (example)
+final transport = ZenTransport.instance;
+final user = await executor.execute(
+  FetchUserTask('123', transport: transport),
+);
 ```
 
 ## 🪧 Codec Selection

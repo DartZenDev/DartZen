@@ -66,12 +66,20 @@
 /// ```
 library;
 
+export 'src/config.dart' show ZenTransportConfig;
+export 'src/descriptors.dart'
+    show
+        TransportDescriptor,
+        TransportChannel,
+        TransportReliability,
+        TransportResult;
 export 'src/zen_codec_selector.dart' show selectDefaultCodec;
 export 'src/zen_decoder.dart' show ZenDecoder;
 export 'src/zen_encoder.dart' show ZenEncoder;
 export 'src/zen_message.dart' show ZenMessage;
 export 'src/zen_request.dart' show ZenRequest;
 export 'src/zen_response.dart' show ZenResponse;
+export 'src/zen_transport.dart' show ZenTransport;
 export 'src/zen_transport_exception.dart' show ZenTransportException;
 export 'src/zen_transport_header.dart'
     show ZenTransportFormat, zenTransportHeaderName;
