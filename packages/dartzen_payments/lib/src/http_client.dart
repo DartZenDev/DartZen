@@ -1,12 +1,13 @@
 import 'dart:convert';
 
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:http/http.dart' as http;
+
+import 'payment_http_response.dart';
 
 /// Minimal HTTP client wrapper for payments providers.
 abstract class PaymentsHttpClient {
   /// Sends a POST request to [path] with optional [body] and [headers].
-  Future<ZenResponse> post(
+  Future<PaymentHttpResponse> post(
     String path,
     Map<String, dynamic>? body, {
     Map<String, String>? headers,
@@ -29,7 +30,7 @@ class DefaultPaymentsHttpClient implements PaymentsHttpClient {
   final bool _ownsClient;
 
   @override
-  Future<ZenResponse> post(
+  Future<PaymentHttpResponse> post(
     String path,
     Map<String, dynamic>? body, {
     Map<String, String>? headers,
@@ -46,11 +47,11 @@ class DefaultPaymentsHttpClient implements PaymentsHttpClient {
 
     final parsed = _parseBody(response);
 
-    return ZenResponse(
+    return PaymentHttpResponse(
       id:
           response.headers['x-request-id'] ??
           DateTime.now().microsecondsSinceEpoch.toString(),
-      status: response.statusCode,
+      statusCode: response.statusCode,
       data: parsed.data,
       error: parsed.error,
     );

@@ -323,6 +323,174 @@ Missing descriptor fails immediately with clear error message. This prevents sil
 If something feels inconvenient to implement under this model,
 that discomfort is the signal.
 
+## Runtime Guard Pattern for Executor-Only Tasks
+
+Some packages, notably `dartzen_ai`, use **Zone-based runtime guards** to enforce that task code executes only within `ZenExecutor` context. This is a recommended pattern for packages with strict execution requirements.
+
+**Pattern: Zone-Based Guard**
+
+```dart
+// In a task's execute() method
+@override
+Future<TextGenerationResponse> execute() async {
+  // Enforce executor-run context
+  if (Zone.current['dartzen.executor'] != true) {
+    throw StateError(
+      'AI tasks MUST be executed via ZenExecutor.execute(), not directly.'
+    );
+  }
+  // ... task implementation
+}
+```
+
+**When to use**:
+
+- Package operations must never run outside the executor (e.g., AI inference, streaming)
+- Package maintains internal service instances that depend on executor lifecycle
+- Package cannot tolerate direct invocation outside the execution model
+
+**Zone contract**:
+
+- `Zone.current['dartzen.executor'] == true` — marks code running inside executor
+- `Zone.current['dartzen.ai.service']` (example) — executor injects services at runtime
+- Task payloads remain pure and serializable; services are injected just-in-time
+
+This pattern is **optional but recommended** for enforcement. It creates a clear, testable boundary: if you try to use the package incorrectly, you get an immediate error.
+
+## Server Transport Boundary
+
+`dartzen_server` imports `dartzen_transport` directly. This is **not a violation**; it is an **architectural responsibility**.
+
+**Why this is correct**:
+
+1. **Server owns the HTTP boundary** — The server package sits at the application perimeter
+2. **Transport format negotiation is a server concern** — Selecting JSON vs MessagePack happens at the HTTP layer
+3. **Middleware integration requires protocol knowledge** — `zenServerTransportMiddleware()` needs `ZenTransportFormat` and codec types
+4. **Not a shortcut** — Server does NOT select executors, route based on environment, or dispatch jobs
+
+**Dependency graph** (correct):
+
+```
+HTTP Request
+  ↓
+dartzen_server (owns boundary)
+  ↓ (negotiates format, decodes request)
+ZenExecutor (executes task)
+  ↓
+ZenTransport (internal facade)
+  ↓
+HTTP Response (encoded via negotiated format)
+```
+
+**What server does NOT do**:
+
+- ❌ Select between LocalExecutor vs CloudExecutor
+- ❌ Decide whether a task is heavy/medium/light
+- ❌ Route based on environment (`dzIsPrd`)
+- ❌ Dispatch jobs directly
+
+Server imports transport types only for: format negotiation, codec selection, protocol translation.
+
+## Payments Executor Pattern
+
+`dartzen_payments` uses a custom `Executor` abstraction instead of integrating with `ZenTask`. This is an **intentional architectural divergence**.
+
+**Why**:
+
+1. **Lightweight execution** — Payments are often light-weight operations (< 100ms), not suited for cloud job dispatch
+2. **Provider-specific semantics** — Payments need explicit provider selection (Adyen, Strapi, test), which is declarative via `PaymentDescriptor.metadata['provider']`
+3. **Retries and idempotency** — Payments have their own retry policy and idempotency windows that differ from the generic job model
+4. **Domain coherence** — Payments operations form a cohesive domain unit; wrapping in ZenTask would add nesting without benefit
+
+**Current pattern**:
+
+```dart
+// Application wires the executor with providers
+final executor = LocalExecutor(
+  providers: {'adyen': adyenService, 'strapi': strapiService},
+);
+
+// Application calls executor directly
+final result = await executor.execute(descriptor, payload);
+```
+
+**Trade-off: Single-instance idempotency**:
+
+- Local idempotency cache works for single-instance deployments
+- Multi-instance Cloud Run relies on provider-level idempotency (Adyen, Strapi support it natively)
+- Document clearly: idempotency is local-only in this implementation
+
+**Future opportunity**:
+
+A `PaymentTask(descriptor, payload)` wrapper could integrate payments with `ZenExecutor` while maintaining the same provider selection and retry semantics. This would unify the execution model across the framework. This is **future work**, not a current requirement.
+
+## Forbidden Patterns in Boundary Packages
+
+These patterns **must not appear** in server, transport, or integration packages:
+
+### ❌ Environment Branching for Routing
+
+**Forbidden**:
+
+```dart
+// In server or executor packages
+if (dzIsPrd) {
+  return await cloudExecutor.execute(task);
+} else {
+  return await localExecutor.execute(task);
+}
+```
+
+**Why**: Routing decisions belong in the task descriptor, not in branch logic. Packages should not know about execution environments.
+
+**Correct**: Routing is determined by `ZenTaskDescriptor.weight` (light/medium/heavy), not environment.
+
+### ❌ Direct Jobs Dispatch from Handlers
+
+**Forbidden**:
+
+```dart
+// In HTTP handler
+final jobId = await zenJobs.enqueue(jobPayload);
+response.write(jobId);
+```
+
+**Why**: Handlers are HTTP adapters. They call `ZenExecutor.execute(task)`. The executor internally decides whether to dispatch to jobs. Handlers don't know about jobs.
+
+### ❌ Direct Transport Client Usage
+
+**Forbidden**:
+
+```dart
+// In application package
+final client = ZenClient(transport);
+final response = await client.send(request);
+```
+
+**Why**: HTTP communication must happen inside `ZenTask.execute()`, not at the application boundary. `ZenClient` is internal to the framework.
+
+### ❌ Executor Selection Logic in Application Code
+
+**Forbidden**:
+
+```dart
+// In application layer
+final executor = isLight ? LocalExecutor() : CloudExecutor();
+await executor.execute(task);
+```
+
+**Why**: Executor is injected at startup. Application code calls `zenExecutor.execute(task)` and trusts the routing. Selection logic is centralized, not scattered.
+
+### ✅ What IS Allowed in Server/Boundary Packages
+
+- ✅ HTTP request/response handling (Shelf)
+- ✅ Transport format negotiation (JSON/MessagePack selection)
+- ✅ Codec integration (ZenEncoder/ZenDecoder)
+- ✅ Request/response translation (ZenRequest ↔ HTTP, ZenResult ↔ ZenResponse)
+- ✅ Error sanitization for production (hiding internal errors)
+- ✅ Middleware composition (explicit pipeline)
+- ✅ Configuration validation (environment variables, config file parsing)
+
 ## Summary
 
 DartZen execution model is:
