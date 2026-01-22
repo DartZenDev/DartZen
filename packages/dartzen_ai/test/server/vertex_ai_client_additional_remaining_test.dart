@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
+import 'package:dartzen_ai/src/errors/ai_error.dart';
 import 'package:dartzen_ai/src/models/ai_config.dart';
 import 'package:dartzen_ai/src/models/ai_request.dart';
-import 'package:dartzen_ai/src/errors/ai_error.dart';
-import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
