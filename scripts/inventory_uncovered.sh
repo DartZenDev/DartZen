@@ -20,10 +20,15 @@ for pkgdir in packages/*; do
   [ -d "$pkgdir" ] || continue
   pkg=$(basename "$pkgdir")
   # find any lcov files under the package's coverage directory (including nested per-run dirs)
+  # but avoid descending into nested 'coverage' directories (coverage/coverage/...) which
+  # can be created by previous merges and lead to extremely long paths. Prune any
+  # 'coverage' directory at depth >= 2 so we only scan the initial coverage tree.
   lcovs=()
-  while IFS= read -r -d '' lf; do
-    lcovs+=("$lf")
-  done < <(find "$pkgdir/coverage" -type f -name "lcov*.info" -print0 2>/dev/null || true)
+  if [ -d "$pkgdir/coverage" ]; then
+    while IFS= read -r -d '' lf; do
+      lcovs+=("$lf")
+    done < <(find "$pkgdir/coverage" \( -type d -name 'coverage*' -mindepth 2 -prune \) -o -type f -name "lcov*.info" -print0 2>/dev/null || true)
+  fi
   if [ ${#lcovs[@]} -eq 0 ]; then
     continue
   fi

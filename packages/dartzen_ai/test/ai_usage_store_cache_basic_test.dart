@@ -50,11 +50,11 @@ void main() {
       expect(store.getMethodUsage('textGeneration'), equals(5.0));
 
       // allow async flush to happen
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Reset should clear in-memory surface
       store.reset();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(store.getGlobalUsage(), equals(0.0));
       expect(store.getMethodUsage('textGeneration'), equals(0.0));

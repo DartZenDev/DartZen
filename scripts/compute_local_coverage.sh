@@ -12,6 +12,13 @@ set -euo pipefail
 # coverage directories so app-level vm.json artifacts are converted too.
 converted_global=()
 while IFS= read -r -d '' cov_root; do
+  # Skip nested coverage directories (avoid processing coverage/*/coverage/*)
+  case "$cov_root" in
+    */coverage/*/coverage/*)
+      echo "Skipping nested coverage dir: $cov_root"
+      continue
+      ;;
+  esac
   # cov_root is a .../coverage directory; the package/app directory is its parent
   pkgdir=$(dirname "$cov_root")
   converted=()
@@ -72,8 +79,19 @@ while IFS= read -r -d '' cov_root; do
 
   # Merge converted per-run lcovs into a single lcov.info for the package
   if [ ${#converted[@]} -gt 0 ]; then
-  pkg_lcov="$pkgdir/coverage/lcov.info"
-  cat "${converted[@]}" > "$pkg_lcov" || true
+    pkg_lcov="$pkgdir/coverage/lcov.info"
+    # Safely concatenate each converted LCOV file into the package lcov
+    # to avoid extremely long argument lists or accidental filename
+    # concatenation when many per-run files exist. Append files one by
+    # one to keep behavior predictable across platforms.
+    : > "$pkg_lcov"
+    for _f in "${converted[@]}"; do
+      if [ -f "$_f" ]; then
+        cat "$_f" >> "$pkg_lcov" || true
+        # Ensure file separators between concatenated reports
+        echo "" >> "$pkg_lcov" || true
+      fi
+    done
     package=$(basename "$pkgdir")
     # Canonicalize SF lines that may contain absolute paths (SF:/abs/path/.../packages/<pkg>/lib/)
     if sed -i "s|SF:.*/packages/$package/lib/|SF:packages/$package/lib/|g" "$pkg_lcov" 2>/dev/null; then
@@ -116,12 +134,40 @@ for pkgdir in packages/* apps/*; do
   pkg_lcovs=()
   if [[ "$pkgdir" == apps/* ]]; then
     # For apps, lcov files may be nested under subpackages; search recursively
-    while IFS= read -r -d '' f; do pkg_lcovs+=("$f"); done < <(find "$pkgdir" -type f -name "lcov*.info" -print0 2>/dev/null || true)
+    # Skip deeply-nested coverage artifacts to avoid extremely long file paths
+    while IFS= read -r -d '' f; do
+      case "$f" in
+        */coverage/*/coverage/*)
+          echo "Skipping nested lcov file: $f"
+          continue
+          ;;
+      esac
+      # Skip extremely long paths which cause "File name too long" errors
+      if [ ${#f} -gt 200 ]; then
+        echo "Skipping too-long lcov path: $f"
+        continue
+      fi
+      pkg_lcovs+=("$f")
+    done < <(find "$pkgdir" -type f -name "lcov*.info" -print0 2>/dev/null || true)
   else
     # For packages, look in the package's coverage directory only
     if [ -d "$pkgdir/coverage" ]; then
       # collect any lcov files under the package's coverage directory, including nested per-run dirs
-      while IFS= read -r -d '' f; do pkg_lcovs+=("$f"); done < <(find "$pkgdir/coverage" -type f -name "lcov*.info" -print0 2>/dev/null || true)
+      # Skip deeply-nested coverage artifacts to avoid extremely long file paths
+      while IFS= read -r -d '' f; do
+        case "$f" in
+          */coverage/*/coverage/*)
+            echo "Skipping nested lcov file: $f"
+            continue
+            ;;
+        esac
+        # Skip extremely long paths which cause "File name too long" errors
+        if [ ${#f} -gt 200 ]; then
+          echo "Skipping too-long lcov path: $f"
+          continue
+        fi
+        pkg_lcovs+=("$f")
+      done < <(find "$pkgdir/coverage" -type f -name "lcov*.info" -print0 2>/dev/null || true)
     fi
   fi
   if [ ${#pkg_lcovs[@]} -eq 0 ]; then
