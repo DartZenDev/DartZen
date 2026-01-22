@@ -1,16 +1,22 @@
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 
-import '../zen_decoder.dart';
-import '../zen_encoder.dart';
-import '../zen_response.dart';
-import '../zen_transport_header.dart';
+import '../../zen_decoder.dart';
+import '../../zen_encoder.dart';
+import '../../zen_response.dart';
+import '../../zen_transport_header.dart';
 
 /// Standard HTTP header for request IDs.
+/// @internal
 const String requestIdHeaderName = 'X-Request-ID';
 
 /// Minimal HTTP client for DartZen transport.
+///
+/// **INTERNAL USE ONLY:** This class must only be used within ZenTask execution
+/// via ZenExecutor. Direct instantiation and use outside of tasks is not
+/// supported and violates the package's architecture.
 ///
 /// Automatically handles:
 /// - Format negotiation via headers
@@ -23,7 +29,7 @@ const String requestIdHeaderName = 'X-Request-ID';
 /// - Response body (decoded)
 /// - Error information (if applicable)
 ///
-/// Example:
+/// Example (for internal/task use only):
 /// ```dart
 /// final client = ZenClient(baseUrl: 'http://localhost:8080');
 /// final response = await client.post('/api/users', {'name': 'Alice'});
@@ -33,6 +39,7 @@ const String requestIdHeaderName = 'X-Request-ID';
 ///   print('Error: ${response.error}');
 /// }
 /// ```
+@internal
 class ZenClient {
   /// Creates a new ZenClient.
   ///

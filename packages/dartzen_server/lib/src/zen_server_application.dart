@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 
+import 'middleware/transport_middleware.dart';
 import 'zen_server_config.dart';
 import 'zen_server_router.dart';
 
@@ -21,6 +21,19 @@ import 'zen_server_router.dart';
 /// - Middleware pipeline configuration
 ///
 /// This is a Shelf-native, GCP-native runtime designed for Cloud Run deployment.
+///
+/// ## Execution Model
+///
+/// The server operates in a **single event-loop runtime**:
+/// - All requests share one execution thread
+/// - No CPU-intensive work in request handlers
+/// - No synchronous I/O operations
+/// - All long-running work must be delegated to jobs
+///
+/// Request handlers MUST be non-blocking. Blocking operations
+/// will freeze the entire server, affecting all active requests.
+///
+/// See `/docs/execution_model.md` for detailed constraints.
 class ZenServerApplication {
   /// Creates a [ZenServerApplication] with the given [config].
   ZenServerApplication({required this.config});
@@ -50,7 +63,7 @@ class ZenServerApplication {
     // 2. Configure the pipeline
     final pipeline = const Pipeline()
         .addMiddleware(logRequests())
-        .addMiddleware(transportMiddleware())
+        .addMiddleware(zenServerTransportMiddleware())
         .addHandler(
           ZenServerRouter(
             config.contentProvider,

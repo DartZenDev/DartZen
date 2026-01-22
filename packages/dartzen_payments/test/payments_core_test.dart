@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_payments/dartzen_payments.dart';
 import 'package:test/test.dart';
@@ -53,7 +51,7 @@ void main() {
         amountMinor: 500,
         currency: 'USD',
         status: PaymentStatus.initiated,
-        createdAt: DateTime.utc(2024, 1, 1),
+        createdAt: DateTime.utc(2024),
         providerReference: 'ref-1',
       );
 

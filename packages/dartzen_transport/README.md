@@ -5,17 +5,81 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**DartZen transport layer for serialization, codec selection, and WebSocket communication.**
+**DartZen transport layer for serialization and protocol abstraction.**
 
 `dartzen_transport` is a foundational package in the DartZen ecosystem that provides:
 
 - **Dual-format serialization**: JSON and MessagePack
 - **Automatic codec selection**: Based on environment (DEV/PRD) and platform (web/native)
 - **Transport envelopes**: Structured request/response messages
-- **WebSocket helper**: Simple WebSocket communication with automatic codec support
+- **Protocol abstraction**: Task-safe message types
 - **Platform-aware treeshaking**: Unused code is automatically removed
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
+
+## ⚠️ Architecture: Executor-Only Transport
+
+**All external I/O (HTTP, gRPC, WebSocket, etc.) must be performed through tasks executed via `ZenExecutor`.**
+
+This package provides:
+
+- ✅ Task-safe protocol abstractions (ZenRequest, ZenResponse)
+- ✅ Serialization utilities (ZenEncoder, ZenDecoder)
+- ✅ Error handling and exceptions
+- ✅ **One public handle:** `ZenTransport` facade (no executor choice)
+
+This package does NOT allow:
+
+- ❌ Direct HTTP calls using `ZenClient`
+- ❌ WebSocket connections outside of tasks
+- ❌ Server setup without framework integration
+- ❌ Selecting executors manually (local/test/prod are internal)
+
+### Why This Architecture?
+
+The executor-only pattern ensures:
+
+- **Controlled I/O**: All network operations are managed by the framework
+- **Resource safety**: Connections are properly owned and cleaned up
+- **Observability**: All transport can be traced, metered, and monitored
+- **Composability**: Complex workflows can retry, timeout, and compose safely
+
+### Correct Usage Pattern
+
+Use the single public handle `ZenTransport` to execute transport descriptors.
+Executor selection (local/test/prod) is internal and environment-driven.
+
+```dart
+import 'package:dartzen_transport/dartzen_transport.dart';
+
+final transport = ZenTransport.instance; // uses ZenTransportConfig.fromEnv()
+
+const webhookDescriptor = TransportDescriptor(
+  id: 'user-webhook',
+  channel: TransportChannel.webhook,
+  reliability: TransportReliability.atLeastOnce,
+  timeout: Duration(seconds: 10),
+);
+
+await transport.send(
+  webhookDescriptor,
+  payload: {'event': 'user.created'},
+);
+```
+
+### Incorrect Usage (Not Supported)
+
+```dart
+// ❌ DO NOT do this
+import 'package:dartzen_transport/src/internal/client/zen_client.dart';
+final client = ZenClient(baseUrl: 'http://localhost:8080');
+final response = await client.get('/api/users'); // Framework doesn't know about this
+
+// ❌ DO NOT do this
+import 'package:dartzen_transport/src/internal/websocket/zen_websocket.dart';
+final ws = ZenWebSocket(Uri.parse('ws://localhost:8080'));
+ws.send(request); // Not managed by framework
+```
 
 ## 🧘🏻 Why This Package Exists
 
@@ -60,7 +124,7 @@ dependencies:
 
 ## 🚀 Quick Start
 
-### Basic Request/Response
+### Basic Request/Response (Task-Safe Protocol)
 
 ```dart
 import 'package:dartzen_transport/dartzen_transport.dart';
@@ -85,26 +149,43 @@ if (response.isSuccess) {
 }
 ```
 
-### WebSocket Communication
+### Transport via ZenExecutor (Recommended)
+
+Frameworks should inject or reuse the singleton `ZenTransport` inside
+executor-managed tasks. Consumers never choose executors themselves.
 
 ```dart
-// Connect to WebSocket server
-final ws = ZenWebSocket(Uri.parse('ws://localhost:8080'));
+class FetchUserTask extends ZenTask<User> {
+  FetchUserTask(this.userId, {required this.transport});
+  final String userId;
+  final ZenTransport transport;
 
-// Listen for responses
-ws.responses.listen((response) {
-  print('Received: ${response.data}');
-});
+  @override
+  Future<User> execute() async {
+    final descriptor = TransportDescriptor(
+      id: 'user-http',
+      channel: TransportChannel.http,
+      reliability: TransportReliability.atLeastOnce,
+    );
 
-// Send a request
-ws.send(ZenRequest(
-  id: 'ws-001',
-  path: '/subscribe',
-  data: {'channel': 'updates'},
-));
+    final result = await transport.send(
+      descriptor,
+      payload: {'userId': userId},
+    );
 
-// Close when done
-await ws.close();
+    if (!result.success || result.data == null) {
+      throw Exception(result.error ?? 'Transport failed');
+    }
+
+    return User.fromJson(result.data as Map<String, dynamic>);
+  }
+}
+
+// Executor wires transport once (example)
+final transport = ZenTransport.instance;
+final user = await executor.execute(
+  FetchUserTask('123', transport: transport),
+);
 ```
 
 ## 🪧 Codec Selection
@@ -116,11 +197,11 @@ The package automatically selects the appropriate codec based on:
 1. **Environment** (set via `DZ_ENV` compile-time constant)
 2. **Platform** (web vs. native)
 
-| Environment | Platform | Codec |
-|-------------|----------|-------|
-| DEV | Any | JSON |
-| PRD | Web | JSON |
-| PRD | Native (mobile/server/desktop) | MessagePack |
+| Environment | Platform                       | Codec       |
+| ----------- | ------------------------------ | ----------- |
+| DEV         | Any                            | JSON        |
+| PRD         | Web                            | JSON        |
+| PRD         | Native (mobile/server/desktop) | MessagePack |
 
 ### Manual Override
 
@@ -246,13 +327,24 @@ try {
 
 ## 📚 API Reference
 
-### Core Classes
+### Core Classes (Public)
 
 - `ZenRequest` - Request envelope
 - `ZenResponse` - Response envelope
-- `ZenWebSocket` - WebSocket helper
-- `ZenEncoder` - Low-level encoder
-- `ZenDecoder` - Low-level decoder
+- `ZenMessage` - Base class for request/response
+- `ZenEncoder` - Static encoder utility
+- `ZenDecoder` - Static decoder utility
+
+### Internal Classes (Framework Use Only)
+
+The following classes are **@internal** and must not be used from user code:
+
+- `ZenClient` - HTTP client (use ZenTask instead)
+- `ZenWebSocket` - WebSocket helper (use ZenTask instead)
+- `transportMiddleware()` - Server middleware (use framework instead)
+- `zenResponse()` - Response builder (use framework instead)
+
+Importing from `lib/src/internal/` is not supported and may break without warning.
 
 ### Enums
 
@@ -264,11 +356,20 @@ try {
 
 ### Constants
 
-- `zenTransportHeaderName` - `'X-DZ-Transport'`
+- `zenTransportHeaderName` - `'X-DZ-Transport'` header for format negotiation
 
-### Exceptions
+## 🔮 Future Work
 
-- `ZenTransportException` - All transport errors
+This package provides the foundation for framework-level features planned for `ZenExecutor`:
+
+- **Automatic retries**: Framework-managed retry strategies with exponential backoff
+- **Circuit breakers**: Automatic failure detection and graceful degradation
+- **Request timeout**: Configurable timeouts with automatic cleanup
+- **Observability hooks**: Tracing, metrics, and logging integration points
+- **Load balancing**: Multi-endpoint failover and round-robin
+- **Caching layer**: Optional response caching based on task configuration
+
+These features will be available through the executor, not through this package directly.
 
 ## 🧪 Testing
 

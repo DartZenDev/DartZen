@@ -1,0 +1,36 @@
+name: dartzen_executor
+description: Explicit task execution runtime for DartZen. Routes light, medium, and heavy tasks with deterministic ownership and no implicit magic.
+version: 0.0.1
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
+publish_to: none
+
+resolution: workspace
+
+environment:
+  sdk: ">=3.10.3 <4.0.0"
+
+topics:
+  - executor
+  - tasks
+  - runtime
+  - gcp
+
+platforms:
+  linux:
+  macos:
+  windows:
+
+dependencies:
+  dartzen_core:
+    path: ../dartzen_core
+  dartzen_jobs:
+    path: ../dartzen_jobs
+  dartzen_localization:
+    path: ../dartzen_localization
+  meta: ^1.15.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

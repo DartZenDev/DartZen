@@ -2,11 +2,13 @@ import 'dart:convert';
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 
 /// Represents a failure encountered during the generation of a Cloud Task request.
 ///
 /// This error is returned when the input parameters for a job execution
 /// violate the structural requirements of the Cloud Tasks API.
+@internal
 class JobTaskCreationError extends ZenError {
   /// Creates a [JobTaskCreationError] with a descriptive message explaining the failure.
   const JobTaskCreationError(super.message);
@@ -16,6 +18,7 @@ class JobTaskCreationError extends ZenError {
 ///
 /// This error is returned when the prepared request cannot be sent to the
 /// Cloud Tasks service (e.g., network error or server rejection).
+@internal
 class JobDispatchError extends ZenError {
   /// Creates a [JobDispatchError] with a descriptive message explaining the failure.
   const JobDispatchError(super.message);
@@ -25,6 +28,7 @@ class JobDispatchError extends ZenError {
 ///
 /// Encapsulates the unique identifier and the optional data payload required
 /// for a single job execution attempt.
+@internal
 class JobSubmission {
   /// The unique identifier that maps to a registered job definition.
   final String id;
@@ -42,6 +46,7 @@ class JobSubmission {
 ///
 /// **Authentication**: Real dispatchers ([GcpJobDispatcher]) typically require
 /// a valid Google Identity token (IAM/ADC) in the `Authorization` header.
+@internal
 class CloudTaskRequest {
   /// The absolute endpoint URL for the Cloud Tasks API request.
   final String url;
@@ -70,6 +75,7 @@ class CloudTaskRequest {
 ///
 /// This adapter is responsible solely for mapping internal job concepts into
 /// valid Cloud Tasks API structures.
+@internal
 class CloudTasksAdapter {
   final String _projectId;
   final String _locationId;
@@ -135,6 +141,7 @@ class CloudTasksAdapter {
 }
 
 /// Interface for dispatching a Cloud Task request.
+@internal
 abstract class JobDispatcher {
   /// Sends the fully prepared [request] to the target queue or simulator.
   Future<ZenResult<void>> dispatch(CloudTaskRequest request);
@@ -146,6 +153,7 @@ abstract class JobDispatcher {
 /// to be authenticated (e.g., using Application Default Credentials or
 /// an injected `Authorization` header). You can use `headerInjector` to
 /// provide dynamic tokens.
+@internal
 class GcpJobDispatcher implements JobDispatcher {
   final http.Client _httpClient;
   final Map<String, String> Function()? _headerInjector;
@@ -190,6 +198,7 @@ class GcpJobDispatcher implements JobDispatcher {
 }
 
 /// A dispatcher that simulates task creation by logging for development.
+@internal
 class SimulatedJobDispatcher implements JobDispatcher {
   @override
   Future<ZenResult<void>> dispatch(CloudTaskRequest request) async {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartzen_transport/dartzen_transport.dart';
+import 'package:dartzen_transport/src/internal/server/transport_middleware.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 

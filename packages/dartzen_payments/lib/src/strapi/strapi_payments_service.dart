@@ -1,16 +1,21 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
-import 'package:dartzen_transport/dartzen_transport.dart';
+import 'package:meta/meta.dart';
 
+import '../http_client.dart';
 import '../payment.dart';
 import '../payment_error.dart';
 import '../payment_events.dart';
 import '../payment_intent.dart';
+import '../payments_service.dart' show PaymentsService;
 import '../payments_service.dart';
 import '../provider_error_mapper.dart';
 import 'strapi_mapper.dart';
 import 'strapi_models.dart';
 
+/// Internal: provider adapter (Strapi). Not part of the public API.
+/// Do not import `package:dartzen_payments/src/...` from outside this package.
+///
 /// Configuration for Strapi payments integration.
 class StrapiPaymentsConfig {
   /// Strapi API base URL.
@@ -24,20 +29,21 @@ class StrapiPaymentsConfig {
 }
 
 /// Strapi implementation of [PaymentsService].
+@internal
 final class StrapiPaymentsService implements PaymentsService {
   /// Creates a Strapi payments service.
   StrapiPaymentsService(
     this._config, {
-    ZenClient? client,
+    PaymentsHttpClient? client,
     TelemetryClient? telemetry,
     StrapiPaymentMapper mapper = const StrapiPaymentMapper(),
-  }) : _client = client ?? ZenClient(baseUrl: _config.baseUrl),
+  }) : _client = client ?? DefaultPaymentsHttpClient(baseUrl: _config.baseUrl),
        _ownsClient = client == null,
        _telemetry = telemetry,
        _mapper = mapper;
 
   final StrapiPaymentsConfig _config;
-  final ZenClient _client;
+  final PaymentsHttpClient _client;
   final TelemetryClient? _telemetry;
   final StrapiPaymentMapper _mapper;
   final bool _ownsClient;
@@ -166,6 +172,7 @@ final class StrapiPaymentsService implements PaymentsService {
   }
 
   /// Closes the owned transport client when created internally.
+  @override
   void close() {
     if (_ownsClient) {
       _client.close();

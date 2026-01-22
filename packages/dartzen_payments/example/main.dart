@@ -1,46 +1,28 @@
-import 'dart:developer' as developer;
+// ignore_for_file: avoid_print
 
 import 'package:dartzen_payments/dartzen_payments.dart';
-import 'package:dartzen_payments/src/strapi/strapi_payments_service.dart';
 
+// Example using `TestExecutor` to run a payment descriptor locally.
 Future<void> main() async {
-  final service = StrapiPaymentsService(
-    const StrapiPaymentsConfig(
-      baseUrl: 'https://payments.example.com',
-      apiToken: '<token>',
-    ),
+  final executor = TestExecutor();
+  await executor.start();
+
+  const charge = PaymentDescriptor(
+    id: 'charge_order',
+    operation: PaymentOperation.charge,
   );
 
-  final intentResult = PaymentIntent.create(
-    id: 'intent-123',
-    amountMinor: 2499,
-    currency: 'USD',
+  final result = await executor.execute(
+    charge,
+    payload: {'amountMinor': 2499, 'currency': 'USD', 'intentId': 'intent-123'},
     idempotencyKey: 'idem-123',
-    description: 'Order #123',
   );
 
-  if (intentResult.isFailure) {
-    developer.log(
-      'Invalid intent: ${intentResult.errorOrNull?.message}',
-      name: 'payments.example',
-    );
-    return;
+  if (result.status == PaymentResultStatus.success) {
+    print('Payment succeeded: ${result.providerReference}');
+  } else {
+    print('Payment failed: ${result.error?.message}');
   }
 
-  final intent = intentResult.dataOrNull!;
-  final createResult = await service.createPayment(intent);
-
-  createResult.fold(
-    (payment) => developer.log(
-      'Created payment ${payment.id} with status ${payment.status}',
-      name: 'payments.example',
-    ),
-    (error) => developer.log(
-      'Payment failed: ${error.message}',
-      name: 'payments.example',
-      level: 1000,
-    ),
-  );
-
-  service.close();
+  await executor.shutdown();
 }

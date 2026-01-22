@@ -1,24 +1,31 @@
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
 
-import '../zen_decoder.dart';
-import '../zen_encoder.dart';
-import '../zen_transport_header.dart';
+import '../../zen_decoder.dart';
+import '../../zen_encoder.dart';
+import '../../zen_transport_header.dart';
 
 /// Creates Shelf middleware for DartZen transport negotiation.
+///
+/// **INTERNAL USE ONLY:** This middleware must only be used within server
+/// contexts that are managed by ZenExecutor or similar frameworks. Direct
+/// server setup using this middleware outside of framework context is not
+/// supported and violates the package's architecture.
 ///
 /// Automatically handles:
 /// - Content-Type negotiation
 /// - X-DZ-Transport header parsing
 /// - Request/response encoding/decoding
 ///
-/// Example:
+/// Example (for internal framework use only):
 /// ```dart
 /// final handler = Pipeline()
 ///     .addMiddleware(transportMiddleware())
 ///     .addHandler(_handleRequest);
 /// ```
+@internal
 Middleware transportMiddleware() =>
     (Handler innerHandler) => (Request request) async {
       // Determine format from header or default
@@ -102,13 +109,16 @@ String _contentType(ZenTransportFormat format) {
 
 /// Helper to create a response with encoded data.
 ///
-/// Example:
+/// **INTERNAL USE ONLY:** This function is for framework/internal use only.
+///
+/// Example (for internal framework use only):
 /// ```dart
 /// Response _handleRequest(Request request) {
 ///   final data = {'message': 'Hello'};
 ///   return zenResponse(200, data);
 /// }
 /// ```
+@internal
 Response zenResponse(
   int statusCode,
   Object? data, {

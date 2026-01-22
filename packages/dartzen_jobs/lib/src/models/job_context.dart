@@ -1,3 +1,6 @@
+import '../../dartzen_jobs.dart' show JobDescriptor;
+import 'job_definition.dart' show JobDescriptor;
+
 /// Context provided to a job handler during execution.
 ///
 /// Contains metadata about the current execution attempt and any standard
@@ -5,7 +8,7 @@
 class JobContext {
   /// The ID of the job being executed.
   ///
-  /// This matches the `id` field of the associated `JobDefinition`.
+  /// This matches the `id` field of the associated [JobDescriptor].
   final String jobId;
 
   /// The timestamp when this specific execution attempt started.

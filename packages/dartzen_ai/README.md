@@ -5,107 +5,258 @@
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-> 🚧 NOT PRODUCTION READY — Authentication and credential rotation are incomplete.
+> 🚧 **NOT PRODUCTION READY** — authentication and credential rotation are not finalized.
 
-**GCP Vertex AI / Gemini integration for DartZen applications.**
-
----
-
-## ⚠️🔴 **CRITICAL: BILLABLE SERVICE**
-
-### **This package makes REAL, BILLABLE API calls to Google Cloud Platform Vertex AI / Gemini services.**
-
-**YOU WILL BE CHARGED** for every API call, including failed requests. Usage is tracked in USD. Example costs:
-
-- Text generation: ~$0.0001 per 1K tokens (input) + $0.0002 per 1K tokens (output)
-- Embeddings: ~$0.00002 per 1K tokens
-- Classification: Variable based on model
-
-**Before using in production:**
-
-1. ⚠️ This package cannot perform real Vertex AI calls until authentication is implemented. See "Missing features" below.
-2. ✅ Set realistic monthly limits via `AIBudgetConfig.monthlyLimit`
-3. ✅ Monitor spending via Google Cloud Console
-4. ✅ Test thoroughly with **Echo service** in dev/staging
-5. ✅ Use **CancelToken** to abort expensive requests if needed
-6. ✅ Rotate GCP credentials regularly once auth is implemented
-
-**Default behavior:** Budget enforcer blocks requests when monthly limit is exceeded. This is your primary defense against runaway costs.
-
----
-
-This package provides AI capabilities through Google Cloud Platform's Vertex AI and Gemini services, with both server-side and client-side components, dev mode Echo service for local testing, and budget enforcement.
-
-## Missing features / Known limitations
-
-- Authentication: service-account-based access token retrieval is not yet implemented. The package currently uses a placeholder token in `VertexAIClient`.
-- Credential rotation: no automatic rotation for long-running services.
-- Production-grade retry/backoff: current retry is basic and lacks jitter and Retry-After handling.
-- Telemetry naming: event names must follow dot-notation alphanumeric rules.
-- Cost calculation: billing logic is currently in `AIUsage` (work planned to move into enforcer).
-
-Please refer to the TODOs in the repository for planned work and contribute if you can.
+**Vertex AI / Gemini integration for DartZen, designed for non-blocking server runtimes with executor-only execution.**
 
 > **Note:** This package is part of the [DartZen](https://github.com/DartZenDev/DartZen) monorepo.
 
-## 🎯 Purpose
+---
 
-- Integrate GCP Vertex AI / Gemini into DartZen applications
-- Provide server-side AI service with budget enforcement
-- Offer Flutter client with cancellable requests and offline support
-- Enable local development with Echo service (no GCP required)
-- Track usage via telemetry integration
+## 🚫 **FORBIDDEN USAGE (WILL FAIL)**
 
-## ⚠️ Important Notices
-
-### Optionality
-
-This package is **fully optional**. The DartZen system functions completely without `dartzen_ai`. Package activation is controlled by configuration/environment. Absence of this package does not affect core workflows.
-
-### GCP Billing Risk
-
-> **WARNING**: This package makes real API calls to Vertex AI / Gemini, which **incur costs**. Budget enforcement is implemented server-side to prevent unexpected expenses. Configure monthly limits carefully before deploying to production.
-
-### Security
-
-> **CRITICAL**: GCP credentials are stored and used **server-side only**. The Flutter client never has direct access to API keys or credentials. Implement secure credential storage and rotation policies in production. Server validates JWT and request ownership before querying Vertex AI.
-
-## 🏗 Architecture
-
-### Server Components
-
-- **AIService**: Main service handling all Vertex AI / Gemini API calls
-- **EchoAIService**: Dev mode service returning mock responses
-- **VertexAIClient**: Low-level REST API client
-- **AIBudgetEnforcer**: Budget tracking and enforcement
-- **Retry Logic**: Exponential backoff for failed requests
-- **Telemetry**: Optional usage tracking
-
-### Client Components
-
-- **AIClient**: Flutter client for server communication
-- **CancelToken**: Request cancellation support
-- **Offline Mode**: Automatic retry on reconnection
-- **No UI Widgets**: Pure API client (UI handled by separate packages)
-
-### Dev Mode Echo Service
-
-The Echo service provides **structurally identical** responses to Vertex AI without making GCP calls:
+### ❌ Do NOT instantiate AI services directly
 
 ```dart
-// Input
-textGeneration("Hello world")
+// ❌ WRONG - This will fail with analyzer error (@internal violation)
+final ai = AIService(client: ..., budgetEnforcer: ...);
+final response = await ai.textGeneration(request);
+```
 
-// Output
-TextGenerationResponse(
-  text: "Echo: Hello world",
-  requestId: "echo_...",
-  usage: AIUsage(inputTokens: 10, outputTokens: 20),
-  metadata: {"mode": "echo", "model": "gemini-pro"}
+### ❌ Do NOT call client directly
+
+```dart
+// ❌ WRONG - This will fail with analyzer error (@internal violation)
+final client = AIClient(baseUrl: 'https://...');
+final response = await client.textGeneration(prompt: '...');
+```
+
+### ❌ Do NOT use low-level HTTP client
+
+```dart
+// ❌ WRONG - This will fail with analyzer error (@internal violation)
+final vertexAI = VertexAIClient(config: ...);
+final response = await vertexAI.generateText(request);
+```
+
+**All services are marked `@internal` and not exported. Direct usage is impossible by design.**
+
+---
+
+## ✅ **CORRECT USAGE (ONLY VALID PATH)**
+
+### All AI operations MUST be executed via `ZenExecutor`
+
+```dart
+import 'package:dartzen_ai/dartzen_ai.dart';
+import 'package:dartzen_executor/dartzen_executor.dart';
+
+// 1. Create AI task (task-based execution)
+final task = TextGenerationAiTask(
+  prompt: 'Write a haiku about distributed systems',
+  model: 'gemini-pro',
+);
+// NOTE: Tasks are payload-only. Do NOT include runtime service instances
+// in task constructors. The `ZenExecutor` injects the runtime `AIService`
+// into the execution `Zone` when running heavy tasks.
+
+// 2. Execute via ZenExecutor (ONLY valid path)
+final response = await zenExecutor.execute(task);
+
+// 3. Handle result
+print(response.text);
+```
+
+### Available AI Tasks
+
+```dart
+// Text Generation
+TextGenerationAiTask(
+  prompt: 'Your prompt',
+  model: 'gemini-pro',
+  aiService: aiService,
+)
+
+// Embeddings
+EmbeddingsAiTask(
+  texts: ['text1', 'text2'],
+  model: 'textembedding-gecko',
+  aiService: aiService,
+)
+
+// Classification
+ClassificationAiTask(
+  text: 'Your text',
+  model: 'gemini-pro',
+  labels: ['positive', 'negative'],
+  aiService: aiService,
 )
 ```
 
-Budget limits can be ignored in dev mode (configurable).
+All tasks declare `weight: heavy` and `latency: slow` to ensure executor routes them to the jobs system.
+
+---
+
+## 🧠 **RATIONALE: Why Executor-Only?**
+
+AI calls are **inherently expensive** and **must never block the event loop**.
+
+### Characteristics of AI Operations
+
+- **Network-bound**: Calls to GCP Vertex AI over HTTP
+- **Latency-heavy**: Model inference can take seconds
+- **Potentially long-running**: Complex prompts, large contexts
+- **Billable**: GCP charges per token, including failures
+- **Heavy weight**: Classified as `TaskWeight.heavy`
+
+### What Direct Execution Would Cause
+
+```dart
+// ❌ This would BLOCK the event loop
+final response = await aiService.textGeneration(request);
+// Other HTTP requests cannot be processed during this call
+// Server becomes unresponsive under load
+```
+
+### What Executor Guarantees
+
+```dart
+// ✅ Executor routes to jobs system (Cloud Run)
+final response = await zenExecutor.execute(task);
+// Event loop remains free
+// Other requests continue processing
+// AI work executes in isolated Cloud Run instance
+```
+
+### The executor provides:
+
+1. **Isolation**: Heavy tasks route to jobs system, not event loop
+2. **Cost Control**: Explicit weight classification (`heavy`)
+3. **Cloud Run Safety**: Non-blocking execution guaranteed
+4. **Budget Enforcement**: Pre-execution validation
+5. **Deterministic Routing**: Task weight → execution path
+
+**This restriction is intentional, non-negotiable, and enforced by design.**
+
+See: [`/docs/execution_model.md`](../../docs/execution_model.md) for full architectural contract.
+
+---
+
+## 🎯 What This Package Is
+
+`dartzen_ai` is an **AI infrastructure package**, not an AI product.
+
+It provides:
+
+- **AI Task Classes**: `TextGenerationAiTask`, `EmbeddingsAiTask`, `ClassificationAiTask`
+- **Request/Response DTOs**: Structured data for AI operations
+- **Internal Services**: `AIService`, `VertexAIClient`, `EchoAIService` (all `@internal`)
+- **Budget Enforcement**: Pre-execution cost validation
+- **Dev Mode**: Echo service for local development without GCP calls
+
+This package is designed to run **inside a single event-loop server** without blocking it.
+
+---
+
+## 🧘🏻 What This Package Is NOT
+
+`dartzen_ai` does **not**:
+
+- Provide UI components
+- Hide costs or billing behavior
+- Execute AI logic synchronously
+- Automatically parallelize requests
+- Manage background workers
+- Own domain-level AI features (summarization, QA, etc.)
+- Allow direct service instantiation
+
+It is infrastructure only, with executor-only execution enforced.
+
+---
+
+## ⚠️🔴 CRITICAL: BILLABLE SERVICE
+
+### This package makes REAL, BILLABLE API calls to GCP Vertex AI / Gemini.
+
+You **will be charged** for every request, including failures.
+
+Approximate costs (subject to change):
+
+- Text generation: ~$0.0001 / 1K input tokens + ~$0.0002 / 1K output tokens
+- Embeddings: ~$0.00002 / 1K tokens
+- Classification: model-dependent
+
+### Mandatory Safeguards
+
+Before production use:
+
+1. Set **monthly budget limits**
+2. Monitor usage in GCP Console
+3. Use Echo service in dev/staging
+4. Store credentials server-side only
+5. Plan credential rotation
+
+By default, requests are **blocked** when the monthly limit is exceeded.
+
+---
+
+## 🏗 Architecture
+
+### Task-Based Execution (Public API)
+
+- **TextGenerationAiTask**: Executes text generation via ZenExecutor
+- **EmbeddingsAiTask**: Executes embeddings generation via ZenExecutor
+- **ClassificationAiTask**: Executes classification via ZenExecutor
+
+All tasks:
+
+- Extend `ZenTask<T>`
+- Declare `weight: heavy`, `latency: slow`, `retryable: true`
+- Execute only via `ZenExecutor.execute(task)`
+
+### Internal Services (Not Public)
+
+- **AIService**: High-level orchestration. Marked `@internal`.
+- **VertexAIClient**: Low-level HTTP client. Marked `@internal`.
+- **AIBudgetEnforcer**: Budget enforcement. Internal implementation.
+- **EchoAIService**: Dev-mode mock. Marked `@internal`.
+- **AIClient**: Client stub. Marked `@internal` (client-side AI not supported).
+
+All services are injected via DI, never instantiated by user code.
+
+---
+
+## 🧪 Dev Mode: Echo Service
+
+The Echo service mirrors real response structures without billing.
+
+In dev mode, tasks use `EchoAIService` instead of production `AIService`:
+
+```dart
+// Dev mode configuration
+final config = AIServiceConfig.dev();
+const echoService = EchoAIService(); // Internal, for task injection
+
+// Create task (dev mode uses Echo service provided by the executor worker)
+final task = TextGenerationAiTask(
+  prompt: 'Hello world',
+  model: 'gemini-pro',
+);
+// The executor worker will provide `EchoAIService` at runtime; do not
+// construct tasks with service instances embedded.
+
+// Execute via ZenExecutor
+final response = await zenExecutor.execute(task);
+// Response: TextGenerationResponse(text: 'Echo: Hello world', ...)
+```
+
+Use this for:
+
+- Local development
+- CI tests
+- Budget-free experimentation
+
+---
 
 ## 📦 Installation
 
@@ -117,6 +268,8 @@ Add to your `pubspec.yaml`:
 dependencies:
   dartzen_ai:
     path: ../dartzen_ai
+  dartzen_executor:
+    path: ../dartzen_executor
 ```
 
 ### External Usage
@@ -124,331 +277,253 @@ dependencies:
 ```yaml
 dependencies:
   dartzen_ai: ^latest_version
+  dartzen_executor: ^latest_version
 ```
 
-## 🚀 Usage
+## Cache-backed Usage Persistence
 
-### Server-Side Setup
+`dartzen_ai` persists monthly AI usage so the `AIBudgetEnforcer` can
+enforce limits. The package ships a cache-backed store `CacheAIUsageStore`
+which uses the `dartzen_cache` package for persistence (supports
+in-memory and Memorystore/Redis backends).
 
-#### Production Configuration
+Example wiring (server-side only):
+
+```dart
+import 'package:dartzen_cache/dartzen_cache.dart';
+import 'package:dartzen_ai/src/server/ai_usage_store_cache.dart';
+import 'package:dartzen_ai/src/server/ai_budget_enforcer.dart';
+
+// Build a CacheClient (use memorystore config in production)
+const cacheConfig = CacheConfig(); // or provide memorystoreHost/Port
+final cache = CacheFactory.create(cacheConfig);
+
+// Create the store and inject into the enforcer
+final store = CacheAIUsageStore.withClient(cache);
+final enforcer = AIBudgetEnforcer(usageTracker: store, config: budgetConfig);
+```
+
+## Cache-backed AIUsageStore Example
+
+The package provides a `CacheAIUsageStore` implementation which persists
+monthly usage counters to a `CacheClient` (for example a Redis-backed
+`MemorystoreCache` in production) while keeping an in-memory synchronous
+surface for low-latency reads. See the example in `example/cache_wiring_example.dart`
+for a full wiring example. Minimal usage:
+
+```dart
+import 'package:dartzen_cache/dartzen_cache.dart';
+import 'package:dartzen_ai/src/server/ai_usage_store_cache.dart';
+
+final cache = InMemoryCache(); // use CacheFactory.create(config) in prod
+final store = CacheAIUsageStore.withClient(cache);
+
+// record usage (synchronous updates to memory, async flush to cache)
+store.recordUsage('textGeneration', 1.25);
+
+// read current in-memory values
+final global = store.getGlobalUsage();
+final textGen = store.getMethodUsage('textGeneration');
+
+// reset counters and persist zeros
+store.reset();
+
+// close when shutting down
+await store.close();
+```
+
+Prefer `InMemoryCache` for deterministic tests and local development; use
+`CacheFactory.create` with a production `CacheConfig` for memorystore in CI/prod.
+
+Notes:
+
+- Keys are namespaced with `dartzen:ai:usage:<method>:YYYY-MM` so
+  monthly counters expire automatically when using a TTL-capable backend.
+- For production, configure `CacheConfig` to point to Memorystore/Redis.
+- The `CacheAIUsageStore.connect` convenience factory builds the client
+  from a `CacheConfig` and loads cached counters on startup.
+
+---
+
+## 🚀 Complete Usage Example
 
 ```dart
 import 'package:dartzen_ai/dartzen_ai.dart';
+import 'package:dartzen_executor/dartzen_executor.dart';
+// Internal imports for service setup (server-side DI)
+import 'package:dartzen_ai/src/server/ai_service.dart';
+import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
+import 'package:dartzen_ai/src/server/ai_budget_enforcer.dart';
 
-// Load GCP credentials (server-side only)
-final credentialsJson = await File('service-account.json').readAsString();
+// ============================================================================
+// SERVER-SIDE SETUP (Internal, DI Container)
+// ============================================================================
 
 final config = AIServiceConfig(
-  projectId: 'my-gcp-project',
+  projectId: 'my-project',
   region: 'us-central1',
   credentialsJson: credentialsJson,
-  budgetConfig: AIBudgetConfig(
-    monthlyLimit: 100.0,  // $100 USD per month
-    textGenerationLimit: 50.0,  // $50 USD for text generation
-    embeddingsLimit: 30.0,  // $30 USD for embeddings
-    classificationLimit: 20.0,  // $20 USD for classification
+  budgetConfig: AIBudgetConfig(monthlyLimit: 100.0),
+);
+
+final aiService = AIService(
+  client: VertexAIClient(config: config),
+  budgetEnforcer: AIBudgetEnforcer(
+    config: config.budgetConfig,
+    usageTracker: myUsageTracker,
   ),
 );
 
-final client = VertexAIClient(config: config);
-final budgetEnforcer = AIBudgetEnforcer(
-  config: config.budgetConfig,
-  usageTracker: InMemoryUsageTracker(),  // Use Firestore in production
+final executor = ZenExecutor(
+  config: ZenExecutorConfig(
+    queueId: 'ai-task-queue',
+    serviceUrl: 'https://my-service.run.app',
+  ),
 );
 
-final service = AIService(
-  client: client,
-  budgetEnforcer: budgetEnforcer,
-  telemetryClient: myTelemetryClient,  // Optional
-);
-```
+// ============================================================================
+// TASK CREATION AND EXECUTION (User Code)
+// ============================================================================
 
-#### Dev Mode Configuration
-
-```dart
-// No credentials required
-final config = AIServiceConfig.dev();
-final echoService = EchoAIService();
-
-final request = TextGenerationRequest(
-  prompt: 'Write a haiku',
+// Create AI task
+final task = TextGenerationAiTask(
+  prompt: 'Write a haiku about coding',
   model: 'gemini-pro',
+  aiService: aiService, // Injected from DI
 );
 
-final result = await echoService.textGeneration(request);
-// Returns: TextGenerationResponse(text: 'Echo: Write a haiku', ...)
-```
-
-### Server-Side API Methods
-
-```dart
-// Text generation
-final textRequest = TextGenerationRequest(
-  prompt: 'Explain quantum computing',
-  model: 'gemini-pro',
-  config: AIModelConfig(temperature: 0.7, maxTokens: 1024),
-);
-final textResult = await service.textGeneration(textRequest);
-
-// Embeddings
-final embeddingsRequest = EmbeddingsRequest(
-  texts: ['Hello world', 'Goodbye world'],
-  model: 'textembedding-gecko',
-);
-final embeddingsResult = await service.embeddings(embeddingsRequest);
-
-// Classification
-final classificationRequest = ClassificationRequest(
-  text: 'This product is amazing!',
-  model: 'gemini-pro',
-  labels: ['positive', 'negative', 'neutral'],
-);
-final classificationResult = await service.classification(classificationRequest);
-```
-
-### Client-Side Usage
-
-```dart
-import 'package:dartzen_ai/dartzen_ai.dart';
-
-final aiClient = AIClient(zenClient: myZenClient);
-
-// Text generation
-final result = await aiClient.textGeneration(
-  prompt: 'Write a motivational message',
-  model: 'gemini-pro',
-);
-
-result.when(
-  success: (response) => print(response.text),
-  failure: (error) => print('Error: ${error.message}'),
-);
-
-// Embeddings
-final embeddingsResult = await aiClient.embeddings(
-  texts: ['Sample text'],
-  model: 'textembedding-gecko',
-);
-
-// Classification
-final classificationResult = await aiClient.classification(
-  text: 'I feel happy',
-  model: 'gemini-pro',
-  labels: ['happy', 'sad', 'neutral'],
-);
-
-// Cancellable request
-final token = CancelToken();
-final future = aiClient.textGeneration(
-  prompt: 'Long running task',
-  model: 'gemini-pro',
-  cancelToken: token,
-);
-// Later...
-token.cancel();
-```
-
-### Extensibility: Custom Methods
-
-Users can add custom methods by wrapping client calls:
-
-```dart
-extension AIClientExtensions on AIClient {
-  Future<ZenResult<TextGenerationResponse>> summarization(String text) {
-    return textGeneration(
-      prompt: 'Summarize the following text:\n\n$text',
-      model: 'gemini-pro',
-      config: AIModelConfig(temperature: 0.3, maxTokens: 256),
-    );
-  }
-
-  Future<ZenResult<TextGenerationResponse>> questionAnswering({
-    required String context,
-    required String question,
-  }) {
-    return textGeneration(
-      prompt: 'Context: $context\n\nQuestion: $question\n\nAnswer:',
-      model: 'gemini-pro',
-    );
-  }
+// Execute via ZenExecutor (ONLY valid path)
+try {
+  final response = await executor.execute(task);
+  print(response.text);
+  print('Tokens: ${response.usage?.totalTokens}');
+} catch (e) {
+  print('Error: $e');
 }
 ```
 
-## 💰 Budget Enforcement
+---
 
-Budget limits are enforced **server-side** before making API calls:
+## 🧩 Extending AI Capabilities
 
-- **Per-method limits**: Separate budgets for text generation, embeddings, and classification
-- **Global monthly limit**: Total spending across all methods
-- **Automatic tracking**: Usage recorded after each successful request
-- **Dev mode**: Budget limits can be ignored (configurable)
+`dartzen_ai` does not define domain features. You are expected to create your own task subclasses.
 
-When budget is exceeded, requests fail with `AIBudgetExceededError`.
-
-## 🔒 Security Considerations
-
-1. **Server-Only Credentials**: GCP credentials never leave the server
-2. **JWT Validation**: Server validates request ownership before API calls
-3. **Secure Storage**: Use GCP Secret Manager or equivalent for credentials
-4. **Credential Rotation**: Implement regular rotation policies
-5. **Budget Limits**: Prevent runaway costs with enforced limits
-6. **Telemetry**: Detect anomalous usage patterns
-
-## ❗ Error Handling
-
-All operations return `ZenResult<T>` with semantic error codes:
-
-- `AIBudgetExceededError`: Budget limit reached
-- `AIQuotaExceededError`: GCP quota exceeded
-- `AIInvalidRequestError`: Invalid parameters
-- `AIServiceUnavailableError`: Service down (includes retry-after)
-- `AIAuthenticationError`: Credential issues
-- `AICancelledError`: Request cancelled by user
+### Example: Custom Summarization Task
 
 ```dart
-final result = await aiClient.textGeneration(
-  prompt: 'Hello',
-  model: 'gemini-pro',
-);
-
-result.when(
-  success: (response) {
-    print('Generated: ${response.text}');
-    print('Tokens: ${response.usage?.totalTokens}');
-    print('Tokens: ${response.usage?.totalTokens}');
-  },
-  failure: (error) {
-    if (error is AIBudgetExceededError) {
-      print('Budget exceeded: ${error.current}/${error.limit}');
-    } else if (error is AIServiceUnavailableError) {
-      print('Retry after: ${error.retryAfter}');
-    } else {
-      print('Error: ${error.message}');
-    }
-  },
-);
-```
-
-## 📊 Telemetry Integration
-
-Optional telemetry tracking (server-side only):
-
-- `ai.text_generation.success` / `ai.text_generation.failure`
-- `ai.embeddings.success` / `ai.embeddings.failure`
-- `ai.classification.success` / `ai.classification.failure`
-- `ai.*.budget_exceeded`
-
-Telemetry for custom client methods is optional and user-implemented.
-
-## 🧪 Testing
-
-The Echo service enables testing without GCP:
-
-```dart
-void main() {
-  test('AI text generation', () async {
-    final echoService = EchoAIService();
-    final request = TextGenerationRequest(
-      prompt: 'Test prompt',
-      model: 'gemini-pro',
-    );
-
-    final result = await echoService.textGeneration(request);
-
-    expect(result.isSuccess, true);
-    expect(result.value!.text, 'Echo: Test prompt');
-  });
-}
-```
-
-## 🎨 Building Custom AI Features
-
-**`dartzen_ai` is infrastructure, not a product.** It provides the foundation for building domain-specific AI capabilities.
-
-### Extending on the Server
-
-Wrap `AIService` methods to add your own logic:
-
-```dart
-// domain/summarization_service.dart
-class SummarizationService {
+class SummarizationAiTask extends ZenTask<String> {
+  final String text;
   final AIService aiService;
-  SummarizationService({required this.aiService});
 
-  Future<ZenResult<String>> summarize(String text) async {
+  SummarizationAiTask({required this.text, required this.aiService});
+
+  @override
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+        weight: TaskWeight.heavy,
+        latency: Latency.slow,
+        retryable: true,
+      );
+
+  @override
+  Future<String> execute() async {
     final request = TextGenerationRequest(
-      prompt: 'Summarize in 3 sentences:\n\n$text',
+      prompt: 'Summarize the following:\n\n$text',
       model: 'gemini-pro',
     );
 
     final result = await aiService.textGeneration(request);
+
     return result.fold(
-      ok: (response) => ZenResult.ok(response.text),
-      err: (error) => ZenResult.err(error),
+      (response) => response.text,
+      (error) => throw error,
     );
   }
 }
+
+// Usage
+final task = SummarizationAiTask(text: longText, aiService: aiService);
+final summary = await executor.execute(task);
 ```
 
-### Custom Client Methods
+This keeps:
 
-Extend `AIClient` on the Flutter side:
+- AI infrastructure reusable
+- Domain logic explicit
+- Execution behavior predictable
 
-```dart
-// Add this to your service/ai_extension.dart
-extension AIClientExtension on AIClient {
-  Future<ZenResult<String>> summarize(
-    String text, {
-    CancelToken? cancelToken,
-  }) {
-    return textGeneration(
-      prompt: 'Summarize:\n\n$text',
-      model: 'gemini-pro',
-      cancelToken: cancelToken,
-    ).then((result) => result.fold(
-      ok: (r) => ZenResult.ok(r.text),
-      err: (e) => ZenResult.err(e),
-    ));
-  }
-}
-```
+---
 
-### Multi-Step Pipelines
+## 📱 Client-Side Usage
 
-Chain methods for complex workflows:
+**Client-side direct AI execution is NOT SUPPORTED.**
 
-```dart
-// QA service combining embeddings → classification
-class QAService {
-  final AIService aiService;
+This is intentional:
 
-  Future<ZenResult<String>> answer(String question, List<String> documents) async {
-    // Step 1: Find most relevant document
-    final embReq = EmbeddingsRequest(
-      texts: [question, ...documents],
-      model: 'textembedding-gecko',
-    );
+1. **Security**: GCP credentials must never be exposed to clients
+2. **Cost Control**: Budget enforcement happens server-side only
+3. **Event Loop Safety**: AI calls would block UI thread
+4. **Billing**: Direct client calls would bypass tracking
 
-    final embResult = await aiService.embeddings(embReq);
-    // ... similarity matching logic
+### ✅ Correct Client-Server Flow
 
-    // Step 2: Generate answer from best doc
-    final textReq = TextGenerationRequest(
-      prompt: 'Answer: $question\nContext: $bestDoc',
-      model: 'gemini-pro',
-    );
+1. **Client**: Sends HTTP request to DartZen server via `ZenClient`
+2. **Server**: Receives request via HTTP endpoint
+3. **Server**: Creates AI task (e.g., `TextGenerationAiTask`)
+4. **Server**: Executes task via `ZenExecutor`
+5. **Executor**: Routes task to jobs system (heavy weight)
+6. **Server**: Returns response to client via HTTP
 
-    return (await aiService.textGeneration(textReq)).fold(
-      ok: (r) => ZenResult.ok(r.text),
-      err: (e) => ZenResult.err(e),
-    );
-  }
-}
-```
+Client never executes AI directly. All AI work is server-side, executor-routed.
 
-## 🛡️ Stability Guarantees
+---
 
-This package is in early development (0.0.1). Expect breaking changes as the DartZen ecosystem evolves.
+## ❗ Error Model
+
+All task execution failures throw typed exceptions:
+
+- `AIBudgetExceededError`
+- `AIQuotaExceededError`
+- `AIInvalidRequestError`
+- `AIServiceUnavailableError`
+- `AIAuthenticationError`
+- `AICancelledError`
+
+No raw exceptions leak across package boundaries.
+
+---
+
+## 📊 Telemetry
+
+Optional server-side telemetry events (emitted by `AIService`, internal):
+
+- `ai.text_generation.success|failure`
+- `ai.embeddings.success|failure`
+- `ai.classification.success|failure`
+- `ai.budget.exceeded`
+
+Telemetry is **opt-in** and explicitly wired.
+
+---
+
+## 🔒 Enforcement Summary
+
+| Mechanism                   | What                            | How                                       |
+| --------------------------- | ------------------------------- | ----------------------------------------- |
+| **`@internal` annotations** | Services cannot be instantiated | Analyzer error                            |
+| **Package exports**         | Services not exported           | Import fails                              |
+| **Task-only API**           | Only tasks are public           | No alternative execution path             |
+| **Descriptor enforcement**  | Tasks declare weight            | Executor routes by weight                 |
+| **Runtime assertion**       | Debug-mode guard                | Fails if `task.execute()` called directly |
+
+---
+
+## 🛡 Stability
+
+This package is evolving.
+
+Breaking changes are expected until the execution model, auth, and budget semantics are finalized.
+
+---
 
 ## 📄 License
 

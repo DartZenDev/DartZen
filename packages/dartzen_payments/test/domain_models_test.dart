@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_payments/dartzen_payments.dart';
 import 'package:test/test.dart';
@@ -285,7 +283,7 @@ void main() {
           amountMinor: 1500,
           currency: 'GBP',
           status: PaymentStatus.completed,
-          createdAt: DateTime.utc(2024, 6, 15, 10, 30, 0),
+          createdAt: DateTime.utc(2024, 6, 15, 10, 30),
           providerReference: 'provider-ref-abc',
         );
 
@@ -308,7 +306,7 @@ void main() {
           amountMinor: 1500,
           currency: 'GBP',
           status: PaymentStatus.pending,
-          createdAt: DateTime.utc(2024, 6, 15, 10, 30, 0),
+          createdAt: DateTime.utc(2024, 6, 15, 10, 30),
         );
 
         final json = payment.toJson();

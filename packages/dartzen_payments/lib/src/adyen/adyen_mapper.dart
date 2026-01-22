@@ -1,7 +1,10 @@
+import 'package:meta/meta.dart';
+
 import '../payment.dart';
 import 'adyen_models.dart';
 
-/// Maps Adyen models to domain payments.
+/// Internal: Adyen mapper. Not part of public API.
+@internal
 class AdyenPaymentMapper {
   /// Creates an Adyen mapper.
   const AdyenPaymentMapper();

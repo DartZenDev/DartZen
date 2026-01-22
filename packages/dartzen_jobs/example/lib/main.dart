@@ -1,84 +1,42 @@
-// ignore_for_file: avoid_print
+// Simple example showing descriptor registration, handler registration,
+// and executing a job via the single public `ZenJobsExecutor` entry point.
 
-import 'package:dartzen_firestore/dartzen_firestore.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 
-/// Example demonstrating dartzen_jobs usage with local simulation.
+// ignore_for_file: avoid_print
+
 Future<void> main() async {
-  print('\n=== dartzen_jobs Example ===\n');
+  // Initialize registry
+  ZenJobs.instance = ZenJobs();
 
-  // 1. Initialize dependencies
-  // We use Firestore simulation mode for this example
-  final firestoreConfig = FirestoreConfig(projectId: 'dev-project');
-
-  try {
-    await FirestoreConnection.initialize(firestoreConfig);
-    print(
-        '✅ Firestore initialized (Mode: ${firestoreConfig.isProduction ? "PROD" : "EMULATOR"})');
-  } catch (e) {
-    print('❌ Firestore init failed: $e');
-    print('💡 Ensure simulated/emulator environment is ready.');
-    // Proceeding might fail if Firestore is needed, but we simulate triggers mostly here.
-  }
-
-  // 2. Initialize ZenJobs
-  // The serviceUrl matches where your server would be running.
-  ZenJobs.instance = ZenJobs(
-    projectId: 'dev-project',
-    locationId: 'us-central1',
-    queueId: 'default',
-    serviceUrl: 'https://myservice.run.app',
-  );
-  print('✅ ZenJobs initialized\n');
-
-  // 3. Define and Register Jobs
-
-  // A. Endpoint Job (triggered manually)
-  final emailJob = JobDefinition(
-    id: 'send_email',
-    type: JobType.endpoint,
-    handler: (context) async {
-      print(
-          '📧 sending email to ${context.payload?['email']} (Attempt: ${context.attempt})');
-      await Future<void>.delayed(
-          const Duration(milliseconds: 100)); // Simulate work
-    },
-  );
-
-  // B. Periodic Job (interval based)
-  final cleanupJob = JobDefinition(
-    id: 'cleanup_temp',
+  const emailDesc =
+      JobDescriptor(id: 'send_welcome_email', type: JobType.endpoint);
+  const cleanupDesc = JobDescriptor(
+    id: 'cleanup_temp_files',
     type: JobType.periodic,
-    defaultInterval: const Duration(minutes: 60),
-    handler: (context) async {
-      print('🧹 Cleaning up temporary files...');
-    },
+    defaultInterval: Duration(hours: 1),
   );
 
-  ZenJobs.instance.register(emailJob);
-  ZenJobs.instance.register(cleanupJob);
-  print('✅ Jobs registered: ${emailJob.id}, ${cleanupJob.id}\n');
+  final jobs = ZenJobsExecutor.development();
+  jobs.register(emailDesc);
+  jobs.register(cleanupDesc);
 
-  // 4. Trigger an Endpoint Job
-  print('--- Triggering Endpoint Job ---');
-  // This simulates enqueuing a task in Cloud Tasks.
-  // In DEV mode (default here unless DZ_ENV=prd), it just logs the intent.
-  await ZenJobs.instance.trigger(
-    'send_email',
-    payload: {'email': 'user@example.com'},
-  );
+  // Register handlers separately
+  jobs.registerHandler(emailDesc.id, (ctx) async {
+    print(
+      'Sending welcome email to ${ctx.payload?['email']} '
+      '(attempt=${ctx.attempt})',
+    );
+  });
 
-  // 5. Simulate Handling a Request (Webhook)
-  // This mimics what happens when Cloud Tasks actually calls your endpoint.
-  print('\n--- Simulating Webhook Execution ---');
-  final webhookBody = {
-    'jobId': 'send_email',
-    'payload': {'email': 'user@example.com'},
-  };
+  jobs.registerHandler(cleanupDesc.id, (ctx) async {
+    print('Running periodic cleanup (attempt=${ctx.attempt})');
+  });
 
-  print('Incoming POST request: $webhookBody');
-  final status = await ZenJobs.instance.handleRequest(webhookBody);
-  print('Job execution status: $status ${status == 200 ? "OK" : "ERROR"}');
+  await jobs.start();
 
-  print('\n=== Example Complete ===\n');
+  print('Scheduling email job via development executor');
+  await jobs.schedule(emailDesc, payload: {'email': 'user@example.com'});
+
+  await jobs.shutdown();
 }

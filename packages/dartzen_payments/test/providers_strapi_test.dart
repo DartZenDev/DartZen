@@ -1,15 +1,14 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:dartzen_payments/dartzen_payments.dart';
+import 'package:dartzen_payments/src/http_client.dart';
+import 'package:dartzen_payments/src/payment_http_response.dart';
 import 'package:dartzen_payments/src/strapi/strapi_mapper.dart';
 import 'package:dartzen_payments/src/strapi/strapi_models.dart';
 import 'package:dartzen_payments/src/strapi/strapi_payments_service.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
-import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockZenClient extends Mock implements ZenClient {}
+class MockPaymentsHttpClient extends Mock implements PaymentsHttpClient {}
 
 class MockTelemetryClient extends Mock implements TelemetryClient {}
 
@@ -17,7 +16,7 @@ class FakeTelemetryEvent extends Fake implements TelemetryEvent {}
 
 void main() {
   group('StrapiPaymentsService', () {
-    late MockZenClient mockClient;
+    late MockPaymentsHttpClient mockClient;
     late MockTelemetryClient mockTelemetry;
     late StrapiPaymentsService service;
 
@@ -31,7 +30,7 @@ void main() {
     });
 
     setUp(() {
-      mockClient = MockZenClient();
+      mockClient = MockPaymentsHttpClient();
       mockTelemetry = MockTelemetryClient();
       service = StrapiPaymentsService(
         config,
@@ -49,9 +48,9 @@ void main() {
           idempotencyKey: 'idem-1',
         ).dataOrNull!;
 
-        const response = ZenResponse(
+        const response = PaymentHttpResponse(
           id: 'req-123',
-          status: 200,
+          statusCode: 200,
           data: {
             'id': 'pay-strapi-1',
             'intent_id': 'intent-1',
@@ -89,9 +88,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -128,9 +127,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -170,9 +169,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 400,
+            statusCode: 400,
             error: 'Invalid amount',
           ),
         );
@@ -194,9 +193,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 402,
+            statusCode: 402,
             error: 'Insufficient funds',
           ),
         );
@@ -218,8 +217,11 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async =>
-              const ZenResponse(id: 'req-123', status: 404, error: 'Not found'),
+          (_) async => const PaymentHttpResponse(
+            id: 'req-123',
+            statusCode: 404,
+            error: 'Not found',
+          ),
         );
 
         final result = await service.createPayment(intent);
@@ -239,9 +241,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 409,
+            statusCode: 409,
             error: 'Invalid state',
           ),
         );
@@ -263,9 +265,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 500,
+            statusCode: 500,
             error: 'Server error',
           ),
         );
@@ -282,9 +284,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -307,9 +309,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 404,
+            statusCode: 404,
             error: 'Payment not found',
           ),
         );
@@ -326,9 +328,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -361,9 +363,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -386,9 +388,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 404,
+            statusCode: 404,
             error: 'Payment not found',
           ),
         );
@@ -403,9 +405,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',
@@ -433,9 +435,9 @@ void main() {
         when(
           () => mockClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer(
-          (_) async => const ZenResponse(
+          (_) async => const PaymentHttpResponse(
             id: 'req-123',
-            status: 200,
+            statusCode: 200,
             data: {
               'id': 'pay-1',
               'intent_id': 'intent-1',

@@ -1,12 +1,26 @@
 name: dartzen_server
-description: Application runtime and orchestration layer for DartZen server applications on GCP.
+description: GCP-native application runtime for DartZen servers. Provides lifecycle management, routing, and non-blocking request orchestration on Shelf.
 version: 0.0.1
+homepage: https://dartzen.dev
+repository: https://github.com/DartZenDev/DartZen
+issue_tracker: https://github.com/DartZenDev/DartZen/issues
 publish_to: none
 
 resolution: workspace
 
 environment:
   sdk: ">=3.10.2 <4.0.0"
+
+topics:
+  - server
+  - runtime
+  - gcp
+  - shelf
+
+platforms:
+  linux:
+  macos:
+  windows:
 
 dependencies:
   dartzen_core:

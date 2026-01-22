@@ -1,58 +1,47 @@
+import '../../dartzen_jobs.dart' show HandlerRegistry;
+import '../handler_registry.dart' show HandlerRegistry;
 import 'job_context.dart';
+import 'job_policy.dart';
 import 'job_type.dart';
 
-/// Function signature for job execution logic.
+/// Function signature for job execution logic. Kept for compatibility.
 typedef JobHandler = Future<void> Function(JobContext context);
 
-/// Definition of a job registered in the application code.
+/// Metadata-only descriptor for a job.
 ///
-/// This class represents the immutable definition of a job, including its internal logic
-/// ([handler]), architectural type ([type]), and default fallback configuration.
-///
-/// **Note**: Runtime configuration (like `enabled` status or modified intervals) is managed
-/// via `JobConfig` in Firestore and overrides these defaults.
-class JobDefinition {
-  /// Unique identifier of the job.
-  ///
-  /// This ID must be unique across the entire application and is used for
-  /// registration, triggering, and Firestore configuration lookups.
+/// This class is deliberately free of executable logic. Handlers must be
+/// registered separately via [HandlerRegistry]. Descriptors declare identity
+/// and policy metadata only.
+class JobDescriptor {
+  /// [id] is the unique identifier for the job.
   final String id;
 
-  /// The execution pattern for this job.
+  /// [type] specifies the job type (one-off, recurring, etc).
   final JobType type;
 
-  /// The async function that executes the job logic.
-  ///
-  /// This function receives a [JobContext] containing metadata about the run.
-  final JobHandler handler;
-
-  /// Default cron schedule (for [JobType.scheduled] jobs).
-  ///
-  /// Used to populate Firestore configuration if no override exists.
-  /// Example: '0 9 * * *' (Every day at 9 AM).
+  /// [defaultCron] is the default cron expression for scheduling (if applicable).
   final String? defaultCron;
 
-  /// Default interval (for [JobType.periodic] jobs).
-  ///
-  /// Defines how often the job should run when using the `MasterJob` batching.
+  /// [defaultInterval] is the default interval duration for scheduling (if applicable).
   final Duration? defaultInterval;
 
-  /// Default execution priority.
-  ///
-  /// Higher values indicate higher priority.
+  /// [defaultPriority] is the default priority for the job.
   final int? defaultPriority;
 
-  /// Default maximum number of retry attempts.
+  /// [defaultMaxRetries] is the default maximum number of retries for the job.
   final int? defaultMaxRetries;
 
-  /// Creates a [JobDefinition].
-  const JobDefinition({
+  /// [policy] defines the job's execution policy.
+  final JobPolicy policy;
+
+  /// Creates a new [JobDescriptor].
+  const JobDescriptor({
     required this.id,
     required this.type,
-    required this.handler,
     this.defaultCron,
     this.defaultInterval,
     this.defaultPriority,
     this.defaultMaxRetries,
+    this.policy = const JobPolicy(),
   });
 }

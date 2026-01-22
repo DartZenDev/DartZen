@@ -1,31 +1,30 @@
-// Domain-level normalization utility for mapping transport responses to
+// Domain-level normalization utility for mapping HTTP responses to
 // payment-specific `ZenError`s.
 //
 // This helper intentionally lives alongside the payments domain to avoid
 // provider-specific leakage and to keep error semantics consistent across
 // implementations (e.g., Strapi, Adyen). It should only translate generic
-// HTTP/transport status codes and optional response payload into
-// `PaymentError`s. It is not infrastructure; rather, it is shared domain
-// logic used by provider services.
+// HTTP status codes and optional response payload into `PaymentError`s.
+// It is not infrastructure; rather, it is shared domain logic used by
+// provider services.
 //
 // Rationale:
 // - Centralizes HTTP→domain error mapping for consistency
 // - Prevents duplication across provider services
 // - Keeps error handling within domain boundaries and testable without
 //   network coupling
-import 'package:dartzen_transport/dartzen_transport.dart';
-
 import 'payment_error.dart';
+import 'payment_http_response.dart';
 
 /// Maps HTTP response status codes to domain payment errors.
-PaymentError mapResponseToError(ZenResponse response) {
+PaymentError mapResponseToError(PaymentHttpResponse response) {
   final message = response.error ?? 'Payment operation failed';
   final metadata = {
-    'status': response.status,
+    'status': response.statusCode,
     if (response.data is Map<String, dynamic>) 'response': response.data,
   };
 
-  switch (response.status) {
+  switch (response.statusCode) {
     case 400:
       return PaymentInvalidAmountError(message, metadata: metadata);
     case 402:

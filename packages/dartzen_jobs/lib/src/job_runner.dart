@@ -23,9 +23,20 @@ class JobExecutionError extends ZenError {
 /// 2. **Telemetry**: Emits events for execution start, success, and failure.
 /// 3. **State Updates**: Synchronizes [JobConfig] state (last run time, status, retries).
 /// 4. **Logging**: Captures and logs errors with stack traces.
+///
+/// ## Execution Model Compliance
+///
+/// Job execution is **non-blocking** and **deterministic**:
+/// - All I/O operations are async (Firestore, telemetry)
+/// - Job handlers are responsible for their own execution safety
+/// - State validation is fast, in-memory logic
+/// - No hidden retries, concurrency, or background execution
+///
+/// If a job handler blocks the event loop, that is a defect in the
+/// handler implementation, not in this runner.
 class JobRunner {
   final JobStore _store;
-  final Map<String, JobDefinition> _registry;
+  final Map<String, JobDescriptor> _registry;
   final TelemetryClient _telemetry;
 
   /// Creates a [JobRunner] with a data store and telemetry client.
@@ -36,7 +47,7 @@ class JobRunner {
   /// This method performs validation against the job's current [JobConfig]
   /// before invoking the registered handler.
   ///
-  /// [jobId] must correspond to a registered [JobDefinition].
+  /// [jobId] must correspond to a registered [JobDescriptor].
   /// [payload] is optional input data for the job.
   /// [currentTime] allows deterministic execution for testing (defaults to now).
   Future<ZenResult<void>> execute(
@@ -46,9 +57,8 @@ class JobRunner {
   }) async {
     final def = _registry[jobId];
     if (def == null) {
-      ZenLogger.instance.error('Job definition not found for id: $jobId');
-      return ZenResult.err(
-        ZenNotFoundError('Job definition not found for id: $jobId'),
+      throw MissingDescriptorException(
+        'Job descriptor not found for id: $jobId',
       );
     }
 
@@ -112,7 +122,14 @@ class JobRunner {
     await _emit(jobId, 'start', timestamp: now, payload: {'attempt': attempt});
 
     try {
-      await def.handler(context);
+      final handler = HandlerRegistry.get(jobId);
+      if (handler == null) {
+        throw MissingDescriptorException(
+          'No handler registered for job: $jobId',
+        );
+      }
+
+      await handler(context);
 
       await _store.updateJobState(
         jobId,

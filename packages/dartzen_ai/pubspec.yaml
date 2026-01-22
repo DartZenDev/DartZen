@@ -12,8 +12,12 @@ environment:
 resolution: workspace
 
 dependencies:
+  dartzen_cache:
+    path: ../dartzen_cache
   dartzen_core:
     path: ../dartzen_core
+  dartzen_executor:
+    path: ../dartzen_executor
   dartzen_localization:
     path: ../dartzen_localization
   dartzen_telemetry:

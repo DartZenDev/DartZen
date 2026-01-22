@@ -1,8 +1,9 @@
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_firestore/dartzen_firestore.dart';
 
+import '../dartzen_jobs.dart' show JobDescriptor;
 import 'models/job_config.dart';
-import 'models/job_definition.dart';
+import 'models/job_definition.dart' show JobDescriptor;
 import 'models/job_status.dart';
 
 /// Repository for managing job configuration and runtime state in Firestore.
@@ -12,7 +13,7 @@ import 'models/job_status.dart';
 /// results (last run time, status, retries).
 ///
 /// Jobs are stored in the `jobs` collection. Each document ID corresponds
-/// to the [JobDefinition.id].
+/// to the [JobDescriptor.id].
 class JobStore {
   /// The Firestore collection used for storing job configuration and state.
   static const String collection = 'jobs';

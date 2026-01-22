@@ -1,12 +1,13 @@
 import 'package:dartzen_ai/src/client/ai_client.dart';
 import 'package:dartzen_ai/src/client/cancel_token.dart';
+import 'package:dartzen_ai/src/client/http_transport.dart';
 import 'package:dartzen_ai/src/errors/ai_error.dart';
 import 'package:dartzen_ai/src/models/ai_config.dart';
 import 'package:dartzen_transport/dartzen_transport.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockZenClient extends Mock implements ZenClient {}
+class MockAIHttpClient extends Mock implements AIHttpClient {}
 
 void main() {
   setUpAll(() {
@@ -14,20 +15,23 @@ void main() {
   });
 
   group('AIClient', () {
-    late MockZenClient mockZenClient;
+    late MockAIHttpClient mockHttpClient;
     late AIClient client;
 
     setUp(() {
-      mockZenClient = MockZenClient();
+      mockHttpClient = MockAIHttpClient();
       client = AIClient(
         baseUrl: 'http://localhost:8080',
-        zenClient: mockZenClient,
+        httpClient: mockHttpClient,
       );
     });
 
     group('textGeneration', () {
       test('returns success on valid response', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_1',
             status: 200,
@@ -55,7 +59,8 @@ void main() {
 
       test('handles empty response data', () async {
         when(
-          () => mockZenClient.post(any(), any()),
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenAnswer((_) async => const ZenResponse(id: 'resp_2', status: 200));
 
         final result = await client.textGeneration(
@@ -68,7 +73,10 @@ void main() {
       });
 
       test('handles budget exceeded error', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_3',
             status: 400,
@@ -87,7 +95,10 @@ void main() {
       });
 
       test('handles quota exceeded error', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_4',
             status: 429,
@@ -106,7 +117,10 @@ void main() {
       });
 
       test('handles authentication error (401)', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_5',
             status: 401,
@@ -125,7 +139,10 @@ void main() {
       });
 
       test('handles authentication error (403)', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_6',
             status: 403,
@@ -144,7 +161,10 @@ void main() {
       });
 
       test('handles service unavailable (500+)', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_7',
             status: 503,
@@ -162,7 +182,10 @@ void main() {
       });
 
       test('handles invalid request (400)', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_8',
             status: 400,
@@ -182,7 +205,8 @@ void main() {
 
       test('handles network exception', () async {
         when(
-          () => mockZenClient.post(any(), any()),
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
         ).thenThrow(Exception('Network error'));
 
         final result = await client.textGeneration(
@@ -206,13 +230,19 @@ void main() {
 
         expect(result.isFailure, true);
         expect(result.errorOrNull, isA<AICancelledError>());
-        verifyNever(() => mockZenClient.post(any(), any()));
+        verifyNever(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        );
       });
 
       test('respects cancellation after request', () async {
         final cancelToken = CancelToken();
 
-        when(() => mockZenClient.post(any(), any())).thenAnswer((_) async {
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer((_) async {
           cancelToken.cancel();
           return const ZenResponse(
             id: 'resp_9',
@@ -232,7 +262,10 @@ void main() {
       });
 
       test('includes config and metadata in request', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_10',
             status: 200,
@@ -248,7 +281,11 @@ void main() {
         );
 
         final captured = verify(
-          () => mockZenClient.post(any(), captureAny()),
+          () => mockHttpClient.post(
+            any(),
+            captureAny(),
+            headers: any(named: 'headers'),
+          ),
         ).captured;
         expect(captured, isNotEmpty);
         final body = captured.first as Map<String, dynamic>;
@@ -262,7 +299,10 @@ void main() {
 
     group('embeddings', () {
       test('returns success on valid response', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_11',
             status: 200,
@@ -301,7 +341,10 @@ void main() {
       });
 
       test('includes metadata in request', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_12',
             status: 200,
@@ -321,7 +364,11 @@ void main() {
         );
 
         final captured = verify(
-          () => mockZenClient.post(any(), captureAny()),
+          () => mockHttpClient.post(
+            any(),
+            captureAny(),
+            headers: any(named: 'headers'),
+          ),
         ).captured;
         expect(captured, isNotEmpty);
         final body = captured.first as Map<String, dynamic>;
@@ -332,7 +379,10 @@ void main() {
 
     group('classification', () {
       test('returns success on valid response', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_13',
             status: 200,
@@ -369,7 +419,10 @@ void main() {
       });
 
       test('includes labels, config and metadata in request', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
             id: 'resp_14',
             status: 200,
@@ -390,7 +443,11 @@ void main() {
         );
 
         final captured = verify(
-          () => mockZenClient.post(any(), captureAny()),
+          () => mockHttpClient.post(
+            any(),
+            captureAny(),
+            headers: any(named: 'headers'),
+          ),
         ).captured;
         expect(captured, isNotEmpty);
         final body = captured.first as Map<String, dynamic>;
@@ -405,12 +462,15 @@ void main() {
 
     group('error mapping edge cases', () {
       test('maps error with "budget" in code', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
-            id: 'resp_15',
+            id: 'resp_20',
             status: 400,
-            error: 'monthly_budget_limit',
-            data: {'message': 'Budget exceeded'},
+            error: 'budget_exceeded',
+            data: {'limit': 100, 'current': 50, 'method': 'vendor'},
           ),
         );
 
@@ -420,15 +480,24 @@ void main() {
         );
 
         expect(result.isFailure, true);
-        expect(result.errorOrNull, isA<AIBudgetExceededError>());
+        final err = result.errorOrNull;
+        expect(err, isA<AIBudgetExceededError>());
+        if (err is AIBudgetExceededError) {
+          expect(err.limit, 100);
+          expect(err.current, 50);
+          expect(err.message.contains('vendor'), isTrue);
+        }
       });
 
       test('maps error with "quota" in code', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
-            id: 'resp_16',
+            id: 'resp_21',
             status: 429,
-            error: 'daily_quota_exceeded',
+            error: 'quota_limit',
             data: {'message': 'Quota exceeded'},
           ),
         );
@@ -443,12 +512,15 @@ void main() {
       });
 
       test('maps error with "auth" in code', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
-            id: 'resp_17',
+            id: 'resp_22',
             status: 401,
-            error: 'auth_token_expired',
-            data: {'message': 'Token expired'},
+            error: 'auth_failed',
+            data: {'message': 'Unauthorized'},
           ),
         );
 
@@ -462,12 +534,15 @@ void main() {
       });
 
       test('maps error with "invalid" in code', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async => const ZenResponse(
-            id: 'resp_18',
+            id: 'resp_23',
             status: 400,
-            error: 'invalid_model_name',
-            data: {'message': 'Invalid model'},
+            error: 'invalid_payload',
+            data: {'message': 'Invalid payload'},
           ),
         );
 
@@ -481,7 +556,10 @@ void main() {
       });
 
       test('falls back to invalid request for unknown errors', () async {
-        when(() => mockZenClient.post(any(), any())).thenAnswer(
+        when(
+          () =>
+              mockHttpClient.post(any(), any(), headers: any(named: 'headers')),
+        ).thenAnswer(
           (_) async =>
               const ZenResponse(id: 'resp_19', status: 418, error: 'teapot'),
         );

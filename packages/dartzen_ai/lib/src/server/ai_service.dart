@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
+import 'package:meta/meta.dart';
 
 import '../errors/ai_error.dart';
 import '../models/ai_request.dart';
@@ -9,24 +10,27 @@ import '../models/ai_response.dart';
 import 'ai_budget_enforcer.dart';
 import 'vertex_ai_client.dart';
 
-// Ignore missing doc warnings for this file: short-lived internal API.
-// The public members are self-explanatory in context.
-// ignore_for_file: public_member_api_docs
-
 /// Retry policy configuration for transient failures.
 ///
 /// - `baseDelayMs`: initial backoff in milliseconds.
 /// - `maxDelayMs`: maximum backoff cap in milliseconds.
 /// - `jitterFactor`: fraction used to apply +/- jitter (0.0..1.0).
 final class RetryPolicy {
+  /// Creates a retry policy. Defaults to 100ms base delay, 5000ms max delay,
+  /// and 0.5 jitter factor.
   const RetryPolicy({
     this.baseDelayMs = 100,
     this.maxDelayMs = 5000,
     this.jitterFactor = 0.5,
   });
 
+  /// Base delay in milliseconds.
   final int baseDelayMs;
+
+  /// Maximum delay in milliseconds.
   final int maxDelayMs;
+
+  /// Jitter factor (0.0 to 1.0).
   final double jitterFactor;
 }
 
@@ -34,6 +38,24 @@ final class RetryPolicy {
 ///
 /// Handles all Vertex AI / Gemini API calls with retry logic,
 /// budget enforcement, and telemetry integration.
+///
+/// ## Execution Model Compliance
+///
+/// This service is **fully non-blocking** and event-loop safe:
+/// - All network calls are async and yield control
+/// - Retry backoff uses `Future.delayed()` which is non-blocking
+/// - No CPU-intensive synchronous work
+/// - Budget checks are fast, in-memory operations
+///
+/// Retry delays do not block the event loop; they schedule
+/// continuation on the event loop after the delay expires.
+///
+/// ## Internal API
+///
+/// This service is marked `@internal` and must NOT be used directly.
+/// All AI operations must be executed via ZenTask subclasses routed
+/// through ZenExecutor.
+@internal
 final class AIService {
   /// Creates an AI service.
   AIService({
@@ -202,6 +224,16 @@ final class AIService {
     return ZenResult.ok(response);
   }
 
+  /// Executes an operation with exponential backoff retry logic.
+  ///
+  /// ## Non-Blocking Guarantee
+  ///
+  /// Retry delays use `Future.delayed()`, which is async and non-blocking.
+  /// The delay schedules continuation on the event loop without blocking
+  /// other requests or operations.
+  ///
+  /// Retries only occur for transient failures. Non-retryable errors
+  /// (authentication, invalid request, budget exceeded) return immediately.
   Future<ZenResult<T>> _withRetry<T>(
     Future<ZenResult<T>> Function() operation, {
     required int maxAttempts,

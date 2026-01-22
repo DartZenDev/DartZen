@@ -1,117 +1,144 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
-import 'package:dartzen_ai/dartzen_ai.dart';
+import 'package:dartzen_ai/src/models/ai_config.dart';
+import 'package:dartzen_ai/src/models/ai_request.dart';
+import 'package:dartzen_ai/src/server/ai_budget_enforcer.dart';
+import 'package:dartzen_ai/src/server/ai_service.dart';
 import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
-class CountingClient implements http.Client {
-  final List<http.Response> responses;
-  int calls = 0;
-
-  CountingClient(this.responses);
+class SeqHttpClient extends http.BaseClient {
+  int _calls = 0;
 
   @override
-  Future<http.Response> post(
-    Uri url, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-  }) async {
-    calls++;
-    if (calls - 1 >= responses.length) return http.Response('No more', 500);
-    return responses[calls - 1];
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    _calls += 1;
+    if (_calls == 1) {
+      // Simulate 503 with Retry-After header
+      const body = 'server error';
+      final headers = {'retry-after': '1'};
+      return http.StreamedResponse(
+        Stream.value(utf8.encode(body)),
+        503,
+        headers: headers,
+      );
+    }
+
+    // Success response with usage
+    final success = jsonEncode({
+      'text': 'ok',
+      'requestId': 'req-1',
+      'usage': {'inputTokens': 10, 'outputTokens': 5},
+    });
+    return http.StreamedResponse(Stream.value(utf8.encode(success)), 200);
   }
 
   @override
   void close() {}
+}
 
-  // Unused methods
+/// A fake HTTP client that returns a 500 (with Retry-After) on the first
+/// request and a 200 response on the second.
+class FlakyHttpClient extends http.BaseClient {
+  int calls = 0;
+
   @override
-  Future<http.Response> delete(
-    Uri url, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-  }) => Future.error(UnsupportedError('not used'));
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    calls += 1;
+    if (calls == 1) {
+      final body = jsonEncode({'error': 'temporary'});
+      final headers = {'retry-after': '0'}; // immediate retry
+      return http.StreamedResponse(
+        Stream.value(utf8.encode(body)),
+        503,
+        headers: headers,
+      );
+    }
+
+    final body = jsonEncode({'text': 'ok', 'requestId': 'rid'});
+    return http.StreamedResponse(
+      Stream.value(utf8.encode(body)),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
+  }
+
   @override
-  Future<http.Response> get(Uri url, {Map<String, String>? headers}) =>
-      Future.error(UnsupportedError('not used'));
-  @override
-  Future<http.Response> head(Uri url, {Map<String, String>? headers}) =>
-      Future.error(UnsupportedError('not used'));
-  @override
-  Future<http.Response> patch(
-    Uri url, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-  }) => Future.error(UnsupportedError('not used'));
-  @override
-  Future<http.Response> put(
-    Uri url, {
-    Map<String, String>? headers,
-    Object? body,
-    Encoding? encoding,
-  }) => Future.error(UnsupportedError('not used'));
-  @override
-  Future<String> read(Uri url, {Map<String, String>? headers}) =>
-      Future.error(UnsupportedError('not used'));
-  @override
-  Future<Uint8List> readBytes(Uri url, {Map<String, String>? headers}) =>
-      Future.error(UnsupportedError('not used'));
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) =>
-      Future.error(UnsupportedError('not used'));
+  void close() {}
 }
 
 void main() {
-  group('AIService retry policy', () {
-    final config = AIServiceConfig.dev(projectId: 'p');
+  group('AIService retry/backoff', () {
+    test(
+      'retries on service unavailable and records usage on success',
+      () async {
+        final client = VertexAIClient(
+          config: AIServiceConfig.dev(),
+          httpClient: SeqHttpClient(),
+        );
 
-    test('does not retry on invalid request (400)', () async {
-      final client = CountingClient([http.Response('Bad', 400)]);
-      final vertex = VertexAIClient(config: config, httpClient: client);
+        final tracker = AIUsageTracker();
+        final enforcer = AIBudgetEnforcer(
+          config: const AIBudgetConfig.unlimited(),
+          usageTracker: tracker,
+        );
+
+        final svc = AIService(
+          client: client,
+          budgetEnforcer: enforcer,
+          retryPolicy: const RetryPolicy(
+            baseDelayMs: 1,
+            maxDelayMs: 1,
+            jitterFactor: 0.0,
+          ),
+        );
+
+        final res = await svc.textGeneration(
+          const TextGenerationRequest(prompt: 'hi', model: 'm'),
+        );
+
+        expect(res.isSuccess, isTrue);
+        // Usage should have been recorded (cost > 0)
+        expect(tracker.getGlobalUsage(), greaterThan(0.0));
+      },
+    );
+
+    test('honors explicit retryAfter and retries operation', () async {
+      final fakeHttp = FlakyHttpClient();
+      final client = VertexAIClient(
+        config: AIServiceConfig.dev(),
+        httpClient: fakeHttp,
+      );
+
+      final tracker = AIUsageTracker();
       final enforcer = AIBudgetEnforcer(
-        config: const AIBudgetConfig.unlimited(),
-        usageTracker: AIUsageTracker(),
+        config: AIBudgetConfig(),
+        usageTracker: tracker,
       );
-      final service = AIService(
-        client: vertex,
+
+      // Deterministic retry policy (no jitter).
+      final svc = AIService(
+        client: client,
         budgetEnforcer: enforcer,
-        retryPolicy: const RetryPolicy(baseDelayMs: 1),
+        retryPolicy: const RetryPolicy(
+          baseDelayMs: 1,
+          maxDelayMs: 50,
+          jitterFactor: 0.0,
+        ),
       );
 
-      const req = TextGenerationRequest(prompt: 'p', model: 'm');
-      final result = await service.textGeneration(req);
-
-      expect(result.isFailure, true);
-      expect(client.calls, 1);
-    });
-
-    test('honors Retry-After from service unavailable', () async {
-      final headers = {'retry-after': '0'}; // zero seconds to avoid delay
-      final client = CountingClient([
-        http.Response('Err', 503, headers: headers),
-        http.Response(jsonEncode({'text': 'ok'}), 200),
-      ]);
-      final vertex = VertexAIClient(config: config, httpClient: client);
-      final enforcer = AIBudgetEnforcer(
-        config: const AIBudgetConfig.unlimited(),
-        usageTracker: AIUsageTracker(),
-      );
-      final service = AIService(
-        client: vertex,
-        budgetEnforcer: enforcer,
-        retryPolicy: const RetryPolicy(baseDelayMs: 1),
+      final res = await svc.textGeneration(
+        const TextGenerationRequest(prompt: 'x', model: 'm'),
       );
 
-      const req = TextGenerationRequest(prompt: 'p', model: 'm');
-      final result = await service.textGeneration(req);
-
-      expect(result.isSuccess, true);
-      expect(client.calls, 2);
+      expect(res.isSuccess, isTrue);
+      expect(
+        fakeHttp.calls,
+        equals(2),
+        reason: 'HTTP client should have been invoked twice',
+      );
     });
   });
 }

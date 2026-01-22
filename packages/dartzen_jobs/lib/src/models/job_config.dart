@@ -6,13 +6,13 @@ import 'job_status.dart';
 /// This class represents the runtime state and configuration that controls
 /// whether and how a job is executed. This data is pulled from the `jobs` collection.
 ///
-/// Separating configuration ([JobConfig]) from definition ([JobDefinition]) allows
+/// Separating configuration ([JobConfig]) from definition ([JobDescriptor]) allows
 /// developers to change job parameters (disable a job, change its interval, update a cron)
 /// instantly via the database without redeploying the application code.
 class JobConfig {
   /// Unique identifier of the job.
   ///
-  /// Must match the associated [JobDefinition.id].
+  /// Must match the associated [JobDescriptor.id].
   final String id;
 
   /// Whether execution is enabled.

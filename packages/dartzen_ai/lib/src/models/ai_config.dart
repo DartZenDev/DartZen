@@ -122,4 +122,16 @@ final class AIModelConfig {
     'topP': topP,
     'topK': topK,
   };
+
+  /// Creates a model configuration from JSON map.
+  factory AIModelConfig.fromJson(Map<String, dynamic> json) => AIModelConfig(
+    temperature: (json['temperature'] as num?)?.toDouble() ?? 0.7,
+    maxTokens:
+        (json['maxTokens'] as int?) ?? (json['max_tokens'] as int?) ?? 1024,
+    topP:
+        (json['topP'] as num?)?.toDouble() ??
+        (json['top_p'] as num?)?.toDouble() ??
+        0.95,
+    topK: (json['topK'] as int?) ?? (json['top_k'] as int?) ?? 40,
+  );
 }

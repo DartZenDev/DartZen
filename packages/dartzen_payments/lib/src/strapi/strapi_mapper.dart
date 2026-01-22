@@ -1,7 +1,10 @@
+import 'package:meta/meta.dart';
+
 import '../payment.dart';
 import 'strapi_models.dart';
 
-/// Maps Strapi models to domain payments.
+/// Internal: Strapi mapper. Not part of public API.
+@internal
 class StrapiPaymentMapper {
   /// Creates a Strapi mapper.
   const StrapiPaymentMapper();

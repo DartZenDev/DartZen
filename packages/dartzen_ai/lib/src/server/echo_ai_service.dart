@@ -1,4 +1,5 @@
 import 'package:dartzen_core/dartzen_core.dart';
+import 'package:meta/meta.dart';
 
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
@@ -7,6 +8,13 @@ import '../models/ai_response.dart';
 ///
 /// Returns mock responses structurally identical to Vertex AI
 /// without making any GCP calls.
+///
+/// ## Internal API
+///
+/// This service is marked `@internal` and must NOT be used directly.
+/// All AI operations must be executed via ZenTask subclasses routed
+/// through ZenExecutor.
+@internal
 final class EchoAIService {
   /// Creates an Echo AI service.
   const EchoAIService();
