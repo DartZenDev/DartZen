@@ -1,11 +1,10 @@
 import 'package:dartzen_core/dartzen_core.dart';
 
-import 'cloud_tasks_adapter.dart' show CloudTasksAdapter, JobDispatcher;
-import 'errors.dart';
+import '../dartzen_jobs.dart' show ZenJobsExecutor;
 import 'job_runner.dart' show JobRunner;
 import 'master_job.dart' show MasterJob;
 import 'models/job_definition.dart';
-import 'models/job_type.dart' show JobType;
+import 'public/zen_jobs_executor.dart' show ZenJobsExecutor;
 
 /// The main entry point for the DartZen Jobs system.
 ///
@@ -59,9 +58,12 @@ class ZenJobs {
 
   /// Registers a [JobDescriptor] in the system.
   ///
-  /// Registration makes the job handler available for execution via [handleRequest]
-  /// or [trigger]. Attempting to register multiple jobs with the same ID will
-  /// log a warning and overwrite the earlier registration.
+  /// Registration makes the job descriptor available in the registry for
+  /// executors to discover. Attempting to register multiple jobs with the
+  /// same ID will log a warning and overwrite the earlier registration.
+  ///
+  /// NOTE: Actual job execution is handled by [ZenJobsExecutor] implementations.
+  /// This method only manages the registry.
   void register(JobDescriptor definition) {
     if (_registry.containsKey(definition.id)) {
       ZenLogger.instance.info(
@@ -71,38 +73,5 @@ class ZenJobs {
     _registry[definition.id] = definition;
   }
 
-  /// Triggers an endpoint-typed job by its ID.
-  ///
-  /// This prepares a request using [CloudTasksAdapter] and dispatches it via
-  /// the environment-specific [JobDispatcher].
-  ///
-  /// [payload] is optional data passed to the job handler.
-  /// [delay] can be used to schedule the execution in the future.
-  /// [currentTime] allows deterministic scheduling (defaults to now).
-  ///
-  /// Returns [ZenNotFoundError] if the jobId is not registered, or
-  /// [ZenValidationError] if it's not an [JobType.endpoint] job.
-  Future<ZenResult<void>> trigger(
-    String jobId, {
-    Map<String, dynamic>? payload,
-    Duration? delay,
-    ZenTimestamp? currentTime,
-  }) async {
-    throw const MissingDescriptorException(
-      'Direct triggering is forbidden. Use an Executor to schedule or trigger jobs.',
-    );
-  }
 
-  /// Processes an incoming HTTP request containing a job execution command.
-  ///
-  /// This is the entry point for webhooks from Cloud Tasks or Cloud Scheduler.
-  ///
-  /// [request] can be a [Map] or a JSON-encoded [String].
-  ///
-  /// Returns a status code (e.g., 200 for success, 500 for retryable failure).
-  Future<int> handleRequest(dynamic request) async {
-    throw const MissingDescriptorException(
-      'Direct HTTP handling is forbidden. Use an Executor to expose webhooks and handle requests.',
-    );
-  }
 }

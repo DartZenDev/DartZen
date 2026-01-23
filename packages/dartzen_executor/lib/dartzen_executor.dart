@@ -57,3 +57,4 @@ export 'src/models/job_envelope.dart';
 export 'src/models/task.dart';
 export 'src/models/task_rehydration.dart';
 export 'src/zen_executor.dart';
+export 'src/zone_config.dart';

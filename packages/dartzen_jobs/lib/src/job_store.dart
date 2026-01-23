@@ -75,39 +75,74 @@ class JobStore {
     }
   }
 
+  /// Stores a task payload for later retrieval and execution.
+  ///
+  /// Task payloads allow serializing heavy task data to Firestore for
+  /// asynchronous processing. The payload must be JSON-serializable.
+  ///
+  /// The payload is stored with a version number for schema evolution tracking.
+  Future<ZenResult<void>> setTaskPayload(
+    String jobId,
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final updates = <String, dynamic>{
+        'taskPayload': payload,
+        'taskPayloadVersion': 1,
+      };
+
+      await _client.patchDocument('$collection/$jobId', updates);
+      return const ZenResult.ok(null);
+    } catch (e) {
+      return ZenResult.err(ZenUnknownError('Failed to store task payload: $e'));
+    }
+  }
+
+  /// Retrieves a previously stored task payload.
+  ///
+  /// Returns null if no payload exists for the job. The payload can be used
+  /// to reconstruct an AggregationTask instance for execution.
+  Future<ZenResult<Map<String, dynamic>?>> getTaskPayload(String jobId) async {
+    try {
+      final doc = await _client.getDocument('$collection/$jobId');
+
+      if (!doc.exists) {
+        return const ZenResult.ok(null);
+      }
+
+      final payload = doc.data?['taskPayload'] as Map<String, dynamic>?;
+      return ZenResult.ok(payload);
+    } catch (e) {
+      return ZenResult.err(
+        ZenUnknownError('Failed to retrieve task payload: $e'),
+      );
+    }
+  }
+
+  /// Clears the task payload for a job.
+  ///
+  /// Useful for cleaning up after task completion or cancellation.
+  Future<ZenResult<void>> clearTaskPayload(String jobId) async {
+    try {
+      final updates = <String, dynamic>{
+        'taskPayload': null,
+        'taskPayloadVersion': null,
+      };
+
+      await _client.patchDocument('$collection/$jobId', updates);
+      return const ZenResult.ok(null);
+    } catch (e) {
+      return ZenResult.err(ZenUnknownError('Failed to clear task payload: $e'));
+    }
+  }
+
   /// Retrieves all periodic jobs that are currently enabled.
   ///
   /// This method performs a structured Firestore query to find documents
   /// where `type == 'periodic'` and `enabled == true`.
   Future<ZenResult<List<JobConfig>>> getEnabledPeriodicJobs() async {
     try {
-      final query = {
-        'from': [
-          {'collectionId': collection},
-        ],
-        'where': {
-          'compositeFilter': {
-            'op': 'AND',
-            'filters': [
-              {
-                'fieldFilter': {
-                  'field': {'fieldPath': 'type'},
-                  'op': 'EQUAL',
-                  'value': {'stringValue': 'periodic'},
-                },
-              },
-              {
-                'fieldFilter': {
-                  'field': {'fieldPath': 'enabled'},
-                  'op': 'EQUAL',
-                  'value': {'booleanValue': true},
-                },
-              },
-            ],
-          },
-        },
-      };
-
+      final query = _buildEnabledPeriodicJobsQuery();
       final results = await _client.runStructuredQuery(query);
 
       final configs = <JobConfig>[];
@@ -127,6 +162,40 @@ class JobStore {
       );
     }
   }
+
+  /// Builds the Firestore structured query for enabled periodic jobs.
+  ///
+  /// Query structure:
+  /// - Collection: jobs
+  /// - Filters (AND conjunction):
+  ///   - type == 'periodic'
+  ///   - enabled == true
+  Map<String, dynamic> _buildEnabledPeriodicJobsQuery() => {
+    'from': [
+      {'collectionId': collection},
+    ],
+    'where': {
+      'compositeFilter': {
+        'op': 'AND',
+        'filters': [
+          {
+            'fieldFilter': {
+              'field': {'fieldPath': 'type'},
+              'op': 'EQUAL',
+              'value': {'stringValue': 'periodic'},
+            },
+          },
+          {
+            'fieldFilter': {
+              'field': {'fieldPath': 'enabled'},
+              'op': 'EQUAL',
+              'value': {'booleanValue': true},
+            },
+          },
+        ],
+      },
+    },
+  };
 
   Map<String, dynamic> _flattenFirestoreFields(Map<String, dynamic> fields) {
     final result = <String, dynamic>{};

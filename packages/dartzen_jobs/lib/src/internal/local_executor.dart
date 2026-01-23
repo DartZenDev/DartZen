@@ -13,6 +13,7 @@ import 'executor.dart';
 class LocalExecutor implements Executor {
   final JobStore _store;
   final TelemetryClient _telemetry;
+  final Map<String, dynamic>? _zoneServices;
   late final JobRunner _runner;
   var _running = false;
 
@@ -20,10 +21,20 @@ class LocalExecutor implements Executor {
   ///
   /// [store] is used to persist and read job configuration/state.
   /// [telemetry] is used for emitting telemetry events. Both are required.
-  LocalExecutor({required JobStore store, required TelemetryClient telemetry})
-    : _store = store,
-      _telemetry = telemetry {
-    _runner = JobRunner(_store, ZenJobs.instance.descriptors, _telemetry);
+  /// [zoneServices] optional map of services to inject into execution zones.
+  LocalExecutor({
+    required JobStore store,
+    required TelemetryClient telemetry,
+    Map<String, dynamic>? zoneServices,
+  }) : _store = store,
+       _telemetry = telemetry,
+       _zoneServices = zoneServices {
+    _runner = JobRunner(
+      _store,
+      ZenJobs.instance.descriptors,
+      _telemetry,
+      zoneServices: _zoneServices,
+    );
   }
 
   @override

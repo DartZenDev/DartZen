@@ -13,7 +13,6 @@ class FakeZenJobs implements ZenJobs {
   bool shouldThrow;
   final List<Map<String, dynamic>> received = [];
 
-  @override
   Future<ZenResult<void>> trigger(
     String jobId, {
     Map<String, dynamic>? payload,
@@ -30,7 +29,6 @@ class FakeZenJobs implements ZenJobs {
   @override
   void register(JobDescriptor definition) {}
 
-  @override
   Future<int> handleRequest(dynamic request) async => 200;
 
   @override

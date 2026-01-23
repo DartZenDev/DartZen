@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_telemetry/dartzen_telemetry.dart';
 
 import '../dartzen_jobs.dart';
 import 'job_store.dart';
+import 'job_validator.dart';
 
 /// Represents a failure encountered during the execution of a job.
 ///
@@ -38,14 +41,52 @@ class JobRunner {
   final JobStore _store;
   final Map<String, JobDescriptor> _registry;
   final TelemetryClient _telemetry;
+  final Map<String, dynamic>? _zoneServices;
 
   /// Creates a [JobRunner] with a data store and telemetry client.
-  JobRunner(this._store, this._registry, this._telemetry);
+  ///
+  /// [zoneServices] is an optional map of services to inject into the Zone
+  /// during handler execution. This enables handlers to access runtime services
+  /// without capturing them in the job payload. Common service keys:
+  /// - `dartzen.executor`: true (marks executor context)
+  /// - `dartzen.ai.service`: AIService instance
+  /// - `dartzen.http.client`: HTTP client instance
+  /// - `dartzen.logger`: Logger instance
+  ///
+  /// See docs/execution_model.md for the complete zone service contract.
+  JobRunner(
+    this._store,
+    this._registry,
+    this._telemetry, {
+    Map<String, dynamic>? zoneServices,
+  }) : _zoneServices = zoneServices;
 
   /// Executes a job by its unique identifier.
   ///
   /// This method performs validation against the job's current [JobConfig]
   /// before invoking the registered handler.
+  ///
+  /// ## Retry Semantics
+  ///
+  /// Retries are **automatic** and managed by the executor, not by the handler.
+  /// The retry workflow is:
+  ///
+  /// 1. **First Execution**: `attempt = 1`, `currentRetries = 0`
+  /// 2. **On Failure**: Increment `currentRetries` to match the attempt number
+  /// 3. **On Next Execution**: Check if `currentRetries < policy.maxRetries`
+  ///    - If yes: retry allowed, increment attempt counter
+  ///    - If no: max retries exceeded, job fails permanently
+  /// 4. **On Success**: Reset `currentRetries = 0`
+  ///
+  /// Example workflow for a job with `maxRetries = 3`:
+  /// - Attempt 1: fails → currentRetries becomes 1
+  /// - Attempt 2: fails → currentRetries becomes 2
+  /// - Attempt 3: fails → currentRetries becomes 3
+  /// - Attempt 4: fails but 3 >= maxRetries → job marked permanently failed
+  ///
+  /// **Handler Responsibility**: Handlers do not decide to retry. They throw
+  /// on failure, and the executor handles retry logic. Handlers that require
+  /// exponential backoff or custom retry logic must implement that internally.
   ///
   /// [jobId] must correspond to a registered [JobDescriptor].
   /// [payload] is optional input data for the job.
@@ -55,12 +96,8 @@ class JobRunner {
     Map<String, dynamic>? payload,
     ZenTimestamp? currentTime,
   }) async {
-    final def = _registry[jobId];
-    if (def == null) {
-      throw MissingDescriptorException(
-        'Job descriptor not found for id: $jobId',
-      );
-    }
+    // Validate job descriptor exists (throws if not found)
+    JobValidator.validateJobExists(jobId, _registry);
 
     final configResult = await _store.getJobConfig(jobId);
     if (configResult.isFailure) {
@@ -70,35 +107,19 @@ class JobRunner {
     final config = configResult.dataOrNull!;
     final now = currentTime?.value ?? DateTime.now().toUtc();
 
-    if (!config.enabled) {
-      await _store.updateJobState(jobId, lastStatus: JobStatus.skippedDisabled);
+    // Check if job is enabled for execution
+    final (isEligible, reason) = JobValidator.isEnabledForExecution(
+      config,
+      now,
+    );
+    if (!isEligible) {
+      // Map reason to appropriate JobStatus
+      final status = _mapSkipReasonToStatus(reason);
+      await _store.updateJobState(jobId, lastStatus: status);
       return const ZenResult.ok(null);
     }
 
-    if (config.startAt != null && now.isBefore(config.startAt!)) {
-      await _store.updateJobState(
-        jobId,
-        lastStatus: JobStatus.skippedNotStarted,
-      );
-      return const ZenResult.ok(null);
-    }
-    if (config.endAt != null && now.isAfter(config.endAt!)) {
-      await _store.updateJobState(jobId, lastStatus: JobStatus.skippedEnded);
-      return const ZenResult.ok(null);
-    }
-
-    final today = DateTime(now.year, now.month, now.day);
-    if (config.skipDates.any(
-      (d) =>
-          d.year == today.year && d.month == today.month && d.day == today.day,
-    )) {
-      await _store.updateJobState(
-        jobId,
-        lastStatus: JobStatus.skippedDateExclusion,
-      );
-      return const ZenResult.ok(null);
-    }
-
+    // Validate all dependencies are satisfied
     for (final depId in config.dependencies) {
       final depResult = await _store.getJobConfig(depId);
       if (depResult.isFailure ||
@@ -129,7 +150,8 @@ class JobRunner {
         );
       }
 
-      await handler(context);
+      // Execute handler with optional Zone service injection
+      await _executeHandlerInZone(handler, context);
 
       await _store.updateJobState(
         jobId,
@@ -146,6 +168,9 @@ class JobRunner {
         stackTrace: stack,
       );
 
+      // Persist the attempt count as the new currentRetries counter.
+      // On the next execution, if currentRetries >= policy.maxRetries, the job
+      // will be marked as permanently failed and no further retries will occur.
       final nextRetries = attempt;
       await _store.updateJobState(
         jobId,
@@ -178,4 +203,37 @@ class JobRunner {
       payload: {'job_id': jobId, if (payload != null) ...payload},
     ),
   );
+
+  /// Maps a skip reason string to the appropriate [JobStatus].
+  JobStatus _mapSkipReasonToStatus(String? reason) {
+    if (reason == null) return JobStatus.success;
+    if (reason.contains('disabled')) return JobStatus.skippedDisabled;
+    if (reason.contains('not started')) return JobStatus.skippedNotStarted;
+    if (reason.contains('ended')) return JobStatus.skippedEnded;
+    if (reason.contains('skip date')) return JobStatus.skippedDateExclusion;
+    return JobStatus.skippedDisabled; // Default fallback
+  }
+
+  /// Executes a handler with optional Zone service injection.
+  ///
+  /// If [_zoneServices] is provided, the handler runs inside a Zone with
+  /// injected services accessible via `Zone.current[key]`. This allows
+  /// handlers to access runtime dependencies (AI services, HTTP clients, etc.)
+  /// without capturing them in the job payload.
+  ///
+  /// If no services are configured, the handler executes normally without
+  /// Zone wrapping, ensuring backward compatibility with existing handlers.
+  Future<void> _executeHandlerInZone(
+    Future<void> Function(JobContext) handler,
+    JobContext context,
+  ) async {
+    if (_zoneServices == null || _zoneServices.isEmpty) {
+      // No zone services configured - execute handler directly
+      await handler(context);
+      return;
+    }
+
+    // Execute handler inside a Zone with injected services
+    await runZoned(() => handler(context), zoneValues: _zoneServices);
+  }
 }
