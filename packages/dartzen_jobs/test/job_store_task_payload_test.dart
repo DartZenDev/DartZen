@@ -199,8 +199,13 @@ void main() {
 
         final retrievedPayload = getResult.dataOrNull!;
         expect(retrievedPayload['metadata'], isA<Map<dynamic, dynamic>>());
+        // ignore: avoid_dynamic_calls
         expect(retrievedPayload['sources'], isA<List<dynamic>>());
-        expect(retrievedPayload['sources'].length, equals(2));
+        // ignore: avoid_dynamic_calls
+        expect(
+          (retrievedPayload['sources'] as List<dynamic>).length,
+          equals(2),
+        );
       });
     });
 

@@ -10,7 +10,7 @@
 /// - Firestore client is injected via zones to query user activity data
 /// - AI service analyzes patterns and generates insights
 /// - Logger tracks progress without being captured in serialized data
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, public_member_api_docs
 
 library;
 
@@ -163,7 +163,7 @@ class UserBehaviorAggregationTask
         }
 
         // Small delay to avoid overwhelming Firestore
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
       }
 
       logger.info('Collected ${allActivities.length} activity records');
@@ -262,7 +262,7 @@ class ReportGenerationTask extends AggregationTask<String> {
       logger.info('Generating $reportType report: $reportId');
 
       // Simulate report generation (in real code, query multiple data sources)
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
       final report = '''
 # Report: $reportType
@@ -299,7 +299,7 @@ void exampleUsage() {
   final logger = _MockLogger();
 
   // Create the aggregation task with serializable data
-  final task = UserBehaviorAggregationTask(
+  final _ = UserBehaviorAggregationTask(
     userIds: ['user1', 'user2', 'user3', 'user4', 'user5'],
     startDate: DateTime(2024),
     endDate: DateTime(2024, 1, 31),
@@ -343,7 +343,7 @@ class _MockFirestoreClient implements FirestoreClient {
     DateTime endDate,
   ) async {
     // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
 
     return {
       'userId': userId,
@@ -359,7 +359,7 @@ class _MockAIService implements AIService {
   @override
   Future<String> analyzePatterns(List<Map<String, dynamic>> activities) async {
     // Simulate AI processing
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future<void>.delayed(const Duration(milliseconds: 200));
 
     return 'Users showed increased activity during business hours. '
         'Peak engagement at 10 AM and 3 PM.';

@@ -61,7 +61,7 @@ void main() {
         expect(Zone.current['dartzen.executor'], isTrue);
 
         // Simulate async operation
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
         // Zone values should still be accessible after async boundary
         expect(Zone.current['dartzen.executor'], isTrue);
@@ -80,7 +80,7 @@ void main() {
       const config = ZoneConfiguration(services: {});
 
       final result = await config.runWithServices(() async {
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
         return 'async-result';
       });
 
@@ -153,13 +153,13 @@ void main() {
       test('properly casts to expected type', () {
         const config = ZoneConfiguration(
           services: {
-            'dartzen.test.list': [1, 2, 3],
+            'dartzen.test.list': <int>[1, 2, 3],
           },
         );
 
         config.runWithServices(() {
           final list = ZoneConfiguration.get<List<int>>('dartzen.test.list');
-          expect(list, isA<List>());
+          expect(list, isA<List<int>>());
           expect(list, equals([1, 2, 3]));
         });
       });
@@ -258,7 +258,7 @@ void main() {
           final logger = ZoneConfiguration.get<List<String>>('dartzen.logger');
           logger?.add('Task started');
 
-          await Future.delayed(Duration.zero);
+          await Future<void>.delayed(Duration.zero);
 
           logger?.add('Task completed');
         });

@@ -19,12 +19,12 @@ class MockDatabase {
   final Map<String, Map<String, dynamic>> data = {};
 
   Future<Map<String, dynamic>?> fetchUser(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 10));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     return data[userId];
   }
 
   Future<void> saveResult(String id, Map<String, dynamic> result) async {
-    await Future.delayed(const Duration(milliseconds: 10));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     data[id] = result;
   }
 }
@@ -271,7 +271,7 @@ void main() {
       await runZoned(
         () async {
           // Nested async call
-          await Future.delayed(const Duration(milliseconds: 10));
+          await Future<void>.delayed(const Duration(milliseconds: 10));
           result = await task.execute(context);
         },
         zoneValues: {

@@ -12,7 +12,7 @@ import 'dart:async';
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, public_member_api_docs
 
 // ============================================================================
 // Mock Service Implementations
@@ -28,7 +28,7 @@ class SimpleLogger {
 /// Mock data service that simulates fetching user data.
 class DataService {
   Future<Map<String, dynamic>> fetchUserData(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     return {
       'userId': userId,
       'name': 'User $userId',
@@ -201,7 +201,7 @@ Future<void> main() async {
   );
 
   // Wait a bit for async execution
-  await Future.delayed(const Duration(seconds: 1));
+  await Future<void>.delayed(const Duration(seconds: 1));
 
   print('\n✓ Task scheduled and executed successfully!');
   print('\n(In production, retrieve results from JobStore)');

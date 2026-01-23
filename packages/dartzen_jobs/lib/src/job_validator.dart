@@ -47,8 +47,9 @@ abstract final class JobValidator {
   /// - Are all dependencies satisfied?
   ///
   /// Returns a tuple of (isEligible: bool, reason: String?).
-  /// If [isEligible] is true, [reason] is null.
-  /// If [isEligible] is false, [reason] explains why.
+  /// The first field indicates if the job is eligible for execution.
+  /// If eligible, the second field is null.
+  /// If not eligible, the second field explains why.
   static (bool isEligible, String? reason) isEnabledForExecution(
     JobConfig config,
     DateTime now,

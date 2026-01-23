@@ -170,6 +170,7 @@ void main() {
     // This is a white-box test to catch query structure regressions early.
 
     // Access via reflection to test the private method
+    // ignore: unused_local_variable
     final queryBuilder = store.runtimeType.toString();
 
     // We'll verify the query by checking its usage in getEnabledPeriodicJobs

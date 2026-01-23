@@ -125,8 +125,13 @@ void main() {
 
         // Verify all values are JSON-serializable
         expect(payload['id'], isA<String>());
+        // ignore: strict_raw_type
         expect(payload['data'], isA<List>());
-        expect(payload['data'].every((e) => e is String), isTrue);
+        // ignore: avoid_dynamic_calls
+        expect(
+          (payload['data'] as List<dynamic>).every((e) => e is String),
+          isTrue,
+        );
       });
     });
 
