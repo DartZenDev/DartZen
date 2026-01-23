@@ -64,6 +64,7 @@ tasks. Tasks access services via `Zone.current[key]` or the `AggregationTask`
 helper methods.
 
 **Benefits**:
+
 - Task payloads remain pure and serializable (only JSON-safe data)
 - Runtime services (HTTP clients, DB connections, AI clients) injected at execution time
 - Clean separation: data in payload, services in zone
@@ -97,11 +98,11 @@ class UserAggregationTask extends AggregationTask<Map<String, dynamic>> {
     // 3. Get services from zone
     final db = AggregationTask.getService<FirestoreClient>('database');
     final logger = AggregationTask.getService<Logger>('logger');
-    
+
     // 4. Use services normally
     logger?.info('Processing ${userIds.length} users');
     final results = await db.queryUsers(userIds);
-    
+
     return ZenResult.ok({'count': results.length});
   }
 }
@@ -137,11 +138,13 @@ await executor.schedule(descriptor, payload: task.toPayload());
 #### Key Properties
 
 **Zone Markers**:
+
 - `Zone.current['dartzen.executor'] == true` — marks executor context
 - Services available via any key: `'database'`, `'logger'`, `'myService'`, etc.
 - Services are **isolated per zone** — concurrent tasks have separate service instances
 
 **Safety Guarantees**:
+
 - Services are NOT serialized with task payloads
 - Outside executor zone, `getService()` returns `null` (fail-safe)
 - Async operations preserve zone context through `runZoned()`
@@ -150,11 +153,13 @@ await executor.schedule(descriptor, payload: task.toPayload());
 **Supported Patterns**:
 
 1. **Simple Zone Access** (in any async context):
+
    ```dart
    final service = AggregationTask.getService<MyService>('myService');
    ```
 
 2. **Zone Configuration** (for manual setup):
+
    ```dart
    await ZoneConfiguration.runWithServices(
      services: {'myService': instance},
@@ -176,7 +181,7 @@ await executor.schedule(descriptor, payload: task.toPayload());
 test('aggregation task accesses zone services', () async {
   final mockDb = MockDatabase();
   final mockLogger = MockLogger();
-  
+
   final task = UserAggregationTask(userIds: ['id1', 'id2']);
   final context = JobContext(
     jobId: 'test',
@@ -184,7 +189,7 @@ test('aggregation task accesses zone services', () async {
     attempt: 1,
     payload: task.toPayload(),
   );
-  
+
   late ZenResult<Map<String, dynamic>> result;
   await runZoned(
     () async {
@@ -196,7 +201,7 @@ test('aggregation task accesses zone services', () async {
       'logger': mockLogger,
     },
   );
-  
+
   expect(result.isSuccess, isTrue);
   expect(mockDb.queryCalled, isTrue);
 });
@@ -204,13 +209,15 @@ test('aggregation task accesses zone services', () async {
 
 #### Implementation Details
 
-**Location**: `packages/dartzen_jobs/lib/src/models/aggregation_task.dart`  
-**Base Class**: `AggregationTask<T>` abstract class  
+**Location**: `packages/dartzen_jobs/lib/src/models/aggregation_task.dart`
+**Base Class**: `AggregationTask<T>` abstract class
 **Helper Methods**:
+
 - `static bool get isInExecutorZone` — checks `Zone.current['dartzen.executor']`
 - `static S? getService<S>(String key)` — safely gets service or null
 
 **Integration Points**:
+
 - `ZenJobsExecutor` injects zones when creating test/local executors
 - `LocalExecutor` propagates zones to `JobRunner`
 - `JobRunner` wraps handler execution with `runZoned()`
@@ -219,6 +226,7 @@ test('aggregation task accesses zone services', () async {
 #### Examples
 
 See complete working examples:
+
 - [Runnable Example](../packages/dartzen_jobs/example/lib/aggregation_example.dart) — Working `UserStatsAggregationTask`
 - [Comprehensive Example](../packages/dartzen_jobs/example/lib/user_behavior_aggregation_example.dart) — Reference implementation
 - [Integration Tests](../packages/dartzen_jobs/test/zone_integration_test.dart) — Full test suite

@@ -23,8 +23,11 @@ enum ZenJobsMode {
 /// Concrete executors are internal. Users must choose a mode explicitly to
 /// avoid accidental executor selection or environment-based guessing.
 class ZenJobsExecutor implements Executor {
-  ZenJobsExecutor._(this.mode, this._delegate, {Map<String, dynamic>? zoneServices})
-    : _zoneServices = zoneServices;
+  ZenJobsExecutor._(
+    this.mode,
+    this._delegate, {
+    Map<String, dynamic>? zoneServices,
+  }) : _zoneServices = zoneServices;
 
   /// Explicit runtime mode.
   final ZenJobsMode mode;

@@ -8,6 +8,7 @@
 library;
 
 import 'dart:async';
+
 import 'package:dartzen_core/dartzen_core.dart';
 import 'package:dartzen_jobs/dartzen_jobs.dart';
 
@@ -20,7 +21,8 @@ import 'package:dartzen_jobs/dartzen_jobs.dart';
 /// Simple logger that prints to console.
 class SimpleLogger {
   void info(String message) => print('[INFO] $message');
-  void error(String message, Object? error) => print('[ERROR] $message: $error');
+  void error(String message, Object? error) =>
+      print('[ERROR] $message: $error');
 }
 
 /// Mock data service that simulates fetching user data.
@@ -31,7 +33,9 @@ class DataService {
       'userId': userId,
       'name': 'User $userId',
       'activityCount': 10 + userId.hashCode % 20,
-      'lastSeen': DateTime.now().subtract(Duration(hours: userId.hashCode % 72)).toIso8601String(),
+      'lastSeen': DateTime.now()
+          .subtract(Duration(hours: userId.hashCode % 72))
+          .toIso8601String(),
     };
   }
 }
@@ -52,14 +56,15 @@ class UserStatsAggregationTask extends AggregationTask<Map<String, dynamic>> {
 
   @override
   Map<String, dynamic> toPayload() => {
-      'userIds': userIds,
-      'reportName': reportName,
-    };
+        'userIds': userIds,
+        'reportName': reportName,
+      };
 
-  static UserStatsAggregationTask fromPayload(Map<String, dynamic> payload) => UserStatsAggregationTask(
-      userIds: List<String>.from(payload['userIds'] as List),
-      reportName: payload['reportName'] as String,
-    );
+  static UserStatsAggregationTask fromPayload(Map<String, dynamic> payload) =>
+      UserStatsAggregationTask(
+        userIds: List<String>.from(payload['userIds'] as List),
+        reportName: payload['reportName'] as String,
+      );
 
   @override
   Future<ZenResult<Map<String, dynamic>>> execute(JobContext context) async {
@@ -155,7 +160,7 @@ Future<void> main() async {
   // Create executor with zone-injected services
   final executor = ZenJobsExecutor.development(
     zoneServices: {
-      'dartzen.executor': true,  // Required marker for executor zone
+      'dartzen.executor': true, // Required marker for executor zone
       'logger': logger,
       'dataService': dataService,
     },
@@ -179,7 +184,7 @@ Future<void> main() async {
 
     // Execute task (services are accessed from zone)
     final result = await task.execute(context);
-    
+
     if (!result.isSuccess) {
       logger.error('Task failed', result.errorOrNull);
     }

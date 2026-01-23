@@ -11,8 +11,7 @@ void main() {
   });
 
   test('registers a job descriptor', () {
-    const descriptor = JobDescriptor(id: 'test-job', type: JobType.endpoint,
-    );
+    const descriptor = JobDescriptor(id: 'test-job', type: JobType.endpoint);
     zenJobs.register(descriptor);
     expect(zenJobs.descriptors['test-job'], descriptor);
   });

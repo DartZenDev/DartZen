@@ -6,16 +6,18 @@ This directory contains examples demonstrating how to use `dartzen_jobs` for job
 
 ### 1. Basic Aggregation Task (`aggregation_example.dart`)
 
-**Runnable Example**: ✅ Yes  
+**Runnable Example**: ✅ Yes
 **Run Command**: `dart run lib/aggregation_example.dart`
 
 A complete, runnable example showing:
+
 - Creating an `AggregationTask` that serializes data to a payload
 - Injecting services via zones (`logger`, `dataService`)
 - Executing heavy aggregation work with proper service isolation
 - Accessing zone services at execution time without capturing them in payloads
 
 **Key Concepts Demonstrated**:
+
 - `UserStatsAggregationTask` extends `AggregationTask<T>`
 - `toPayload()` / `fromPayload()` for serialization
 - `AggregationTask.isInExecutorZone` for zone detection
@@ -23,6 +25,7 @@ A complete, runnable example showing:
 - Zone marker `'dartzen.executor': true` required for executor context
 
 **Output**:
+
 ```
 ========================================
 AggregationTask with Zone Services Demo
@@ -47,10 +50,11 @@ Executing aggregation task...
 
 ### 2. Comprehensive Example (`user_behavior_aggregation_example.dart`)
 
-**Runnable Example**: ❌ No (Reference/Template)  
+**Runnable Example**: ❌ No (Reference/Template)
 **Purpose**: Comprehensive documentation and patterns
 
 A detailed reference implementation showing:
+
 - **UserBehaviorAggregationTask**: Full-featured aggregation with Firestore, AI service, and batching
 - **ReportGenerationTask**: Simpler aggregation pattern
 - Mock service interfaces for real-world scenarios
@@ -58,19 +62,21 @@ A detailed reference implementation showing:
 - Best practices and usage patterns
 
 **Service Interfaces Demonstrated**:
+
 - `FirestoreClient` - Database queries
 - `AIService` - Pattern analysis
 - `Logger` - Structured logging
 
 **Key Patterns**:
+
 ```dart
 // 1. Define serializable task
 class MyAggregationTask extends AggregationTask<ResultType> {
   final SerializableData data;  // Only JSON-safe data
-  
+
   @override
   Map<String, dynamic> toPayload() => {'data': data};
-  
+
   @override
   Future<ZenResult<ResultType>> execute(JobContext context) async {
     // Access zone services
@@ -99,6 +105,7 @@ executor.registerHandler('myTask', (context) async {
 ### AggregationTask Base Class
 
 The `AggregationTask<T>` abstract class provides:
+
 - **Payload Serialization**: `toPayload()` for converting task to JSON-safe data
 - **Execution**: `execute(JobContext)` for performing work with zone-injected services
 - **Zone Detection**: `AggregationTask.isInExecutorZone` checks if running in executor
@@ -107,12 +114,14 @@ The `AggregationTask<T>` abstract class provides:
 ### Zone-Based Service Injection
 
 **Why Zones?**
+
 - ✅ Services available at execution time without serialization
 - ✅ Clean separation: data in payload, services in zone
 - ✅ No risk of capturing non-serializable objects
 - ✅ Testability: inject mocks via zones
 
 **Required Zone Values**:
+
 ```dart
 {
   'dartzen.executor': true,        // Marker indicating executor context
@@ -125,6 +134,7 @@ The `AggregationTask<T>` abstract class provides:
 ### Serialization Pattern
 
 **What Goes in Payload** (serializable):
+
 - User IDs, entity IDs
 - Date ranges
 - Configuration parameters
@@ -132,6 +142,7 @@ The `AggregationTask<T>` abstract class provides:
 - Filter criteria
 
 **What Goes in Zone** (non-serializable):
+
 - Database clients
 - HTTP clients
 - Logger instances
@@ -146,15 +157,15 @@ The `AggregationTask<T>` abstract class provides:
 class MyTask extends AggregationTask<MyResult> {
   final List<String> ids;
   final DateTime startDate;
-  
+
   MyTask({required this.ids, required this.startDate});
-  
+
   @override
   Map<String, dynamic> toPayload() => {
     'ids': ids,
     'startDate': startDate.toIso8601String(),
   };
-  
+
   static MyTask fromPayload(Map<String, dynamic> payload) {
     return MyTask(
       ids: List<String>.from(payload['ids']),
@@ -173,11 +184,11 @@ Future<ZenResult<MyResult>> execute(JobContext context) async {
   if (!AggregationTask.isInExecutorZone) {
     return ZenResult.err(ZenValidationError('Must run in executor zone'));
   }
-  
+
   // Get services
   final logger = AggregationTask.getService<Logger>('logger');
   final db = AggregationTask.getService<Database>('database');
-  
+
   try {
     // Your work here
     return ZenResult.ok(result);
@@ -218,6 +229,7 @@ await executor.shutdown();
 ## Testing
 
 For testing aggregation tasks:
+
 1. Create mock service implementations
 2. Inject mocks via `zoneServices`
 3. Verify task behavior in isolation
@@ -226,7 +238,7 @@ For testing aggregation tasks:
 test('task executes with mocked services', () async {
   final mockLogger = MockLogger();
   final mockDb = MockDatabase();
-  
+
   final executor = ZenJobsExecutor.development(
     zoneServices: {
       'dartzen.executor': true,
@@ -234,7 +246,7 @@ test('task executes with mocked services', () async {
       'database': mockDb,
     },
   );
-  
+
   // ... register and execute task
 });
 ```
@@ -257,6 +269,7 @@ test('task executes with mocked services', () async {
 ## Questions?
 
 For more information, consult:
+
 - `dartzen_jobs` package README
 - `AggregationTask` API documentation
 - DartZen architecture documentation in `/docs/`

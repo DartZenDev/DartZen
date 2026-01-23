@@ -72,6 +72,4 @@ class ZenJobs {
     }
     _registry[definition.id] = definition;
   }
-
-
 }

@@ -12,15 +12,13 @@ class TestAggregationTask extends AggregationTask<Map<String, dynamic>> {
   TestAggregationTask({required this.id, required this.data});
 
   @override
-  Map<String, dynamic> toPayload() => {
-        'id': id,
-        'data': data,
-      };
+  Map<String, dynamic> toPayload() => {'id': id, 'data': data};
 
-  factory TestAggregationTask.fromPayload(Map<String, dynamic> payload) => TestAggregationTask(
-      id: payload['id'] as String,
-      data: List<String>.from(payload['data'] as List),
-    );
+  factory TestAggregationTask.fromPayload(Map<String, dynamic> payload) =>
+      TestAggregationTask(
+        id: payload['id'] as String,
+        data: List<String>.from(payload['data'] as List),
+      );
 
   @override
   Future<ZenResult<Map<String, dynamic>>> execute(JobContext context) async {
@@ -43,7 +41,8 @@ class MultiServiceTask extends AggregationTask<String> {
   @override
   Map<String, dynamic> toPayload() => {'operation': operation};
 
-  factory MultiServiceTask.fromPayload(Map<String, dynamic> payload) => MultiServiceTask(payload['operation'] as String);
+  factory MultiServiceTask.fromPayload(Map<String, dynamic> payload) =>
+      MultiServiceTask(payload['operation'] as String);
 
   @override
   Future<ZenResult<String>> execute(JobContext context) async {
@@ -53,9 +52,7 @@ class MultiServiceTask extends AggregationTask<String> {
     final aiService = Zone.current['dartzen.ai.service'] as String?;
 
     if (executor != true) {
-      return const ZenResult.err(
-        ZenUnknownError('Not in executor zone'),
-      );
+      return const ZenResult.err(ZenUnknownError('Not in executor zone'));
     }
 
     logger?.add('operation: $operation');
@@ -112,10 +109,7 @@ void main() {
       });
 
       test('round-trip serialization/deserialization works', () {
-        final original = TestAggregationTask(
-          id: 'round-trip',
-          data: ['test'],
-        );
+        final original = TestAggregationTask(id: 'round-trip', data: ['test']);
 
         final payload = original.toPayload();
         final reconstructed = TestAggregationTask.fromPayload(payload);
@@ -125,10 +119,7 @@ void main() {
       });
 
       test('payload contains only JSON-serializable types', () {
-        final task = TestAggregationTask(
-          id: 'json-test',
-          data: ['valid'],
-        );
+        final task = TestAggregationTask(id: 'json-test', data: ['valid']);
 
         final payload = task.toPayload();
 
@@ -152,10 +143,7 @@ void main() {
 
         final result = await runZoned(
           () => task.execute(context),
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.logger': logger,
-          },
+          zoneValues: {'dartzen.executor': true, 'dartzen.logger': logger},
         );
 
         expect(result.isSuccess, isTrue);
@@ -219,18 +207,12 @@ void main() {
         var zoneCheckBefore = false;
         var zoneCheckAfter = false;
 
-        final result = await runZoned(
-          () async {
-            zoneCheckBefore = Zone.current['dartzen.executor'] == true;
+        final result = await runZoned(() async {
+          zoneCheckBefore = Zone.current['dartzen.executor'] == true;
           await Future<void>.delayed(Duration.zero);
-            zoneCheckAfter = Zone.current['dartzen.executor'] == true;
-            return task.execute(context);
-          },
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.logger': logger,
-          },
-        );
+          zoneCheckAfter = Zone.current['dartzen.executor'] == true;
+          return task.execute(context);
+        }, zoneValues: {'dartzen.executor': true, 'dartzen.logger': logger});
 
         expect(zoneCheckBefore, isTrue);
         expect(zoneCheckAfter, isTrue);
@@ -251,9 +233,7 @@ void main() {
           await task.execute(context);
         } catch (e) {
           // Task threw an error - executor would catch and wrap this
-          result = ZenResult.err(
-            ZenUnknownError('Task failed: $e'),
-          );
+          result = ZenResult.err(ZenUnknownError('Task failed: $e'));
         }
 
         expect(result, isNotNull);
@@ -301,10 +281,7 @@ void main() {
 
         final logger = runZoned(
           () => AggregationTask.getService<List<String>>('dartzen.logger'),
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.logger': mockLogger,
-          },
+          zoneValues: {'dartzen.executor': true, 'dartzen.logger': mockLogger},
         );
 
         expect(logger, equals(mockLogger));
@@ -336,10 +313,7 @@ void main() {
       test('properly casts to expected type', () {
         final result = runZoned(
           () => AggregationTask.getService<String>('dartzen.test'),
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.test': 'test-value',
-          },
+          zoneValues: {'dartzen.executor': true, 'dartzen.test': 'test-value'},
         );
 
         expect(result, isA<String>());
@@ -373,89 +347,84 @@ void main() {
 
         final result = await runZoned(
           () => rehydrated.execute(context),
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.logger': logger,
-          },
+          zoneValues: {'dartzen.executor': true, 'dartzen.logger': logger},
         );
 
         expect(result.isSuccess, isTrue);
         expect(logger, isNotEmpty);
       });
 
-      test('task can conditionally use services based on availability',
-          () async {
-        final task = MultiServiceTask('conditional-services');
+      test(
+        'task can conditionally use services based on availability',
+        () async {
+          final task = MultiServiceTask('conditional-services');
 
-        final context = JobContext(
-          jobId: 'conditional-job',
-          executionTime: DateTime.now(),
-          attempt: 1,
-        );
+          final context = JobContext(
+            jobId: 'conditional-job',
+            executionTime: DateTime.now(),
+            attempt: 1,
+          );
 
-        // Execute with partial services
-        final result = await runZoned(
-          () => task.execute(context),
-          zoneValues: {
-            'dartzen.executor': true,
-            'dartzen.logger': <String>[],
-            // http and ai services not provided
-          },
-        );
-
-        expect(result.isSuccess, isTrue);
-        final output = result.dataOrNull!;
-        expect(output, contains('executor=true'));
-        expect(output, contains('http=null'));
-        expect(output, contains('ai=null'));
-      });
-
-      test('multiple tasks can execute concurrently with isolated zones',
-          () async {
-        final task1 = TestAggregationTask(id: 'task1', data: ['a']);
-        final task2 = TestAggregationTask(id: 'task2', data: ['b']);
-
-        final logger1 = <String>[];
-        final logger2 = <String>[];
-
-        final context1 = JobContext(
-          jobId: 'job1',
-          executionTime: DateTime.now(),
-          attempt: 1,
-        );
-
-        final context2 = JobContext(
-          jobId: 'job2',
-          executionTime: DateTime.now(),
-          attempt: 1,
-        );
-
-        // Execute concurrently with different zone services
-        final results = await Future.wait([
-          runZoned(
-            () => task1.execute(context1),
+          // Execute with partial services
+          final result = await runZoned(
+            () => task.execute(context),
             zoneValues: {
               'dartzen.executor': true,
-              'dartzen.logger': logger1,
+              'dartzen.logger': <String>[],
+              // http and ai services not provided
             },
-          ),
-          runZoned(
-            () => task2.execute(context2),
-            zoneValues: {
-              'dartzen.executor': true,
-              'dartzen.logger': logger2,
-            },
-          ),
-        ]);
+          );
 
-        expect(results[0].isSuccess, isTrue);
-        expect(results[1].isSuccess, isTrue);
-        expect(logger1, contains('Executing task: task1'));
-        expect(logger2, contains('Executing task: task2'));
-        // Verify zone isolation - logger1 shouldn't have task2's logs
-        expect(logger1, isNot(contains('Executing task: task2')));
-        expect(logger2, isNot(contains('Executing task: task1')));
-      });
+          expect(result.isSuccess, isTrue);
+          final output = result.dataOrNull!;
+          expect(output, contains('executor=true'));
+          expect(output, contains('http=null'));
+          expect(output, contains('ai=null'));
+        },
+      );
+
+      test(
+        'multiple tasks can execute concurrently with isolated zones',
+        () async {
+          final task1 = TestAggregationTask(id: 'task1', data: ['a']);
+          final task2 = TestAggregationTask(id: 'task2', data: ['b']);
+
+          final logger1 = <String>[];
+          final logger2 = <String>[];
+
+          final context1 = JobContext(
+            jobId: 'job1',
+            executionTime: DateTime.now(),
+            attempt: 1,
+          );
+
+          final context2 = JobContext(
+            jobId: 'job2',
+            executionTime: DateTime.now(),
+            attempt: 1,
+          );
+
+          // Execute concurrently with different zone services
+          final results = await Future.wait([
+            runZoned(
+              () => task1.execute(context1),
+              zoneValues: {'dartzen.executor': true, 'dartzen.logger': logger1},
+            ),
+            runZoned(
+              () => task2.execute(context2),
+              zoneValues: {'dartzen.executor': true, 'dartzen.logger': logger2},
+            ),
+          ]);
+
+          expect(results[0].isSuccess, isTrue);
+          expect(results[1].isSuccess, isTrue);
+          expect(logger1, contains('Executing task: task1'));
+          expect(logger2, contains('Executing task: task2'));
+          // Verify zone isolation - logger1 shouldn't have task2's logs
+          expect(logger1, isNot(contains('Executing task: task2')));
+          expect(logger2, isNot(contains('Executing task: task1')));
+        },
+      );
     });
   });
 }

@@ -72,20 +72,19 @@ class CloudJobDispatcher implements JobDispatcher {
       // Job dispatch now goes through the executor pattern. For backward
       // compatibility with tests that use FakeZenJobs with trigger(), we
       // attempt to call trigger() via dynamic dispatch.
-      
+
       // Try calling trigger() on ZenJobs instance (for test compatibility)
       final zenJobs = ZenJobs.instance;
       try {
         // Dynamic call for backward compatibility with tests using FakeZenJobs
-        final result = await (zenJobs as dynamic).trigger(
-          jobId,
-          payload: payload,
-        ) as ZenResult<void>;
+        final result =
+            await (zenJobs as dynamic).trigger(jobId, payload: payload)
+                as ZenResult<void>;
         return result;
       } on NoSuchMethodError {
         // Production ZenJobs instance doesn't have trigger() method,
         // which is expected. This is handled by ZenJobsExecutor instead.
-        
+
         // Zone injection contract now implemented in dartzen_jobs.
         // This dispatcher acts as the bridge between ZenExecutor and ZenJobsExecutor.
         //
@@ -107,7 +106,7 @@ class CloudJobDispatcher implements JobDispatcher {
         //
         // See docs/execution_model.md for full zone injection specification.
         // See ZONE_INJECTION_IMPLEMENTATION_PLAN.md for implementation status.
-        
+
         return const ZenResult.ok(null);
       }
     } catch (e, st) {

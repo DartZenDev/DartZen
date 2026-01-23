@@ -59,10 +59,7 @@ class TestExecutor implements Executor {
     if (_zoneServices == null || _zoneServices.isEmpty) {
       await handler(context);
     } else {
-      await runZoned(
-        () => handler(context),
-        zoneValues: _zoneServices,
-      );
+      await runZoned(() => handler(context), zoneValues: _zoneServices);
     }
   }
 }
