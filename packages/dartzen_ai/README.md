@@ -74,14 +74,12 @@ print(response.text);
 TextGenerationAiTask(
   prompt: 'Your prompt',
   model: 'gemini-pro',
-  aiService: aiService,
 )
 
 // Embeddings
 EmbeddingsAiTask(
   texts: ['text1', 'text2'],
   model: 'textembedding-gecko',
-  aiService: aiService,
 )
 
 // Classification
@@ -89,11 +87,12 @@ ClassificationAiTask(
   text: 'Your text',
   model: 'gemini-pro',
   labels: ['positive', 'negative'],
-  aiService: aiService,
 )
 ```
 
-All tasks declare `weight: heavy` and `latency: slow` to ensure executor routes them to the jobs system.
+All tasks are payload-only and declare `weight: heavy` and `latency: slow` to
+ensure the executor routes them to the jobs system. Runtime services (e.g.
+`AIService`) are injected into the execution Zone by `ZenExecutor`.
 
 ---
 
@@ -350,46 +349,14 @@ Notes:
 ```dart
 import 'package:dartzen_ai/dartzen_ai.dart';
 import 'package:dartzen_executor/dartzen_executor.dart';
-// Internal imports for service setup (server-side DI)
-import 'package:dartzen_ai/src/server/ai_service.dart';
-import 'package:dartzen_ai/src/server/vertex_ai_client.dart';
-import 'package:dartzen_ai/src/server/ai_budget_enforcer.dart';
 
-// ============================================================================
-// SERVER-SIDE SETUP (Internal, DI Container)
-// ============================================================================
+// Create the executor (server-side)
+final executor = ZenExecutor();
 
-final config = AIServiceConfig(
-  projectId: 'my-project',
-  region: 'us-central1',
-  credentialsJson: credentialsJson,
-  budgetConfig: AIBudgetConfig(monthlyLimit: 100.0),
-);
-
-final aiService = AIService(
-  client: VertexAIClient(config: config),
-  budgetEnforcer: AIBudgetEnforcer(
-    config: config.budgetConfig,
-    usageTracker: myUsageTracker,
-  ),
-);
-
-final executor = ZenExecutor(
-  config: ZenExecutorConfig(
-    queueId: 'ai-task-queue',
-    serviceUrl: 'https://my-service.run.app',
-  ),
-);
-
-// ============================================================================
-// TASK CREATION AND EXECUTION (User Code)
-// ============================================================================
-
-// Create AI task
+// Create AI task (payload-only)
 final task = TextGenerationAiTask(
   prompt: 'Write a haiku about coding',
   model: 'gemini-pro',
-  aiService: aiService, // Injected from DI
 );
 
 // Execute via ZenExecutor (ONLY valid path)
@@ -400,6 +367,9 @@ try {
 } catch (e) {
   print('Error: $e');
 }
+
+// Note: `ZenExecutor` injects the runtime AI service into the execution Zone.
+// See `docs/execution_model.md` for the Zone-based injection contract.
 ```
 
 ---
@@ -413,9 +383,7 @@ try {
 ```dart
 class SummarizationAiTask extends ZenTask<String> {
   final String text;
-  final AIService aiService;
-
-  SummarizationAiTask({required this.text, required this.aiService});
+  SummarizationAiTask({required this.text});
 
   @override
   ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
@@ -431,7 +399,10 @@ class SummarizationAiTask extends ZenTask<String> {
       model: 'gemini-pro',
     );
 
-    final result = await aiService.textGeneration(request);
+    // Obtain the runtime AI service from the execution Zone (injected by
+    // ZenExecutor) and perform the operation. See `docs/execution_model.md`.
+    final ai = Zone.current['dartzen.ai.service'];
+    final result = await ai.textGeneration(request);
 
     return result.fold(
       (response) => response.text,
@@ -441,7 +412,7 @@ class SummarizationAiTask extends ZenTask<String> {
 }
 
 // Usage
-final task = SummarizationAiTask(text: longText, aiService: aiService);
+final task = SummarizationAiTask(text: longText);
 final summary = await executor.execute(task);
 ```
 
@@ -496,12 +467,28 @@ No raw exceptions leak across package boundaries.
 
 Optional server-side telemetry events (emitted by `AIService`, internal):
 
-- `ai.text_generation.success|failure`
+- `ai.textgeneration.success|failure`
 - `ai.embeddings.success|failure`
 - `ai.classification.success|failure`
-- `ai.budget.exceeded`
+- `ai.textgeneration.budget.exceeded`
+- `ai.embeddings.budget.exceeded`
+- `ai.classification.budget.exceeded`
 
 Telemetry is **opt-in** and explicitly wired.
+
+---
+
+## ⚙️ Limitations
+
+- **Authentication & Rotation**: Authentication and credential rotation are not
+  finalized. Do not use in production without explicit review and rotation
+  policies.
+- **Vertex AI Endpoints**: Current client uses generic path patterns that may
+  change as strongly-typed endpoints are introduced. Endpoint shapes and
+  payload contracts are subject to revision.
+- **Executor-Only**: AI operations are executor-only and Zone-injected. Tasks
+  must remain payload-only; direct service instantiation and client-side usage
+  are unsupported by design.
 
 ---
 

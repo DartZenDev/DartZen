@@ -55,6 +55,29 @@ final class RetryPolicy {
 /// This service is marked `@internal` and must NOT be used directly.
 /// All AI operations must be executed via ZenTask subclasses routed
 /// through ZenExecutor.
+///
+/// ## Telemetry Events
+///
+/// When a `TelemetryClient` is provided, the following events are emitted:
+///
+/// - `ai.textgeneration.success` — Text generation completed successfully.
+///   Payload: `{ model, tokens }`.
+/// - `ai.textgeneration.failure` — Text generation failed.
+///   Payload: `{ model, error }`.
+/// - `ai.textgeneration.budget.exceeded` — Budget check failed.
+///   Payload: `{ model }`.
+/// - `ai.embeddings.success` — Embeddings generated successfully.
+///   Payload: `{ model, count }`.
+/// - `ai.embeddings.failure` — Embeddings generation failed.
+///   Payload: `{ model, error }`.
+/// - `ai.embeddings.budget.exceeded` — Budget check failed.
+///   Payload: `{ model }`.
+/// - `ai.classification.success` — Classification completed successfully.
+///   Payload: `{ model, label }`.
+/// - `ai.classification.failure` — Classification failed.
+///   Payload: `{ model, error }`.
+/// - `ai.classification.budget.exceeded` — Budget check failed.
+///   Payload: `{ model }`.
 @internal
 final class AIService {
   /// Creates an AI service.

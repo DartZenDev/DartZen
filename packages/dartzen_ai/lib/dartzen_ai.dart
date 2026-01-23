@@ -35,22 +35,19 @@
 /// import 'package:dartzen_ai/dartzen_ai.dart';
 /// import 'package:dartzen_executor/dartzen_executor.dart';
 ///
-/// // Create AI service (server-side, internal use)
-/// final aiService = AIService(
-///   client: vertexAIClient,
-///   budgetEnforcer: budgetEnforcer,
-/// );
-///
-/// // Create task with injected service
+/// // Create payload-only task (no runtime services in constructor)
 /// final task = TextGenerationAiTask(
 ///   prompt: 'Write a haiku about coding',
 ///   model: 'gemini-pro',
-///   aiService: aiService,
 /// );
 ///
 /// // Execute via ZenExecutor (ONLY valid path)
 /// final result = await zenExecutor.execute(task);
 /// ```
+///
+/// The `ZenExecutor` injects the runtime AI service into the execution Zone.
+/// Tasks MUST remain payload-only. See `docs/execution_model.md` for the
+/// Zone-based injection contract.
 ///
 /// ## 🧠 Rationale
 ///
