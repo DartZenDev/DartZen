@@ -50,23 +50,194 @@ Every executable operation is classified by expected cost.
 
 ### Executor Zone Keys & Service Injection
 
-To support durable, serializable heavy tasks the executor provides a
-small, well-known runtime contract via Dart `Zone` values. Heavy task
-implementations must not capture runtime-only objects (for example
-instances of `AIService` or HTTP clients) inside their payload. Instead,
-the executor will inject runtime services when executing a task.
+**STATUS: ✅ IMPLEMENTED** (as of v0.0.3)
 
-Contract:
+Zone-based service injection is now fully implemented in `dartzen_jobs` and
+`dartzen_executor`. This allows heavy task implementations to access runtime
+services (like database clients and AI services) at execution time without
+capturing them in serializable payloads.
 
-- `Zone.current['dartzen.executor'] == true` — marks code running inside the executor.
-- `Zone.current['dartzen.ai.service']` — when present it holds the `AIService`
-  instance that tasks may use at execution time.
+#### Implementation Summary
 
-This design ensures that task payloads remain pure and serializable, and
-that executor-workers (local isolates or Cloud Run instances) provide the
-runtime dependencies just-in-time. Task authors should implement `toPayload()`
-and `fromPayload()` for job rehydration and must fetch runtime services from
-the Zone (or via executor-provided hooks) when executing.
+**Architecture**: Services are injected into Dart `Zone` values when executing
+tasks. Tasks access services via `Zone.current[key]` or the `AggregationTask`
+helper methods.
+
+**Benefits**:
+
+- Task payloads remain pure and serializable (only JSON-safe data)
+- Runtime services (HTTP clients, DB connections, AI clients) injected at execution time
+- Clean separation: data in payload, services in zone
+- Testability: inject mocks via zones for unit testing
+- No risk of accidentally capturing non-serializable objects in payloads
+
+#### Usage Contract
+
+**For Task Implementations**:
+
+```dart
+// 1. Define a task with serializable data only
+class UserAggregationTask extends AggregationTask<Map<String, dynamic>> {
+  final List<String> userIds;      // ✓ Serializable
+  final DateTime dateRange;        // ✓ Serializable
+  // ✗ Do NOT capture: FirestoreClient, Logger, HttpClient, etc.
+
+  @override
+  Map<String, dynamic> toPayload() => {
+    'userIds': userIds,
+    'dateRange': dateRange.toIso8601String(),
+  };
+
+  @override
+  Future<ZenResult<Map<String, dynamic>>> execute(JobContext context) async {
+    // 2. Check we're in executor zone
+    if (!AggregationTask.isInExecutorZone) {
+      return ZenResult.err(ZenValidationError('Must run in executor zone'));
+    }
+
+    // 3. Get services from zone
+    final db = AggregationTask.getService<FirestoreClient>('database');
+    final logger = AggregationTask.getService<Logger>('logger');
+
+    // 4. Use services normally
+    logger?.info('Processing ${userIds.length} users');
+    final results = await db.queryUsers(userIds);
+
+    return ZenResult.ok({'count': results.length});
+  }
+}
+```
+
+**For Executor Configuration**:
+
+```dart
+// Initialize executor with zone services
+final executor = ZenJobsExecutor.development(
+  zoneServices: {
+    'dartzen.executor': true,        // Required marker for isInExecutorZone
+    'database': firestoreClient,     // Your service instances
+    'logger': loggerInstance,
+    'http.client': httpClient,
+    'ai.service': aiServiceClient,
+  },
+);
+
+// Register job and handler
+const descriptor = JobDescriptor(id: 'user_agg', type: JobType.endpoint);
+executor.register(descriptor);
+executor.registerHandler(descriptor.id, (context) async {
+  final payload = context.payload!;
+  final task = UserAggregationTask.fromPayload(payload);
+  await task.execute(context);
+});
+
+// Execute - services are automatically injected in zone
+await executor.schedule(descriptor, payload: task.toPayload());
+```
+
+#### Key Properties
+
+**Zone Markers**:
+
+- `Zone.current['dartzen.executor'] == true` — marks executor context
+- Services available via any key: `'database'`, `'logger'`, `'myService'`, etc.
+- Services are **isolated per zone** — concurrent tasks have separate service instances
+
+**Safety Guarantees**:
+
+- Services are NOT serialized with task payloads
+- Outside executor zone, `getService()` returns `null` (fail-safe)
+- Async operations preserve zone context through `runZoned()`
+- Nested zones inherit parent services (customizable)
+
+**Supported Patterns**:
+
+1. **Simple Zone Access** (in any async context):
+
+   ```dart
+   final service = AggregationTask.getService<MyService>('myService');
+   ```
+
+2. **Zone Configuration** (for manual setup):
+
+   ```dart
+   await ZoneConfiguration.runWithServices(
+     services: {'myService': instance},
+     callback: () => doWork(),
+   );
+   ```
+
+3. **Direct runZoned** (Dart standard):
+   ```dart
+   await runZoned(
+     () async { /* work */ },
+     zoneValues: {'key': value},
+   );
+   ```
+
+#### Testing with Zone Services
+
+```dart
+test('aggregation task accesses zone services', () async {
+  final mockDb = MockDatabase();
+  final mockLogger = MockLogger();
+
+  final task = UserAggregationTask(userIds: ['id1', 'id2']);
+  final context = JobContext(
+    jobId: 'test',
+    executionTime: DateTime.now(),
+    attempt: 1,
+    payload: task.toPayload(),
+  );
+
+  late ZenResult<Map<String, dynamic>> result;
+  await runZoned(
+    () async {
+      result = await task.execute(context);
+    },
+    zoneValues: {
+      'dartzen.executor': true,
+      'database': mockDb,
+      'logger': mockLogger,
+    },
+  );
+
+  expect(result.isSuccess, isTrue);
+  expect(mockDb.queryCalled, isTrue);
+});
+```
+
+#### Implementation Details
+
+**Location**: `packages/dartzen_jobs/lib/src/models/aggregation_task.dart`
+**Base Class**: `AggregationTask<T>` abstract class
+**Helper Methods**:
+
+- `static bool get isInExecutorZone` — checks `Zone.current['dartzen.executor']`
+- `static S? getService<S>(String key)` — safely gets service or null
+
+**Integration Points**:
+
+- `ZenJobsExecutor` injects zones when creating test/local executors
+- `LocalExecutor` propagates zones to `JobRunner`
+- `JobRunner` wraps handler execution with `runZoned()`
+- `TestExecutor` uses `runZoned()` for zone support in tests
+
+#### Examples
+
+See complete working examples:
+
+- [Runnable Example](../packages/dartzen_jobs/example/lib/aggregation_example.dart) — Working `UserStatsAggregationTask`
+- [Comprehensive Example](../packages/dartzen_jobs/example/lib/user_behavior_aggregation_example.dart) — Reference implementation
+- [Integration Tests](../packages/dartzen_jobs/test/zone_integration_test.dart) — Full test suite
+
+#### Related Documentation
+
+- **AggregationTask API**: See `dartzen_jobs` package documentation
+- **ZoneConfiguration API**: See `dartzen_executor` package documentation
+- **Examples**: See `packages/dartzen_jobs/example/README.md`
+
+## Task Classification
 
 ### Light Tasks
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../errors.dart';
 import '../handler_registry.dart';
 import '../models/job_context.dart';
@@ -9,8 +11,17 @@ import 'executor.dart';
 /// `TestExecutor` invokes registered handlers synchronously and does not
 /// perform persistence or retry logic. It is useful for examples and tests
 /// where a full production executor is not required.
+///
+/// Supports optional zone service injection for testing zone-aware tasks.
 class TestExecutor implements Executor {
+  final Map<String, dynamic>? _zoneServices;
   var _running = false;
+
+  /// Creates a [TestExecutor].
+  ///
+  /// [zoneServices] optional map of services to inject into execution zones.
+  TestExecutor({Map<String, dynamic>? zoneServices})
+    : _zoneServices = zoneServices;
 
   @override
   Future<void> start() async {
@@ -44,6 +55,11 @@ class TestExecutor implements Executor {
       payload: payload,
     );
 
-    await handler(context);
+    // Execute handler with zone services if configured
+    if (_zoneServices == null || _zoneServices.isEmpty) {
+      await handler(context);
+    } else {
+      await runZoned(() => handler(context), zoneValues: _zoneServices);
+    }
   }
 }

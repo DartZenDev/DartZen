@@ -98,7 +98,7 @@ class ZenExecutor {
   Future<ZenResult<T>> execute<T>(
     ZenTask<T> task, {
     ExecutionOverrides? overrides,
-  }) async {
+  }) async => await runZoned(() async {
     final metadata = task.metadata;
 
     ZenLogger.instance.info(
@@ -140,7 +140,7 @@ class ZenExecutor {
         ),
       );
     }
-  }
+  }, zoneValues: const {'dartzen.executor': true});
 
   /// Executes a light task inline in the event loop.
   ///
@@ -176,7 +176,12 @@ class ZenExecutor {
 
     try {
       final result =
-          await Isolate.run<T>(() async => await task.invokeInternal()).timeout(
+          await Isolate.run<T>(
+            () async => runZoned(
+              () async => await task.invokeInternal(),
+              zoneValues: const {#dartzenExecutor: true},
+            ),
+          ).timeout(
             mediumPolicy.timeout,
             onTimeout: () {
               throw TimeoutException(
@@ -252,6 +257,11 @@ class ZenExecutor {
     // Determine destination: explicit override or constructor config
     final queueId = overrides?.queueId ?? config.queueId;
     final serviceUrl = overrides?.serviceUrl ?? config.serviceUrl;
+
+    // INVARIANT: queueId/serviceUrl MUST match ZenJobs runtime configuration.
+    // ZenJobs.instance is initialized once with queue/service at startup.
+    // Executor config acts as documentation; actual routing via ZenJobs global.
+    // Future: Per-call destination routing requires ZenJobs API enhancement.
 
     ZenLogger.instance.info(
       'Dispatching heavy task via injected dispatcher: ${task.metadata.id}',

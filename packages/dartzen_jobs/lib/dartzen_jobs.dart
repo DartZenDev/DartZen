@@ -31,6 +31,7 @@ library;
 
 export 'src/errors.dart';
 export 'src/handler_registry.dart';
+export 'src/models/aggregation_task.dart';
 export 'src/models/job_config.dart';
 export 'src/models/job_context.dart';
 export 'src/models/job_definition.dart';

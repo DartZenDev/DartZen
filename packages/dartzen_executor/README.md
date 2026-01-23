@@ -208,6 +208,204 @@ Heavy tasks produce a fixed envelope:
 - **Weight is absolute**: Task weight enforces routing; no fallback.
 - **Medium timeout is hard failure**: Exceeding timeout indicates misclassification, not transience.
 
+## 🛡️ Runtime Guard (Zone)
+
+`ZenExecutor.execute()` runs tasks inside a Zone with `#dartzenExecutor` marker.
+
+**This is an opt-in validation mechanism, not mandatory enforcement.**
+
+- The executor automatically marks its execution context via Zone.
+- Tasks can override `validateExecutorContext()` to enforce executor-only invocation.
+- By default, tasks trust the executor's public API design for routing.
+
+### Default Behavior (No Guard)
+
+Most tasks don't need explicit validation:
+
+```dart
+class MyTask extends ZenTask<String> {
+  @override
+  TaskDescriptor get descriptor => TaskDescriptor(
+    taskType: 'MyTask',
+    weight: TaskWeight.light,
+  );
+
+  @override
+  Future<String> execute() async => 'result';
+  // No validateExecutorContext override = no zone check
+}
+
+// ✅ This works normally
+final result = await executor.execute(myTask);
+```
+
+### Opt-In Guard (For Strict Isolation)
+
+Tasks requiring service injection or strict context control can enforce validation:
+
+```dart
+class SecureAiTask extends ZenTask<String> {
+  @override
+  TaskDescriptor get descriptor => TaskDescriptor(
+    taskType: 'SecureAiTask',
+    weight: TaskWeight.heavy,
+  );
+
+  @override
+  void validateExecutorContext() {
+    if (Zone.current[#dartzenExecutor] != true) {
+      throw StateError('SecureAiTask requires executor context');
+    }
+  }
+
+  @override
+  Future<String> execute() async => 'AI result with services';
+}
+```
+
+**Architecture Note:** The zone marker enables future extensions like distributed
+tracing, service injection, and observability hooks. Most tasks rely on the
+executor's public API design for routing enforcement.
+
+Zone values can also carry runtime services (e.g., AI clients) injected by the executor or server workers, avoiding non-serializable captures in payloads.
+
+## ⚙️ Heavy Task Configuration Invariant
+
+**CRITICAL REQUIREMENT:** `ZenExecutor` config (`queueId`, `serviceUrl`) **MUST**
+match the `ZenJobs.instance` configuration at runtime.
+
+### Why This Matters
+
+`ZenJobs` is initialized once at app startup with queue/service configuration.
+The executor's config parameters **document the intended destination** but are
+**NOT enforced** at dispatch time (no runtime validation).
+
+**Violating this invariant** (executor config ≠ ZenJobs config) causes jobs to
+route to the wrong queue/service, visible only in production.
+
+### Enforcement Strategy
+
+**Current approach:** Document invariant + fail-fast at integration test level.
+
+```dart
+// ✅ CORRECT: Executor config matches ZenJobs init
+await ZenJobs.instance.init(
+  queueId: 'my-queue',
+  serviceUrl: 'https://worker.run.app',
+);
+
+final executor = ZenExecutor(
+  config: ZenExecutorConfig(
+    queueId: 'my-queue',  // MUST match ZenJobs
+    serviceUrl: 'https://worker.run.app',  // MUST match ZenJobs
+  ),
+  dispatcher: const CloudJobDispatcher(),
+);
+
+// ❌ WRONG: Mismatched config (silent production failure)
+await ZenJobs.instance.init(
+  queueId: 'queue-a',
+  serviceUrl: 'https://worker-a.run.app',
+);
+
+final executor = ZenExecutor(
+  config: ZenExecutorConfig(
+    queueId: 'queue-b',  // ⚠️ Mismatch! Jobs go to queue-a, not queue-b
+    serviceUrl: 'https://worker-b.run.app',
+  ),
+  dispatcher: const CloudJobDispatcher(),
+);
+```
+
+### Future Enhancement Options
+
+1. **Runtime validation:** Add `ZenJobs.getConfig()` API + assert match in dispatcher
+2. **Per-call routing:** Enhance `ZenJobs.trigger(queue, service, ...)` to accept destination
+
+## 🔄 Heavy Task Rehydration (Minimal Contract)
+
+Heavy tasks are serialized to `JobEnvelope` and dispatched to Cloud Tasks.
+Job workers receive the envelope, rehydrate the task, and execute it.
+
+**⚠️ CRITICAL: `fromPayload()` must be pure.**
+
+- No side effects
+- No network calls or database access
+- No async operations
+- Only reconstruct state from JSON
+
+Violating this causes unpredictable failures in job workers.
+
+### Recommended Pattern
+
+1. Add a static `fromPayload(Map<String,dynamic>)` on the task class
+2. Register it in `TaskFactoryRegistry` at worker startup
+3. Use the internal `rehydrateAndExecute()` helper in your Cloud Run handler
+
+```dart
+import 'package:dartzen_executor/src/models/task.dart';
+import 'package:dartzen_executor/src/models/task_rehydration.dart';
+import 'package:dartzen_executor/src/models/task_worker.dart';
+import 'package:dartzen_executor/src/models/job_envelope.dart';
+
+// 1. Define heavy task with pure fromPayload
+class DataProcessingTask extends ZenTask<Map<String, dynamic>> {
+  DataProcessingTask({required this.data});
+  final List<int> data;
+
+  @override
+  ZenTaskDescriptor get descriptor => const ZenTaskDescriptor(
+    weight: TaskWeight.heavy,
+  );
+
+  @override
+  Future<Map<String, dynamic>> execute() async {
+    final sum = data.reduce((a, b) => a + b);
+    return {
+      'count': data.length,
+      'sum': sum,
+      'average': sum / data.length,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toPayload() => {'data': data};
+
+  // ✅ Pure factory: no side effects, no async
+  static ZenTask<Map<String, dynamic>> fromPayload(Map<String, dynamic> json) =>
+      DataProcessingTask(data: List<int>.from(json['data'] as List));
+}
+
+// 2. Register factory at worker startup
+void initWorker() {
+  TaskFactoryRegistry.register<Map<String, dynamic>>(
+    'DataProcessingTask',
+    DataProcessingTask.fromPayload,
+  );
+}
+
+// 3. Use worker helper in Cloud Run handler
+@CloudFunction()
+Future<Response> handleHeavyTask(Request request) async {
+  final json = await request.readAsString();
+  final envelope = JobEnvelope.fromJson(jsonDecode(json));
+
+  // Internal helper: rehydrate + execute
+  final result = await rehydrateAndExecute(envelope);
+
+  return result.fold(
+    (value) => Response.ok(jsonEncode(value)),
+    (error) => Response.internalServerError(body: error.message),
+  );
+}
+```
+
+### End-to-End Flow
+
+1. **Executor side:** Task → `JobEnvelope.fromTask()` → JSON → Cloud Tasks
+2. **Transport:** HTTP request body contains serialized envelope
+3. **Worker side:** JSON → `JobEnvelope.fromJson()` → `rehydrateAndExecute()` → Result
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

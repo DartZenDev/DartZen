@@ -57,6 +57,20 @@ class _FakeJobStore implements JobStore {
   @override
   Future<ZenResult<List<JobConfig>>> getEnabledPeriodicJobs() =>
       Future.value(const ZenResult.ok([]));
+
+  @override
+  Future<ZenResult<void>> setTaskPayload(
+    String jobId,
+    Map<String, dynamic> payload,
+  ) async => const ZenResult.ok(null);
+
+  @override
+  Future<ZenResult<Map<String, dynamic>?>> getTaskPayload(String jobId) async =>
+      const ZenResult.ok(null);
+
+  @override
+  Future<ZenResult<void>> clearTaskPayload(String jobId) async =>
+      const ZenResult.ok(null);
 }
 
 void main() {
