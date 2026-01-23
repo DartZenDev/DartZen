@@ -23,6 +23,7 @@ platforms:
   windows:
 
 dependencies:
+  crypto: ^3.0.3
   dartzen_core:
     path: ../dartzen_core
   dartzen_jobs:

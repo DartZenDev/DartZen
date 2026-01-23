@@ -52,10 +52,21 @@ class CloudJobDispatcher implements JobDispatcher {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      // Note: In current ZenJobs API, queueId and serviceUrl are configured
-      // at initialization time, not per-call. This dispatcher validates that
-      // the requested destination matches the executor's configuration.
-      // In a future refactor, ZenJobs should support per-call destination.
+      // INVARIANT: queueId/serviceUrl MUST match ZenJobs.instance config.
+      //
+      // ZenJobs is initialized once at app startup with queue/service.
+      // These parameters document the intended destination but are NOT
+      // enforced at dispatch time (no runtime validation).
+      //
+      // Violating this invariant (executor config != ZenJobs config) causes
+      // jobs to route to the wrong queue/service, visible only in prod.
+      //
+      // ENFORCEMENT OPTIONS:
+      // 1. Document invariant (current): Fast, explicit in code/README
+      // 2. Runtime validation: Add ZenJobs.getConfig() API + assert match
+      // 3. Per-call routing: Enhance ZenJobs.trigger(queue, service, ...)
+      //
+      // Current choice: (1) - Fail-fast at integration test, explicit docs.
 
       final result = await ZenJobs.instance.trigger(jobId, payload: payload);
 

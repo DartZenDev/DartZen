@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
 
 /// The computational weight classification for a task.
@@ -138,8 +142,10 @@ class TaskMetadata {
     // Generate deterministic ID from task type and payload
     final taskType = task.runtimeType.toString();
     final payload = task.toPayload();
-    final payloadHash = payload.toString().hashCode.abs();
-    final autoId = '${taskType}_$payloadHash';
+    // Deterministic, canonical hash based on JSON with sorted keys
+    final canonical = _canonicalJson(payload);
+    final digest = sha256.convert(utf8.encode(canonical)).toString();
+    final autoId = '${taskType}_$digest';
 
     return TaskMetadata(
       weight: descriptor.weight,
@@ -166,6 +172,28 @@ class TaskMetadata {
     'weight': weight.name,
     'schemaVersion': schemaVersion,
   };
+}
+
+// Produces a canonical JSON string by sorting map keys recursively.
+// This ensures stable hashing across VM runs and platforms.
+String _canonicalJson(Map<String, dynamic> map) {
+  dynamic canonicalize(dynamic value) {
+    if (value is Map) {
+      final sortedKeys = value.keys.map((k) => k.toString()).toList()..sort();
+      final out = <String, dynamic>{};
+      for (final key in sortedKeys) {
+        out[key] = canonicalize(value[key]);
+      }
+      return out;
+    } else if (value is List) {
+      return value.map(canonicalize).toList();
+    } else {
+      return value;
+    }
+  }
+
+  final canonical = canonicalize(map) as Map<String, dynamic>;
+  return jsonEncode(canonical);
 }
 
 /// Abstract base class for all executable tasks.
@@ -229,13 +257,28 @@ abstract class ZenTask<T> {
   @protected
   Future<T> execute();
 
+  /// Optional runtime guard check. Override to enforce executor-only context.
+  ///
+  /// By default, this is a no-op. Tasks that require strict isolation
+  /// (e.g., AI tasks with service injection) can override to validate Zone.
+  @protected
+  void validateExecutorContext() {
+    // No-op by default; tasks can override if needed
+  }
+
   /// Entry point used by `ZenExecutor` to invoke a task deterministically.
   ///
   /// This preserves the protected intent of [execute] for application code
   /// while giving the executor a stable hook. Application code should not
   /// call this directly; use `ZenExecutor.execute(...)` instead.
+  ///
+  /// **Runtime Guard**: Tasks can optionally validate executor context via
+  /// [validateExecutorContext]. The executor sets Zone marker `#dartzenExecutor`.
   @internal
-  Future<T> invokeInternal() => execute();
+  Future<T> invokeInternal() {
+    validateExecutorContext();
+    return execute();
+  }
 
   /// Converts the task's payload to a JSON-serializable map.
   ///

@@ -51,6 +51,15 @@ class JobEnvelope {
     payload: task.toPayload(),
   );
 
+  /// Creates a job envelope from a JSON map.
+  ///
+  /// Used by job workers to deserialize HTTP request payloads.
+  factory JobEnvelope.fromJson(Map<String, dynamic> json) => JobEnvelope(
+    taskType: json['taskType'] as String,
+    metadata: json['metadata'] as Map<String, dynamic>,
+    payload: json['payload'] as Map<String, dynamic>,
+  );
+
   /// The fully-qualified task type name for deserialization.
   final String taskType;
 
