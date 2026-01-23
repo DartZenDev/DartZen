@@ -81,10 +81,15 @@ void main() {
       final expectedClass = 'dartzen:ai:usage:classification:$suffix';
 
       final keys = cache.setCalls.map((c) => c.key).toList();
-      expect(keys, containsAll([expectedGlobal, expectedText, expectedEmb, expectedClass]));
+      expect(
+        keys,
+        containsAll([expectedGlobal, expectedText, expectedEmb, expectedClass]),
+      );
 
       // Ensure the reset writes zeros and does not provide TTL
-      final zeroCalls = cache.setCalls.where((c) => (c.value as double) == 0.0).toList();
+      final zeroCalls = cache.setCalls
+          .where((c) => (c.value as double) == 0.0)
+          .toList();
       expect(zeroCalls.length, greaterThanOrEqualTo(4));
       for (final c in zeroCalls) {
         expect(c.ttl, isNull, reason: 'reset should call set without ttl');
@@ -93,33 +98,36 @@ void main() {
       await store.close();
     });
 
-    test('flush swallows cache.set errors and in-memory counters still update', () async {
-      // make the cache throw for the global key only
-      final now = DateTime.now().toUtc();
-      final suffix = '${now.year}-${now.month.toString().padLeft(2, '0')}';
-      final badGlobal = 'dartzen:ai:usage:global:$suffix';
+    test(
+      'flush swallows cache.set errors and in-memory counters still update',
+      () async {
+        // make the cache throw for the global key only
+        final now = DateTime.now().toUtc();
+        final suffix = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+        final badGlobal = 'dartzen:ai:usage:global:$suffix';
 
-      final cache = ThrowingCache({badGlobal});
-      final store = CacheAIUsageStore.withClient(
-        cache,
-        flushInterval: const Duration(hours: 1),
-      );
+        final cache = ThrowingCache({badGlobal});
+        final store = CacheAIUsageStore.withClient(
+          cache,
+          flushInterval: const Duration(hours: 1),
+        );
 
-      // Should not throw despite underlying cache.set throwing
-      store.recordUsage('textGeneration', 2.5);
+        // Should not throw despite underlying cache.set throwing
+        store.recordUsage('textGeneration', 2.5);
 
-      // allow async flush
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+        // allow async flush
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      // in-memory values must have been updated
-      expect(store.getMethodUsage('textGeneration'), equals(2.5));
-      expect(store.getGlobalUsage(), equals(2.5));
+        // in-memory values must have been updated
+        expect(store.getMethodUsage('textGeneration'), equals(2.5));
+        expect(store.getGlobalUsage(), equals(2.5));
 
-      // The cache may have swallowed the global error before setting method
-      // keys; the important invariant is that in-memory counters were updated
-      // and no exception propagated.
+        // The cache may have swallowed the global error before setting method
+        // keys; the important invariant is that in-memory counters were updated
+        // and no exception propagated.
 
-      await store.close();
-    });
+        await store.close();
+      },
+    );
   });
 }

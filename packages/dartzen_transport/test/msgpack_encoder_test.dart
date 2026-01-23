@@ -74,25 +74,29 @@ void main() {
     expect(b32.length, greaterThan(4));
   });
 
-  test('encode binary is currently encoded as arrays (Uint8List implements List)', () {
-    final small = Uint8List.fromList([1, 2, 3]);
-    final bs = encodeValue(small);
-    // Encoded as a fixarray of 3 elements
-    expect(bs[0], equals(0x90 | 3));
+  test(
+    'encode binary is currently encoded as arrays (Uint8List implements List)',
+    () {
+      final small = Uint8List.fromList([1, 2, 3]);
+      final bs = encodeValue(small);
+      // Encoded as a fixarray of 3 elements
+      expect(bs[0], equals(0x90 | 3));
 
-    final big = Uint8List(300);
-    final bb = encodeValue(big);
-    // Encoded as array16 (0xdc) + 2-byte length
-    expect(bb[0], equals(0xdc));
-    expect(bb[1], equals((300 >> 8) & 0xff));
-    expect(bb[2], equals(300 & 0xff));
+      final big = Uint8List(300);
+      final bb = encodeValue(big);
+      // Encoded as array16 (0xdc) + 2-byte length
+      expect(bb[0], equals(0xdc));
+      expect(bb[1], equals((300 >> 8) & 0xff));
+      expect(bb[2], equals(300 & 0xff));
 
-    final huge = Uint8List(70000);
-    final bh = encodeValue(huge);
-    // Encoded as array32
-    expect(bh[0], equals(0xdd));
-    expect(bh.length, greaterThan(4));
-  }, testOn: 'vm');
+      final huge = Uint8List(70000);
+      final bh = encodeValue(huge);
+      // Encoded as array32
+      expect(bh[0], equals(0xdd));
+      expect(bh.length, greaterThan(4));
+    },
+    testOn: 'vm',
+  );
 
   test('encode list uses fixarray and array16', () {
     final smallList = [1, 2];

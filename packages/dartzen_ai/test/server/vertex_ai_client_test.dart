@@ -398,9 +398,7 @@ void main() {
             headers: any(named: 'headers'),
             body: any(named: 'body'),
           ),
-        ).thenAnswer(
-          (_) async => http.Response('Unauthorized', 401),
-        );
+        ).thenAnswer((_) async => http.Response('Unauthorized', 401));
 
         const request = TextGenerationRequest(
           prompt: 'test',
@@ -420,9 +418,7 @@ void main() {
             headers: any(named: 'headers'),
             body: any(named: 'body'),
           ),
-        ).thenAnswer(
-          (_) async => http.Response('Forbidden', 403),
-        );
+        ).thenAnswer((_) async => http.Response('Forbidden', 403));
 
         const request = TextGenerationRequest(
           prompt: 'test',
@@ -442,9 +438,7 @@ void main() {
             headers: any(named: 'headers'),
             body: any(named: 'body'),
           ),
-        ).thenAnswer(
-          (_) async => http.Response('Quota exceeded', 429),
-        );
+        ).thenAnswer((_) async => http.Response('Quota exceeded', 429));
 
         const request = TextGenerationRequest(
           prompt: 'test',
@@ -457,36 +451,38 @@ void main() {
         expect(result.errorOrNull, isA<AIQuotaExceededError>());
       });
 
-      test('maps 429 with numeric Retry-After to AIServiceUnavailableError',
-          () async {
-        when(
-          () => mockHttp.post(
-            any(),
-            headers: any(named: 'headers'),
-            body: any(named: 'body'),
-          ),
-        ).thenAnswer(
-          (_) async => http.Response(
-            'Quota exceeded',
-            429,
-            headers: {'retry-after': '120'},
-          ),
-        );
+      test(
+        'maps 429 with numeric Retry-After to AIServiceUnavailableError',
+        () async {
+          when(
+            () => mockHttp.post(
+              any(),
+              headers: any(named: 'headers'),
+              body: any(named: 'body'),
+            ),
+          ).thenAnswer(
+            (_) async => http.Response(
+              'Quota exceeded',
+              429,
+              headers: {'retry-after': '120'},
+            ),
+          );
 
-        const request = TextGenerationRequest(
-          prompt: 'test',
-          model: 'gemini-pro',
-        );
+          const request = TextGenerationRequest(
+            prompt: 'test',
+            model: 'gemini-pro',
+          );
 
-        final result = await client.generateText(request);
+          final result = await client.generateText(request);
 
-        expect(result.isFailure, true);
-        expect(result.errorOrNull, isA<AIServiceUnavailableError>());
+          expect(result.isFailure, true);
+          expect(result.errorOrNull, isA<AIServiceUnavailableError>());
 
-        final error = result.errorOrNull as AIServiceUnavailableError;
-        expect(error.retryAfter, isNotNull);
-        expect(error.retryAfter!.inSeconds, equals(120));
-      });
+          final error = result.errorOrNull as AIServiceUnavailableError;
+          expect(error.retryAfter, isNotNull);
+          expect(error.retryAfter!.inSeconds, equals(120));
+        },
+      );
 
       test('maps 503 with Retry-After to AIServiceUnavailableError', () async {
         when(
@@ -518,32 +514,34 @@ void main() {
         expect(error.retryAfter!.inSeconds, greaterThanOrEqualTo(2));
       });
 
-      test('maps 500 without Retry-After to AIServiceUnavailableError with default',
-          () async {
-        when(
-          () => mockHttp.post(
-            any(),
-            headers: any(named: 'headers'),
-            body: any(named: 'body'),
-          ),
-        ).thenAnswer(
-          (_) async => http.Response('Internal server error', 500),
-        );
+      test(
+        'maps 500 without Retry-After to AIServiceUnavailableError with default',
+        () async {
+          when(
+            () => mockHttp.post(
+              any(),
+              headers: any(named: 'headers'),
+              body: any(named: 'body'),
+            ),
+          ).thenAnswer(
+            (_) async => http.Response('Internal server error', 500),
+          );
 
-        const request = TextGenerationRequest(
-          prompt: 'test',
-          model: 'gemini-pro',
-        );
+          const request = TextGenerationRequest(
+            prompt: 'test',
+            model: 'gemini-pro',
+          );
 
-        final result = await client.generateText(request);
+          final result = await client.generateText(request);
 
-        expect(result.isFailure, true);
-        expect(result.errorOrNull, isA<AIServiceUnavailableError>());
+          expect(result.isFailure, true);
+          expect(result.errorOrNull, isA<AIServiceUnavailableError>());
 
-        final error = result.errorOrNull as AIServiceUnavailableError;
-        expect(error.retryAfter, isNotNull);
-        expect(error.retryAfter!.inSeconds, equals(2)); // default
-      });
+          final error = result.errorOrNull as AIServiceUnavailableError;
+          expect(error.retryAfter, isNotNull);
+          expect(error.retryAfter!.inSeconds, equals(2)); // default
+        },
+      );
 
       test('maps 400 to AIInvalidRequestError', () async {
         when(
@@ -552,9 +550,7 @@ void main() {
             headers: any(named: 'headers'),
             body: any(named: 'body'),
           ),
-        ).thenAnswer(
-          (_) async => http.Response('Bad request', 400),
-        );
+        ).thenAnswer((_) async => http.Response('Bad request', 400));
 
         const request = TextGenerationRequest(
           prompt: 'test',
@@ -570,7 +566,9 @@ void main() {
 
     group('parseRetryAfter', () {
       test('parses ISO-8601 date string in future', () async {
-        final futureDate = DateTime.now().toUtc().add(const Duration(seconds: 90));
+        final futureDate = DateTime.now().toUtc().add(
+          const Duration(seconds: 90),
+        );
 
         when(
           () => mockHttp.post(
@@ -628,7 +626,9 @@ void main() {
       });
 
       test('handles past date in Retry-After as zero duration', () async {
-        final pastDate = DateTime.now().toUtc().subtract(const Duration(seconds: 60));
+        final pastDate = DateTime.now().toUtc().subtract(
+          const Duration(seconds: 60),
+        );
 
         when(
           () => mockHttp.post(

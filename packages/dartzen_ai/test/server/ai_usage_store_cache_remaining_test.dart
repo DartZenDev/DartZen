@@ -102,7 +102,11 @@ void main() {
 
       expect(store.getMethodUsage('embeddings'), equals(1.25));
       expect(store.getGlobalUsage(), equals(1.25));
-      expect(cache.setKeys, isEmpty, reason: 'No cache.set should be attempted after close');
+      expect(
+        cache.setKeys,
+        isEmpty,
+        reason: 'No cache.set should be attempted after close',
+      );
 
       // ensure tidy shutdown (no-op but safe)
       await store.close();

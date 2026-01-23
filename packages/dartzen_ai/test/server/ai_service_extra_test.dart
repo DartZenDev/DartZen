@@ -19,7 +19,11 @@ class _SeqResponseClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final bytes = utf8.encode(_responseBody);
-    return http.StreamedResponse(Stream.value(bytes), _status, headers: {'content-type': 'application/json'});
+    return http.StreamedResponse(
+      Stream.value(bytes),
+      _status,
+      headers: {'content-type': 'application/json'},
+    );
   }
 
   @override
@@ -33,28 +37,56 @@ class InMemoryTelemetryStore implements TelemetryStore {
   Future<void> addEvent(TelemetryEvent event) async => events.add(event);
 
   @override
-  Future<List<TelemetryEvent>> queryEvents({String? userId, String? sessionId, String? correlationId, String? scope, DateTime? from, DateTime? to, int? limit}) async => List<TelemetryEvent>.from(events);
+  Future<List<TelemetryEvent>> queryEvents({
+    String? userId,
+    String? sessionId,
+    String? correlationId,
+    String? scope,
+    DateTime? from,
+    DateTime? to,
+    int? limit,
+  }) async => List<TelemetryEvent>.from(events);
 }
 
 void main() {
   group('AIService additional branches', () {
     test('embeddings success records usage and emits telemetry', () async {
       final resp = jsonEncode({
-        'embeddings': [ [0.1, 0.2], [0.3, 0.4] ],
+        'embeddings': [
+          [0.1, 0.2],
+          [0.3, 0.4],
+        ],
         'requestId': 'r-emb',
-        'usage': {'inputTokens': 5, 'outputTokens': 0}
+        'usage': {'inputTokens': 5, 'outputTokens': 0},
       });
 
-      final client = VertexAIClient(config: AIServiceConfig.dev(), httpClient: _SeqResponseClient(resp, 200));
+      final client = VertexAIClient(
+        config: AIServiceConfig.dev(),
+        httpClient: _SeqResponseClient(resp, 200),
+      );
       final tracker = AIUsageTracker();
-      final enforcer = AIBudgetEnforcer(config: const AIBudgetConfig.unlimited(), usageTracker: tracker);
+      final enforcer = AIBudgetEnforcer(
+        config: const AIBudgetConfig.unlimited(),
+        usageTracker: tracker,
+      );
 
       final store = InMemoryTelemetryStore();
       final telemetry = TelemetryClient(store);
 
-      final svc = AIService(client: client, budgetEnforcer: enforcer, telemetryClient: telemetry, retryPolicy: const RetryPolicy(baseDelayMs: 1, maxDelayMs: 1, jitterFactor: 0.0));
+      final svc = AIService(
+        client: client,
+        budgetEnforcer: enforcer,
+        telemetryClient: telemetry,
+        retryPolicy: const RetryPolicy(
+          baseDelayMs: 1,
+          maxDelayMs: 1,
+          jitterFactor: 0.0,
+        ),
+      );
 
-      final res = await svc.embeddings(const EmbeddingsRequest(texts: ['a', 'b'], model: 'm-emb'));
+      final res = await svc.embeddings(
+        const EmbeddingsRequest(texts: ['a', 'b'], model: 'm-emb'),
+      );
 
       expect(res.isSuccess, isTrue);
 
@@ -70,19 +102,36 @@ void main() {
         'label': 'positive',
         'confidence': 0.92,
         'requestId': 'r-cls',
-        'usage': {'inputTokens': 2, 'outputTokens': 0}
+        'usage': {'inputTokens': 2, 'outputTokens': 0},
       });
 
-      final client = VertexAIClient(config: AIServiceConfig.dev(), httpClient: _SeqResponseClient(resp, 200));
+      final client = VertexAIClient(
+        config: AIServiceConfig.dev(),
+        httpClient: _SeqResponseClient(resp, 200),
+      );
       final tracker = AIUsageTracker();
-      final enforcer = AIBudgetEnforcer(config: const AIBudgetConfig.unlimited(), usageTracker: tracker);
+      final enforcer = AIBudgetEnforcer(
+        config: const AIBudgetConfig.unlimited(),
+        usageTracker: tracker,
+      );
 
       final store = InMemoryTelemetryStore();
       final telemetry = TelemetryClient(store);
 
-      final svc = AIService(client: client, budgetEnforcer: enforcer, telemetryClient: telemetry, retryPolicy: const RetryPolicy(baseDelayMs: 1, maxDelayMs: 1, jitterFactor: 0.0));
+      final svc = AIService(
+        client: client,
+        budgetEnforcer: enforcer,
+        telemetryClient: telemetry,
+        retryPolicy: const RetryPolicy(
+          baseDelayMs: 1,
+          maxDelayMs: 1,
+          jitterFactor: 0.0,
+        ),
+      );
 
-      final res = await svc.classification(const ClassificationRequest(text: 'hello', model: 'm-cls'));
+      final res = await svc.classification(
+        const ClassificationRequest(text: 'hello', model: 'm-cls'),
+      );
 
       expect(res.isSuccess, isTrue);
 
@@ -92,23 +141,46 @@ void main() {
       expect(events.any((e) => e.name == 'ai.classification.success'), isTrue);
     });
 
-    test('classification failure emits failure telemetry and returns error', () async {
-      // return 400 to simulate invalid request
-      final client = VertexAIClient(config: AIServiceConfig.dev(), httpClient: _SeqResponseClient(jsonEncode({'message': 'bad'}), 400));
-      final tracker = AIUsageTracker();
-      final enforcer = AIBudgetEnforcer(config: const AIBudgetConfig.unlimited(), usageTracker: tracker);
+    test(
+      'classification failure emits failure telemetry and returns error',
+      () async {
+        // return 400 to simulate invalid request
+        final client = VertexAIClient(
+          config: AIServiceConfig.dev(),
+          httpClient: _SeqResponseClient(jsonEncode({'message': 'bad'}), 400),
+        );
+        final tracker = AIUsageTracker();
+        final enforcer = AIBudgetEnforcer(
+          config: const AIBudgetConfig.unlimited(),
+          usageTracker: tracker,
+        );
 
-      final store = InMemoryTelemetryStore();
-      final telemetry = TelemetryClient(store);
+        final store = InMemoryTelemetryStore();
+        final telemetry = TelemetryClient(store);
 
-      final svc = AIService(client: client, budgetEnforcer: enforcer, telemetryClient: telemetry, retryPolicy: const RetryPolicy(baseDelayMs: 1, maxDelayMs: 1, jitterFactor: 0.0));
+        final svc = AIService(
+          client: client,
+          budgetEnforcer: enforcer,
+          telemetryClient: telemetry,
+          retryPolicy: const RetryPolicy(
+            baseDelayMs: 1,
+            maxDelayMs: 1,
+            jitterFactor: 0.0,
+          ),
+        );
 
-      final res = await svc.classification(const ClassificationRequest(text: 'bad', model: 'm-cls'));
+        final res = await svc.classification(
+          const ClassificationRequest(text: 'bad', model: 'm-cls'),
+        );
 
-      expect(res.isFailure, isTrue);
+        expect(res.isFailure, isTrue);
 
-      final events = await store.queryEvents();
-      expect(events.any((e) => e.name == 'ai.classification.failure'), isTrue);
-    });
+        final events = await store.queryEvents();
+        expect(
+          events.any((e) => e.name == 'ai.classification.failure'),
+          isTrue,
+        );
+      },
+    );
   });
 }

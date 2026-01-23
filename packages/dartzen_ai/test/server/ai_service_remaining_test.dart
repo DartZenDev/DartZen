@@ -50,41 +50,47 @@ class InMemoryTelemetryStore implements TelemetryStore {
 
 void main() {
   group('AIService remaining branches', () {
-    test('classification short-circuits when budget exceeded and emits telemetry', () async {
-      final tracker = AIUsageTracker();
-      // push usage over classification limit
-      tracker.recordUsage('classification', 1000.0);
+    test(
+      'classification short-circuits when budget exceeded and emits telemetry',
+      () async {
+        final tracker = AIUsageTracker();
+        // push usage over classification limit
+        tracker.recordUsage('classification', 1000.0);
 
-      final enforcer = AIBudgetEnforcer(
-        config: AIBudgetConfig(classificationLimit: 1.0),
-        usageTracker: tracker,
-      );
+        final enforcer = AIBudgetEnforcer(
+          config: AIBudgetConfig(classificationLimit: 1.0),
+          usageTracker: tracker,
+        );
 
-      final store = InMemoryTelemetryStore();
-      final telemetry = TelemetryClient(store);
+        final store = InMemoryTelemetryStore();
+        final telemetry = TelemetryClient(store);
 
-      final client = VertexAIClient(
-        config: AIServiceConfig.dev(),
-        httpClient: SimpleSuccessClient({
-          'label': 'ok',
-          'requestId': 'r',
-        }), // should not be invoked due to budget short-circuit
-      );
+        final client = VertexAIClient(
+          config: AIServiceConfig.dev(),
+          httpClient: SimpleSuccessClient({
+            'label': 'ok',
+            'requestId': 'r',
+          }), // should not be invoked due to budget short-circuit
+        );
 
-      final svc = AIService(
-        client: client,
-        budgetEnforcer: enforcer,
-        telemetryClient: telemetry,
-      );
+        final svc = AIService(
+          client: client,
+          budgetEnforcer: enforcer,
+          telemetryClient: telemetry,
+        );
 
-      final res = await svc.classification(
-        const ClassificationRequest(text: 'x', model: 'm'),
-      );
+        final res = await svc.classification(
+          const ClassificationRequest(text: 'x', model: 'm'),
+        );
 
-      expect(res.isFailure, isTrue);
-      final events = await store.queryEvents();
-      expect(events.any((e) => e.name == 'ai.classification.budget.exceeded'), isTrue);
-    });
+        expect(res.isFailure, isTrue);
+        final events = await store.queryEvents();
+        expect(
+          events.any((e) => e.name == 'ai.classification.budget.exceeded'),
+          isTrue,
+        );
+      },
+    );
 
     test('telemetry is optional and does not throw when absent', () async {
       final client = VertexAIClient(
@@ -92,7 +98,7 @@ void main() {
         httpClient: SimpleSuccessClient({
           'label': 'ok',
           'requestId': 'r',
-          'usage': {'inputTokens': 1, 'outputTokens': 1}
+          'usage': {'inputTokens': 1, 'outputTokens': 1},
         }),
       );
 

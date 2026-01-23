@@ -15,7 +15,9 @@ class FakeClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     lastHeaders = Map.fromEntries(
-      request.headers.entries.map((e) => MapEntry(e.key.toLowerCase(), e.value)),
+      request.headers.entries.map(
+        (e) => MapEntry(e.key.toLowerCase(), e.value),
+      ),
     );
     if (throwOnSend) throw Exception('send-failure');
     return http.StreamedResponse(
@@ -36,7 +38,9 @@ void main() {
       final future = DateTime.now().toUtc().add(const Duration(seconds: 5));
       final header = future.toIso8601String();
 
-      final fake = FakeClient(http.Response('', 429, headers: {'retry-after': header}));
+      final fake = FakeClient(
+        http.Response('', 429, headers: {'retry-after': header}),
+      );
       final client = VertexAIClient(config: cfg, httpClient: fake);
 
       final res = await client.generateText(
@@ -57,7 +61,9 @@ void main() {
       final past = DateTime.now().toUtc().subtract(const Duration(hours: 1));
       final header = past.toIso8601String();
 
-      final fake = FakeClient(http.Response('', 500, headers: {'retry-after': header}));
+      final fake = FakeClient(
+        http.Response('', 500, headers: {'retry-after': header}),
+      );
       final client = VertexAIClient(config: cfg, httpClient: fake);
 
       final res = await client.generateText(

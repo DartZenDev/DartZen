@@ -51,7 +51,9 @@ void main() {
       final cache = RecordingCache();
       final store = CacheAIUsageStore.withClient(
         cache,
-        flushInterval: const Duration(hours: 1), // long to avoid timer-based flush
+        flushInterval: const Duration(
+          hours: 1,
+        ), // long to avoid timer-based flush
       );
 
       store.recordUsage('textGeneration', 3.5);
@@ -64,13 +66,12 @@ void main() {
         cache.setCalls.any((c) => c.key.contains('textGeneration')),
         isTrue,
       );
-      expect(
-        cache.setCalls.any((c) => c.key.contains('global')),
-        isTrue,
-      );
+      expect(cache.setCalls.any((c) => c.key.contains('global')), isTrue);
 
       // Verify TTL was provided
-      final globalCall = cache.setCalls.firstWhere((c) => c.key.contains('global'));
+      final globalCall = cache.setCalls.firstWhere(
+        (c) => c.key.contains('global'),
+      );
       expect(globalCall.ttl, isNotNull);
       expect(globalCall.ttl!.inSeconds, greaterThan(0));
 
@@ -89,7 +90,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       final now = DateTime.now().toUtc();
-      final expectedSuffix = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+      final expectedSuffix =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}';
 
       expect(
         cache.setCalls.any((c) => c.key.contains(expectedSuffix)),
@@ -120,7 +122,9 @@ void main() {
       expect(store.getMethodUsage('classification'), equals(0.0));
 
       // Verify cache was updated with zeros
-      final zeroCalls = cache.setCalls.where((c) => (c.value as double) == 0.0).toList();
+      final zeroCalls = cache.setCalls
+          .where((c) => (c.value as double) == 0.0)
+          .toList();
       expect(zeroCalls.length, greaterThanOrEqualTo(3)); // global + methods
 
       await store.close();
@@ -158,10 +162,7 @@ void main() {
       await store.close();
 
       // Final flush should have happened
-      expect(
-        cache.setCalls.any((c) => c.key.contains('embeddings')),
-        isTrue,
-      );
+      expect(cache.setCalls.any((c) => c.key.contains('embeddings')), isTrue);
 
       final beforeCount = cache.setCalls.length;
 
@@ -215,16 +216,24 @@ void main() {
       // allow async flush
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      final globalCall = cache.setCalls.firstWhere((c) => c.key.contains('global'));
+      final globalCall = cache.setCalls.firstWhere(
+        (c) => c.key.contains('global'),
+      );
       expect(globalCall.ttl, isNotNull);
 
       final now = DateTime.now().toUtc();
-      final nextMonth = (now.month == 12) ? DateTime(now.year + 1).toUtc() : DateTime(now.year, now.month + 1).toUtc();
+      final nextMonth = (now.month == 12)
+          ? DateTime(now.year + 1).toUtc()
+          : DateTime(now.year, now.month + 1).toUtc();
       final expectedSeconds = nextMonth.difference(now).inSeconds + 60;
 
       // allow a small timing discrepancy
       final actual = globalCall.ttl!.inSeconds;
-      expect((actual - expectedSeconds).abs(), lessThanOrEqualTo(2), reason: 'TTL should equal seconds until month end + 60s slack');
+      expect(
+        (actual - expectedSeconds).abs(),
+        lessThanOrEqualTo(2),
+        reason: 'TTL should equal seconds until month end + 60s slack',
+      );
 
       await store.close();
     });
