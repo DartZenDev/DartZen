@@ -75,10 +75,7 @@ void main() {
     await showDeleteDialog(tester);
 
     expect(find.text('Confirm Delete'), findsOneWidget);
-    expect(
-      find.text('Are you sure you want to delete?'),
-      findsOneWidget,
-    );
+    expect(find.text('Are you sure you want to delete?'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
   });
@@ -93,15 +90,10 @@ void main() {
   });
 
   testWidgets('delete calls client and pops true', (tester) async {
-    when(
-      () => client.delete(any(), any()),
-    ).thenAnswer((_) async {});
+    when(() => client.delete(any(), any())).thenAnswer((_) async {});
 
     bool successCalled = false;
-    await showDeleteDialog(
-      tester,
-      onSuccess: () => successCalled = true,
-    );
+    await showDeleteDialog(tester, onSuccess: () => successCalled = true);
 
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();

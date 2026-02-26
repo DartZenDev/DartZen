@@ -28,9 +28,7 @@ class MockAdminTransport {
       'admin.create' => _create(payload),
       'admin.update' => _update(payload),
       'admin.delete' => _delete(payload),
-      _ => TransportResult.err(
-          error: 'Unknown descriptor: ${descriptor.id}',
-        ),
+      _ => TransportResult.err(error: 'Unknown descriptor: ${descriptor.id}'),
     };
   }
 
@@ -60,10 +58,7 @@ class MockAdminTransport {
 
   TransportResult _create(Map<String, dynamic> payload) {
     final data = payload['data'] as Map<String, dynamic>;
-    final user = <String, dynamic>{
-      'id': '${_nextId++}',
-      ...data,
-    };
+    final user = <String, dynamic>{'id': '${_nextId++}', ...data};
     _users.add(user);
     return TransportResult.ok(data: user);
   }
@@ -75,11 +70,7 @@ class MockAdminTransport {
     if (index == -1) {
       return TransportResult.err(error: 'Not found');
     }
-    _users[index] = <String, dynamic>{
-      'id': id,
-      ..._users[index],
-      ...data,
-    };
+    _users[index] = <String, dynamic>{'id': id, ..._users[index], ...data};
     return TransportResult.ok(data: _users[index]);
   }
 

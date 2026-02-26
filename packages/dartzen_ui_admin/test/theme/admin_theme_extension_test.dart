@@ -50,10 +50,7 @@ void main() {
   group('lerp', () {
     test('interpolates between two themes at t=0', () {
       final a = AdminThemeExtension.fallback();
-      final b = a.copyWith(
-        headerColor: const Color(0xFF000000),
-        spacing: 32.0,
-      );
+      final b = a.copyWith(headerColor: const Color(0xFF000000), spacing: 32.0);
 
       final result = a.lerp(b, 0.0);
 
@@ -63,10 +60,7 @@ void main() {
 
     test('interpolates between two themes at t=1', () {
       final a = AdminThemeExtension.fallback();
-      final b = a.copyWith(
-        headerColor: const Color(0xFF000000),
-        spacing: 32.0,
-      );
+      final b = a.copyWith(headerColor: const Color(0xFF000000), spacing: 32.0);
 
       final result = a.lerp(b, 1.0);
 
