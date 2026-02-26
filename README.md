@@ -57,6 +57,7 @@ dartzen/
 - **`dartzen_jobs`**: A unified background and scheduled jobs system for DartZen applications.
 - **`dartzen_telemetry`**: Telemetry and monitoring package for DartZen — provides interfaces and implementations for logging, metrics, and tracing using GCP Cloud Logging and Cloud Monitoring.
 - **`dartzen_executor`**: A unified task executor for DartZen applications, supporting concurrent and sequential task execution with error handling, retries, and policies.
+- **`dartzen_ui_admin`**: Cross-platform, adaptive UI components and screens for building admin CRUD interfaces in DartZen applications.
 
 ### Example Applications
 

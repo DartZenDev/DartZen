@@ -112,10 +112,7 @@ final class FirestoreRestClient {
     final response = await _httpClient.post(
       Uri.parse(commitUrl),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'writes': writes,
-        if (transactionId != null) 'transaction': transactionId,
-      }),
+      body: jsonEncode({'writes': writes, 'transaction': ?transactionId}),
     );
 
     if (response.statusCode != 200) {

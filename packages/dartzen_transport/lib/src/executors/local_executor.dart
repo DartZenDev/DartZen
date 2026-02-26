@@ -15,7 +15,7 @@ class _LocalTransportExecutor implements TransportExecutor {
       data: {
         'descriptorId': descriptor.id,
         'payload': payload,
-        if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
+        'idempotencyKey': ?idempotencyKey,
         'channel': descriptor.channel.name,
         'reliability': descriptor.reliability.name,
       },

@@ -142,14 +142,14 @@ class FirestoreTelemetryStore implements TelemetryStore {
       'from': [
         {'collectionId': collectionId},
       ],
-      if (where != null) 'where': where,
+      'where': ?where,
       'orderBy': [
         {
           'field': {'fieldPath': 'timestamp'},
           'direction': 'ASCENDING',
         },
       ],
-      if (limit != null) 'limit': limit,
+      'limit': ?limit,
     };
 
     final list = await FirestoreConnection.client.runStructuredQuery(

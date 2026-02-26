@@ -15,7 +15,7 @@ class _TestTransportExecutor implements TransportExecutor {
       'test': true,
       'descriptorId': descriptor.id,
       'payload': payload,
-      if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
+      'idempotencyKey': ?idempotencyKey,
     },
     requestId: 'test-${DateTime.now().millisecondsSinceEpoch}',
   );
