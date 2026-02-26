@@ -129,7 +129,7 @@ final class AdyenPaymentsService implements PaymentsService {
     String? reason,
   }) async {
     final response = await _client.post('/payments/$paymentId/refund', {
-      if (reason != null) 'reason': reason,
+      'reason': ?reason,
     }, headers: _headers(null));
 
     if (response.isError) {
@@ -158,7 +158,7 @@ final class AdyenPaymentsService implements PaymentsService {
 
   Map<String, String> _headers(String? idempotencyKey) => {
     'Authorization': 'Api-Key ${_config.apiKey}',
-    if (idempotencyKey != null) 'Idempotency-Key': idempotencyKey,
+    'Idempotency-Key': ?idempotencyKey,
   };
 
   ZenResult<AdyenPaymentModel> _parseModel(Object? data) {

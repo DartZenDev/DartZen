@@ -22,6 +22,8 @@ workspace:
   - packages/dartzen_transport
   - packages/dartzen_ui_identity
   - packages/dartzen_ui_identity/example
+  - packages/dartzen_ui_admin
+  - packages/dartzen_ui_admin/example
   - packages/dartzen_ui_navigation
   - packages/dartzen_ui_navigation/example
   - apps/ZenDemo/dartzen_demo_contracts
@@ -61,7 +63,7 @@ melos:
         # `flutter test --coverage` does not accept a value for the flag; run
         # the test and then move the produced `coverage/` dir to a per-run
         # name so the CI script can find per-matrix outputs.
-        melos exec --scope="dartzen_ai,dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- 'sh -c "flutter test --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=dev --coverage || true; if [ -d coverage ]; then mv coverage coverage_tmp || true; mkdir -p coverage || true; mv coverage_tmp coverage/coverage_dev_macos_flutter || true; fi"'
+        melos exec --scope="dartzen_ai,dartzen_core,dartzen_ui_admin,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization" -- 'sh -c "flutter test --dart-define=DZ_PLATFORM=macos --dart-define=DZ_ENV=dev --coverage || true; if [ -d coverage ]; then mv coverage coverage_tmp || true; mkdir -p coverage || true; mv coverage_tmp coverage/coverage_dev_macos_flutter || true; fi"'
         # Dart packages (pass compile-time defines via `dart --define` so constants are tree-shaken correctly)
         melos exec --scope="dartzen_transport,dartzen_storage,dartzen_identity,dartzen_jobs,dartzen_firestore,dartzen_executor,dartzen_cache,dartzen_telemetry,dartzen_payments,dartzen_server,dartzen_demo_server,dartzen_demo_contracts" -- "dart --define=DZ_ENV=dev test --coverage=coverage"
       description: Run all Dart & Flutter tests with coverage, using flutter test for any package that depends on Flutter
@@ -140,13 +142,21 @@ melos:
       exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
       packageFilters:
         scope: dartzen_ui_identity_example
+    example:admin:web:
+      exec: flutter run -d chrome --dart-define=DZ_PLATFORM=web --dart-define=DZ_ENV=dev
+      packageFilters:
+        scope: dartzen_ui_admin_example
+    example:admin:ios:
+      exec: flutter run --dart-define=DZ_PLATFORM=ios --dart-define=DZ_ENV=dev
+      packageFilters:
+        scope: dartzen_ui_admin_example
     test:matrix:
       run: |
         PACKAGE=${PACKAGE:-packages/dartzen_storage}
         ENVS="dev prd"
         PLATFORMS="web ios android macos linux windows"
         # Flutter packages should use `flutter test` (they depend on Flutter)
-        FLUTTER_SCOPE="dartzen_ai,dartzen_core,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization"
+        FLUTTER_SCOPE="dartzen_ai,dartzen_core,dartzen_ui_admin,dartzen_ui_navigation,dartzen_ui_identity,dartzen_demo_client,dartzen_localization"
         # Dart-only packages use `dart run test`
         DART_SCOPE="dartzen_transport,dartzen_storage,dartzen_executor,dartzen_identity,dartzen_jobs,dartzen_firestore,dartzen_cache,dartzen_server,dartzen_payments,dartzen_telemetry,dartzen_demo_server,dartzen_demo_contracts"
 

@@ -84,6 +84,6 @@ TelemetryEvent paymentFailed({
     'amountMinor': amountMinor,
     'currency': currency,
     'status': PaymentStatus.failed.name,
-    if (reason != null) 'reason': reason,
+    'reason': ?reason,
   },
 );

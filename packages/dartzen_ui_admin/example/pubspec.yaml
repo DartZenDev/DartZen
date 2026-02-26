@@ -1,0 +1,34 @@
+name: dartzen_ui_admin_example
+description: Example app for dartzen_ui_admin.
+publish_to: "none"
+version: 0.0.1
+
+environment:
+  sdk: ">=3.10.3 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  dartzen_core:
+    path: ../../dartzen_core
+  dartzen_identity:
+    path: ../../dartzen_identity
+  dartzen_localization:
+    path: ../../dartzen_localization
+  dartzen_transport:
+    path: ../../dartzen_transport
+  dartzen_ui_admin:
+    path: ../
+  dartzen_ui_identity:
+    path: ../../dartzen_ui_identity
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.0.3
+  go_router: ^17.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

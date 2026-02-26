@@ -1,0 +1,22 @@
+{
+  "list.title": "Items",
+  "create.title": "Create",
+  "edit.title": "Edit",
+  "delete.confirmation": "Are you sure you want to delete this item?",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "required.field": "This field is required",
+  "error.unauthorized": "Unauthorized access.",
+  "error.not_found": "Resource not found.",
+  "error.validation": "Validation failed. Please check your input.",
+  "error.conflict": "A conflict occurred.",
+  "error.unknown": "An unexpected error occurred.",
+  "loading": "Loading…",
+  "no.items": "No items found.",
+  "edit": "Edit",
+  "confirm.delete": "Confirm Delete",
+  "actions": "Actions",
+  "previous.page": "Previous page",
+  "next.page": "Next page"
+}

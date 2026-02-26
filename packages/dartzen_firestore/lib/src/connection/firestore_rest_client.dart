@@ -114,7 +114,7 @@ final class FirestoreRestClient {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'writes': writes,
-        if (transactionId != null) 'transaction': transactionId,
+        'transaction': ?transactionId,
       }),
     );
 
